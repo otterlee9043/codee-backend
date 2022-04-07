@@ -9,6 +9,8 @@ const HEAD = 0;
 const CENTER = 1;
 const TAIL = 2;
 
+// hljs-function, span 안에 span이 있는 구조 -> splitSpan 다시 짜야 한다.
+
 function isString(inputText) {
   if (typeof inputText === "string" || inputText instanceof String) return true;
   else return false;
@@ -41,7 +43,9 @@ function createEllipsisNode(line) {
   lnNumber.appendChild(ellipsisBtn);
   ellipsisLine.querySelector(".hljs-ln-code").innerText = ""; // <span2>
   ellipsisLine.addEventListener("click", () => {
-    const info = selectedInfo.find((item) => `L${item.start}` === ellipsisLine.id);
+    const info = selectedInfo.find(
+      (item) => `L${item.start}` === ellipsisLine.id
+    );
     const lineId = `L${info.start}`;
     const number = info.number;
     expand(lineId, number);
@@ -71,7 +75,8 @@ window.addEventListener("load", function () {
         start = Math.min(start, end);
         selectedInfo = selectedInfo.filter((item) => {
           // contained = 숨길 lines 중에 이미 숨김된 line이 있는지
-          const contained = start < item.start && start + numberLinesSelected - 1 > item.start;
+          const contained =
+            start < item.start && start + numberLinesSelected - 1 > item.start;
           if (contained) {
             expand(`L${String(item.start)}`, item.number);
           }
@@ -125,7 +130,10 @@ function splitText(textNode, text, start, same = false) {
       span3 = document.createElement("span");
       span1.innerText = fullText.substring(0, index);
       span2.innerText = text;
-      span3.innerText = fullText.substring(index + text.length, fullText.length);
+      span3.innerText = fullText.substring(
+        index + text.length,
+        fullText.length
+      );
       between = !between;
     }
   } else {
@@ -182,7 +190,10 @@ function splitSpan(span, text, start, same = false) {
       span3 = span.cloneNode(false);
       span.innerText = fullText.substring(0, index);
       span2.innerText = text;
-      span3.innerText = fullText.substring(index + text.length, fullText.length);
+      span3.innerText = fullText.substring(
+        index + text.length,
+        fullText.length
+      );
       between = !between;
       span2.after(span3);
       return fragmented(CENTER, span2);
@@ -209,14 +220,17 @@ function splitSpan(span, text, start, same = false) {
 function merge(newSpan) {
   while (newSpan.firstChild) {
     const child = newSpan.firstChild;
+    console.log(child);
+    newSpan.parentNode.insertBefore(child, newSpan);
+    if (child.nodeType == Node.TEXT_NODE) continue;
     const fragmented = child.getAttribute("fragmented");
 
-    newSpan.parentNode.insertBefore(child, newSpan);
     if (fragmented == FALSE) child.removeAttribute("fragmented");
     if (fragmented == TAIL) {
       console.log("PREVIOUS", child.previousSibling);
       const previous = child.previousSibling;
-      //previous.textContent = previous.textContent + child.textContent;
+      previous.textContent = previous.textContent + child.textContent;
+      child.remove();
       console.log(previous.textContent);
       console.log(child.textContent);
     }
@@ -290,13 +304,24 @@ function selectText() {
 
     console.log("selectedFirst >", selectedFirst);
     console.log(indexAmongChildren(parent, selectedFirst));
-    if (indexAmongChildren(parent, selectedFirst) > indexAmongChildren(parent, selectedLast))
+    if (
+      indexAmongChildren(parent, selectedFirst) >
+      indexAmongChildren(parent, selectedLast)
+    )
       [selectedFirst, selectedLast] = [selectedLast, selectedFirst];
-    if (!isString(selectedFirst.nodeValue) || !isString(selectedLast.nodeValue)) {
+    if (
+      !isString(selectedFirst.nodeValue) ||
+      !isString(selectedLast.nodeValue)
+    ) {
       console.log("NOT STRING!!");
       return;
     }
-    const firstOverlappedString = findOverlap(selectedFirst.nodeValue, selectedString, selectedString, false);
+    const firstOverlappedString = findOverlap(
+      selectedFirst.nodeValue,
+      selectedString,
+      selectedString,
+      false
+    );
     console.log("selectedLast >", selectedLast);
     const lastOverlappedString = findOverlap(
       selectedString,
@@ -316,7 +341,12 @@ function selectText() {
       if (anchorTagType === "TD") {
         startNode = splitText(selectedFirst, firstOverlappedString, true, true);
       } else {
-        startNode = splitSpan(selectedFirst.parentElement, firstOverlappedString, true, true);
+        startNode = splitSpan(
+          selectedFirst.parentElement,
+          firstOverlappedString,
+          true,
+          true
+        );
       }
       ellipsisSpan(startNode, null, true);
     } else {
@@ -324,7 +354,11 @@ function selectText() {
         startNode = splitText(selectedFirst, firstOverlappedString, true);
         console.log("startNode >", startNode);
       } else if (anchorTagType === "SPAN") {
-        startNode = splitSpan(selectedFirst.parentElement, firstOverlappedString, true);
+        startNode = splitSpan(
+          selectedFirst.parentElement,
+          firstOverlappedString,
+          true
+        );
         console.log("startNode >>", startNode);
       }
 
@@ -335,7 +369,11 @@ function selectText() {
         }
         console.log("endNode >", endNode);
       } else if (focusTagType === "SPAN") {
-        endNode = splitSpan(selectedLast.parentElement, lastOverlappedString, false);
+        endNode = splitSpan(
+          selectedLast.parentElement,
+          lastOverlappedString,
+          false
+        );
         console.log("endNode >>", endNode);
       }
 
