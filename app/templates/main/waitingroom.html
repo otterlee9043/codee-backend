@@ -1,0 +1,39 @@
+{% extends "darkbase.html" %}
+{% block navbar %}
+
+<a href="{{ url_for('auth.logout') }}" class="logout">로그아웃</a>
+<span class="logout">{{user_name}} 님,</span>
+<div class='waitingroom_top'>
+    <div class="button-wrapper">
+        <a class="blue room-btn" href="{{ url_for('main.create_room')}}">방 생성</a>
+        <a class="blue room-btn" href="{{ url_for('main.enter_room')}}">방 참여</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<br>
+<h2 style='padding-left: 20px;'>참여한 방</h2>
+<br>
+
+<section class='room-list'>
+    {% for room in rooms %}
+    <div class="card">
+        <div class="card-content">
+            <p class="classroom-name">{{ room['room_name']}}</p>
+            {% if current_user.id == room['host_id'] %}
+                <form action = "{{ url_for('main.delete_room', room_id = room['id']) }}" method = "post">
+                    <input class = "red room_btn" type = "submit" value = "삭제" onclick = "return confirm('방을 지우시겠습니까?') ;">
+                </form>
+            {% endif %}
+        </div>
+        <div class="card-content">
+            <p class='classroom-host'>{{ room['host_name']}}</p>
+            <a class="yellow room-btn" href="{{ url_for('main.classroom', room_id=room['id']) }}">입장</a>
+        </div>
+    </div>
+    <br>
+    {% endfor %}
+</section>
+
+{% endblock %}

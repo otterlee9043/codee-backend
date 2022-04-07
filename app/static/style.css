@@ -1,0 +1,157 @@
+/* @import url('https://fonts.googleapis.com/css?family=Nanum+Gothic'); */
+* {
+  box-sizing: border-box;
+}
+
+ul {
+  padding-inline-start: 10px;
+  list-style: none;
+}
+
+div {
+  width: 100%;
+}
+pre {
+  margin-top: 0px;
+}
+
+div#export {
+  padding-top: 30px;
+  padding-left: 30px;
+}
+div.filelist {
+  padding-top: 10px;
+  float: left;
+  overflow: auto;
+  height: 60vh;
+}
+div.box {
+  float: auto;
+  width: 80%;
+}
+
+.lineNumber {
+  font-weight: bold;
+}
+
+.hidden {
+  display: none;
+}
+
+.hljs-ln-line.hljs-ln-numbers {
+  padding-right: 10px;
+  text-align: right;
+  width: 50px;
+}
+
+.hljs-ln-line.hljs-ln-code {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+/* index.html dir tree */
+ul#treeitem {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 120%;
+}
+
+#treeitem.file::before {
+  font-family: "Font Awesome 5 Free";
+  content: "\f15c";
+  display: inline-block;
+  padding-right: 2px;
+  padding-left: 5px;
+  vertical-align: middle;
+}
+
+#treeitem[aria-expanded="false"] > ul {
+  display: none;
+}
+
+#treeitem[aria-expanded="true"] > ul {
+  display: block;
+}
+
+#treeitem[aria-expanded="false"] > span::before {
+  font-family: "Font Awesome 5 Free";
+  content: "\f07b";
+  /* display: inline-block; */
+  padding-right: 3px;
+  vertical-align: middle;
+  font-weight: 900;
+}
+
+#treeitem[aria-expanded="true"] > span::before {
+  font-family: "Font Awesome 5 Free";
+  content: "\f07c";
+  /* display: inline-block; */
+  padding-right: 3px;
+  vertical-align: middle;
+  font-weight: 900;
+}
+
+#treeitem,
+#treeitem span::before {
+  width: 9em;
+  margin: 0;
+  padding: 0.125em;
+  border: 2px transparent solid;
+  /* display: block; */
+}
+
+/* disable default keyboard focus styling for treeitems
+   Keyboard focus is styled with the following CSS */
+#treeitem:focus {
+  outline: 0;
+}
+
+#treeitem.focus,
+#treeitem span.focus {
+  border-color: black;
+  background-color: #eee;
+}
+
+#treeitem.hover,
+#treeitem span:hover {
+  background-color: #ddd;
+}
+
+.container {
+  display: flex;
+}
+
+#group {
+  padding-left: 15px;
+}
+
+.lineNumber {
+  font-weight: bold;
+}
+
+.selecting {
+  font-weight: bold;
+}
+
+.hidden {
+  display: none;
+}
+
+.bg {
+  background-color: tomato;
+}
+
+.shown {
+  display: inline;
+}
+
+.ellipsis {
+  border: 1px grey solid;
+  border-radius: 3px;
+  margin-right: 1px;
+  margin-left: 1px;
+  padding-left: 2px;
+  padding-right: 4px;
+  letter-spacing: -3px;
+}

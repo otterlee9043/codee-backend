@@ -1,0 +1,30 @@
+{% extends "darkbase.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block navbar %}
+<div class='top'>
+    <span class="material-icons left-icons" onclick="location.href='/13thweek'">
+        arrow_back
+    </span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="room-create-form">
+    <div class="align-center">
+        <form method = "post">
+            {{ form.hidden_tag() }}
+            <div class = "form-group">
+                <p style="font-size: 20px;">입장 코드</p>
+                {{ form.code(class = "form-control") }}
+            </div>
+            <div class = "form-group">
+                <p style="font-size: 20px;">방 이름</p>
+                {{ form.roomname(class = "form-control") }}
+            </div>
+            <br>
+            {{ form.submit(class = "blue room-btn") }}
+        </form>
+    </div>
+</div>
+
+{% endblock %}

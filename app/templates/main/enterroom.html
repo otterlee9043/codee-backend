@@ -1,0 +1,22 @@
+{% extends "darkbase.html" %}
+{% block navbar %}
+<div class='top'>
+    <span class="material-icons left-icons" onclick="location.href='/13thweek'">
+        arrow_back
+    </span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="room-create-form">
+    <div class="align-center">
+        <form method="post">
+            <p style="font-size: 20px;">입장 코드</p>
+            <input name="roomcode">
+            <br>
+            <input type="submit" class="blue room-btn" value="방 참여하기">
+        </form>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=deivce-width, initial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
+
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/go.min.js"></script>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
+  <script>hljs.highlightAll(); hljs.initLineNumbersOnLoad();</script>
+  <title>Codee</title>
+</head>
+
+<body>
+  <h1>Codee</h1>
+
+  <form method="post">
+    <input type="text" name="repository">
+    <input type="submit" value="clone">
+  </form>
+  <div class="container">
+    <div style="width: 20%">
+      <div class="filelist">
+        <ul id="dir_tree" aria-labelledby="tree_label">
+          <li id="{{username}}" class="dir">
+          </li>
+          <script>
+            $(function () {
+              var dir_tree = JSON.parse('{{dir_tree | tojson}}');
+              var parent_node = document.getElementById('{{ username }}');
+              show_dir(dir_tree['{{ username }}'], '{{ username }}', parent_node);
+            });
+
+          </script>
+        </ul>
+      </div>
+      <div id="pull-push">
+        <button type="button" onclick="pull('clipboard')">pull</button>
+        <button type="button" onclick="push('clipboard')">push</button>
+      </div>
+    </div>
+    <div class="box" id='export'>
+      <div><button type="button" onclick="copyToClip(document.getElementById('code'))">export</button>
+      </div>
+      <pre id="pre">
+    <code id="code">{{data}}</code>
+      </pre>
+    </div>
+  </div>
+
+
+</body>
+<script src="{{ url_for('static', filename = 'script/html-to-rtf-browser.min.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/index.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/dir_upload.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/showcode.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/showdir.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/copy.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/push_pull.js') }}"></script>
+
+
+</html>
