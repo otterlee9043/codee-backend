@@ -10,7 +10,11 @@ const CENTER = 1;
 const TAIL = 2;
 
 // hljs-function, span 안에 span이 있는 구조 -> splitSpan 다시 짜야 한다.
+// 1) 처음에 span들 depth 1이 되도록 전부 펼치기
+// 2) 똑같이 쪼개기
 
+// 단어 선택시 콘텍스트 메뉴 나오도록
+// 라인에 링크 추가
 function isString(inputText) {
   if (typeof inputText === "string" || inputText instanceof String) return true;
   else return false;
@@ -43,9 +47,7 @@ function createEllipsisNode(line) {
   lnNumber.appendChild(ellipsisBtn);
   ellipsisLine.querySelector(".hljs-ln-code").innerText = ""; // <span2>
   ellipsisLine.addEventListener("click", () => {
-    const info = selectedInfo.find(
-      (item) => `L${item.start}` === ellipsisLine.id
-    );
+    const info = selectedInfo.find((item) => `L${item.start}` === ellipsisLine.id);
     const lineId = `L${info.start}`;
     const number = info.number;
     expand(lineId, number);
@@ -75,8 +77,7 @@ window.addEventListener("load", function () {
         start = Math.min(start, end);
         selectedInfo = selectedInfo.filter((item) => {
           // contained = 숨길 lines 중에 이미 숨김된 line이 있는지
-          const contained =
-            start < item.start && start + numberLinesSelected - 1 > item.start;
+          const contained = start < item.start && start + numberLinesSelected - 1 > item.start;
           if (contained) {
             expand(`L${String(item.start)}`, item.number);
           }
@@ -130,10 +131,7 @@ function splitText(textNode, text, start, same = false) {
       span3 = document.createElement("span");
       span1.innerText = fullText.substring(0, index);
       span2.innerText = text;
-      span3.innerText = fullText.substring(
-        index + text.length,
-        fullText.length
-      );
+      span3.innerText = fullText.substring(index + text.length, fullText.length);
       between = !between;
     }
   } else {
@@ -190,10 +188,7 @@ function splitSpan(span, text, start, same = false) {
       span3 = span.cloneNode(false);
       span.innerText = fullText.substring(0, index);
       span2.innerText = text;
-      span3.innerText = fullText.substring(
-        index + text.length,
-        fullText.length
-      );
+      span3.innerText = fullText.substring(index + text.length, fullText.length);
       between = !between;
       span2.after(span3);
       return fragmented(CENTER, span2);
@@ -304,24 +299,13 @@ function selectText() {
 
     console.log("selectedFirst >", selectedFirst);
     console.log(indexAmongChildren(parent, selectedFirst));
-    if (
-      indexAmongChildren(parent, selectedFirst) >
-      indexAmongChildren(parent, selectedLast)
-    )
+    if (indexAmongChildren(parent, selectedFirst) > indexAmongChildren(parent, selectedLast))
       [selectedFirst, selectedLast] = [selectedLast, selectedFirst];
-    if (
-      !isString(selectedFirst.nodeValue) ||
-      !isString(selectedLast.nodeValue)
-    ) {
+    if (!isString(selectedFirst.nodeValue) || !isString(selectedLast.nodeValue)) {
       console.log("NOT STRING!!");
       return;
     }
-    const firstOverlappedString = findOverlap(
-      selectedFirst.nodeValue,
-      selectedString,
-      selectedString,
-      false
-    );
+    const firstOverlappedString = findOverlap(selectedFirst.nodeValue, selectedString, selectedString, false);
     console.log("selectedLast >", selectedLast);
     const lastOverlappedString = findOverlap(
       selectedString,
@@ -329,11 +313,11 @@ function selectText() {
       selectedLast.nodeValue,
       false
     );
-    console.log("firstOverlappedString >", firstOverlappedString);
-    console.log("lastOverlappedString >", lastOverlappedString);
+    // console.log("firstOverlappedString >", firstOverlappedString);
+    // console.log("lastOverlappedString >", lastOverlappedString);
     let startNode, endNode;
     const key = randomId();
-    //여기 수정
+
     const anchorTagType = selectedFirst.parentElement.tagName;
     const focusTagType = selectedLast.parentElement.tagName;
     if (selectedFirst === selectedLast) {
@@ -341,12 +325,7 @@ function selectText() {
       if (anchorTagType === "TD") {
         startNode = splitText(selectedFirst, firstOverlappedString, true, true);
       } else {
-        startNode = splitSpan(
-          selectedFirst.parentElement,
-          firstOverlappedString,
-          true,
-          true
-        );
+        startNode = splitSpan(selectedFirst.parentElement, firstOverlappedString, true, true);
       }
       ellipsisSpan(startNode, null, true);
     } else {
@@ -354,11 +333,7 @@ function selectText() {
         startNode = splitText(selectedFirst, firstOverlappedString, true);
         console.log("startNode >", startNode);
       } else if (anchorTagType === "SPAN") {
-        startNode = splitSpan(
-          selectedFirst.parentElement,
-          firstOverlappedString,
-          true
-        );
+        startNode = splitSpan(selectedFirst.parentElement, firstOverlappedString, true);
         console.log("startNode >>", startNode);
       }
 
@@ -369,11 +344,7 @@ function selectText() {
         }
         console.log("endNode >", endNode);
       } else if (focusTagType === "SPAN") {
-        endNode = splitSpan(
-          selectedLast.parentElement,
-          lastOverlappedString,
-          false
-        );
+        endNode = splitSpan(selectedLast.parentElement, lastOverlappedString, false);
         console.log("endNode >>", endNode);
       }
 
@@ -405,5 +376,22 @@ function findOverlap(a, b, originalB, reverse) {
     return findOverlap(a, b.substring(0, b.length - 1), originalB, false);
   } else {
     return findOverlap(a, b.substring(1, b.length), originalB, true);
+  }
+}
+
+function splitOn(bound, cutElement) {
+  // will divide the DOM tree rooted at bound to the left and right of cutElement
+  // cutElement must be a descendant of bound
+  const td = document.querySelector('#L27 .hljs-ln-code[data-line-number="27"]');
+  const cut = td.querySelectorAll(".hljs-function .hljs-params")[1];
+  console.log(cut);
+  bound = td;
+  cutElement = cut;
+  for (var parent = cutElement.parentNode; bound != parent; parent = grandparent) {
+    var right = parent.cloneNode(false);
+    while (cutElement.nextSibling) right.appendChild(cutElement.nextSibling);
+    var grandparent = parent.parentNode;
+    grandparent.insertBefore(right, parent.nextSibling);
+    grandparent.insertBefore(cutElement, right);
   }
 }
