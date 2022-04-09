@@ -9,12 +9,6 @@ const HEAD = 0;
 const CENTER = 1;
 const TAIL = 2;
 
-// hljs-function, span 안에 span이 있는 구조 -> splitSpan 다시 짜야 한다.
-// 1) 처음에 span들 depth 1이 되도록 전부 펼치기
-// 2) 똑같이 쪼개기
-
-// 단어 선택시 콘텍스트 메뉴 나오도록
-// 라인에 링크 추가
 function isString(inputText) {
   if (typeof inputText === "string" || inputText instanceof String) return true;
   else return false;
@@ -119,7 +113,7 @@ function splitText(textNode, text, start, same = false) {
       span1.innerText = text;
       textNode.before(span1);
       textNode.remove();
-      return span1;
+      return fragmented(FALSE, span1);
     }
     if (index === 0) {
       span1.innerText = text;
@@ -150,10 +144,10 @@ function splitText(textNode, text, start, same = false) {
     textNode.before(span3);
     textNode.remove();
     console.log(span1, span2, span3);
-    return span2;
+    return fragmented(CENTER, span2);
   }
   textNode.remove();
-  return start ? span2 : span1;
+  return start ? fragmented(TAIL, span2) : fragmented(HEAD, span1);
 }
 
 function fragmented(value, element) {
@@ -196,7 +190,7 @@ function splitSpan(span, text, start, same = false) {
   } else {
     span.after(span2);
     if (start) {
-      //const span2 = spane.cloneNode("span");
+      //const span2 = span.cloneNode("span");
       span.innerText = fullText.substring(0, index);
       span2.innerText = text;
       console.log(span.innerText);
@@ -213,25 +207,71 @@ function splitSpan(span, text, start, same = false) {
 }
 
 function merge(newSpan) {
+  const listToMerge = [];
   while (newSpan.firstChild) {
     const child = newSpan.firstChild;
     console.log(child);
     newSpan.parentNode.insertBefore(child, newSpan);
     if (child.nodeType == Node.TEXT_NODE) continue;
-    const fragmented = child.getAttribute("fragmented");
-
-    if (fragmented == FALSE) child.removeAttribute("fragmented");
-    if (fragmented == TAIL) {
-      console.log("PREVIOUS", child.previousSibling);
-      const previous = child.previousSibling;
-      previous.textContent = previous.textContent + child.textContent;
-      child.remove();
-      console.log(previous.textContent);
-      console.log(child.textContent);
-    }
+    //const fragmented = child.getAttribute("fragmented");
+    if (child.hasAttribute("fragmented")) listToMerge.push(child);
+    // if (fragmented == FALSE) child.removeAttribute("fragmented");
+    // if (fragmented == TAIL) {
+    //   console.log("PREVIOUS", child.previousSibling);
+    //   const previous = child.previousSibling;
+    //   previous.textContent = previous.textContent + child.textContent;
+    //   child.remove();
+    //   console.log(previous.textContent);
+    //   console.log(child.textContent);
+    // }
   }
-
+  console.log(listToMerge);
   newSpan.parentNode.removeChild(newSpan);
+  listToMerge.map((el) => {
+    console.log(el);
+    const type = parseInt(el.getAttribute("fragmented"));
+    if (el.className === "") {
+      switch (type) {
+        case FALSE:
+          const textNode = document.createTextNode(el.innerText);
+          el.parent.insertBefore(textNode, el);
+          el.remove();
+          break;
+        case HEAD:
+          el.nextSibling.nodeValue = el.innerText + el.nextSibling.nodeValue;
+          el.remove();
+          break;
+        case CENTER:
+          el.previousSibling.nodeValue += el.innerText + el.nextSibling.nodeValue;
+          el.nextSibling.remove();
+          el.remove();
+          break;
+        case TAIL:
+          el.previousSibling.nodeValue = el.previousSibling.nodeValue + el.innerText;
+          el.remove();
+          break;
+      }
+    } else {
+      switch (type) {
+        case FALSE:
+          el.removeAttribute("fragmented");
+          break;
+        case HEAD:
+          el.nextSibling.innerText = el.innerText + el.nextSibling.innerText;
+          el.remove();
+          break;
+        case CENTER:
+          el.previousSibling.innerText += el.innerText + el.nextSibling.innerText;
+          el.nextSibling.remove();
+          el.remove();
+          break;
+        case TAIL:
+          el.previousSibling.innerText += el.innerText;
+          el.remove();
+          break;
+      }
+    }
+  });
 }
 
 function ellipsisSpan(startNode, endNode) {
