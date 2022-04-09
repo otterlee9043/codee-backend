@@ -247,7 +247,7 @@ function ellipsisSpan(startNode, endNode) {
   const newSpan = document.createElement("span");
   newSpan.classList.add("hidden");
 
-  const key = startNode.id;
+  const key = startNode.getAttribute("key");
   let node = startNode;
   let nextNode = startNode.nextSibling;
 
@@ -257,7 +257,7 @@ function ellipsisSpan(startNode, endNode) {
     while (1) {
       node = nextNode;
       console.log(node);
-      if (node.nodeType === 1 && node.id === key) {
+      if (node.nodeType === 1 && node.getAttribute("key") === key) {
         newSpan.appendChild(node);
         break;
       }
@@ -355,8 +355,10 @@ function selectText() {
       endNode = endNode.closest("td>span");
       console.log("endNode >>", endNode);
 
-      startNode.id = key;
-      endNode.id = key;
+      // startNode.id = key;
+      // endNode.id = key;
+      startNode.setAttribute("key", key);
+      endNode.setAttribute("key", key);
       ellipsisSpan(startNode, endNode, false);
     }
   } else if (document.selection) {
