@@ -256,6 +256,7 @@ function ellipsisSpan(startNode, endNode) {
   if (endNode) {
     while (1) {
       node = nextNode;
+      console.log(node);
       if (node.nodeType === 1 && node.id === key) {
         newSpan.appendChild(node);
         break;
@@ -320,33 +321,39 @@ function selectText() {
 
     const anchorTagType = selectedFirst.parentElement.tagName;
     const focusTagType = selectedLast.parentElement.tagName;
+
+    const cutSpan = document.createElement("span");
+    cutSpan.textContent = ">>CUT<<";
     if (selectedFirst === selectedLast) {
       console.log("SAME!");
       if (anchorTagType === "TD") {
         startNode = splitText(selectedFirst, firstOverlappedString, true, true);
       } else {
         startNode = splitSpan(selectedFirst.parentElement, firstOverlappedString, true, true);
+        startNode.parentElement.insertBefore(cutSpan, startNode);
+        splitTree(parent, cutSpan);
       }
       ellipsisSpan(startNode, null, true);
     } else {
       if (anchorTagType === "TD") {
         startNode = splitText(selectedFirst, firstOverlappedString, true);
-        console.log("startNode >", startNode);
       } else if (anchorTagType === "SPAN") {
         startNode = splitSpan(selectedFirst.parentElement, firstOverlappedString, true);
-        console.log("startNode >>", startNode);
       }
-
+      startNode.parentElement.insertBefore(cutSpan, startNode);
+      splitTree(parent, cutSpan);
+      startNode = startNode.closest("td>span");
+      console.log("startNode >>", startNode);
       if (focusTagType === "TD") {
         // text
-        if (selectedFirst !== selectedLast) {
-          endNode = splitText(selectedLast, lastOverlappedString, false);
-        }
-        console.log("endNode >", endNode);
+        endNode = splitText(selectedLast, lastOverlappedString, false);
       } else if (focusTagType === "SPAN") {
         endNode = splitSpan(selectedLast.parentElement, lastOverlappedString, false);
-        console.log("endNode >>", endNode);
       }
+      endNode.parentElement.insertBefore(cutSpan, endNode.nextSibling);
+      splitTree(parent, cutSpan);
+      endNode = endNode.closest("td>span");
+      console.log("endNode >>", endNode);
 
       startNode.id = key;
       endNode.id = key;
@@ -379,19 +386,13 @@ function findOverlap(a, b, originalB, reverse) {
   }
 }
 
-function splitOn(bound, cutElement) {
-  // will divide the DOM tree rooted at bound to the left and right of cutElement
-  // cutElement must be a descendant of bound
-  const td = document.querySelector('#L27 .hljs-ln-code[data-line-number="27"]');
-  const cut = td.querySelectorAll(".hljs-function .hljs-params")[1];
-  console.log(cut);
-  bound = td;
-  cutElement = cut;
+function splitTree(bound, cutElement) {
   for (var parent = cutElement.parentNode; bound != parent; parent = grandparent) {
-    var right = parent.cloneNode(false);
-    while (cutElement.nextSibling) right.appendChild(cutElement.nextSibling);
+    var right = parent.cloneNode(false); // parent node를 right로 복사
+    while (cutElement.nextSibling) right.appendChild(cutElement.nextSibling); // cut 뒤에 오는 element들을 right에 append
     var grandparent = parent.parentNode;
-    grandparent.insertBefore(right, parent.nextSibling);
-    grandparent.insertBefore(cutElement, right);
+    grandparent.insertBefore(right, parent.nextSibling); // parent 뒤에 right를 삽입
+    grandparent.insertBefore(cutElement, right); // right 앞에 cutElement 삽입
   }
+  cutElement.remove();
 }
