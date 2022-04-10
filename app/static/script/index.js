@@ -101,7 +101,7 @@ code.addEventListener("mouseup", selectText, false);
 
 function splitText(textNode, text, start, same = false) {
   const fullText = textNode.nodeValue;
-  // console.log(fullText);
+  console.log(fullText);
   // console.log(text);
   const span1 = document.createElement("span");
   const span2 = document.createElement("span");
@@ -213,17 +213,7 @@ function merge(newSpan) {
     console.log(child);
     newSpan.parentNode.insertBefore(child, newSpan);
     if (child.nodeType == Node.TEXT_NODE) continue;
-    //const fragmented = child.getAttribute("fragmented");
     if (child.hasAttribute("fragmented")) listToMerge.push(child);
-    // if (fragmented == FALSE) child.removeAttribute("fragmented");
-    // if (fragmented == TAIL) {
-    //   console.log("PREVIOUS", child.previousSibling);
-    //   const previous = child.previousSibling;
-    //   previous.textContent = previous.textContent + child.textContent;
-    //   child.remove();
-    //   console.log(previous.textContent);
-    //   console.log(child.textContent);
-    // }
   }
   console.log(listToMerge);
   newSpan.parentNode.removeChild(newSpan);
@@ -236,6 +226,7 @@ function merge(newSpan) {
           const textNode = document.createTextNode(el.innerText);
           el.parent.insertBefore(textNode, el);
           el.remove();
+          console.log(el.parent);
           break;
         case HEAD:
           el.nextSibling.nodeValue = el.innerText + el.nextSibling.nodeValue;
@@ -346,6 +337,7 @@ function selectText() {
       console.log("NOT STRING!!");
       return;
     }
+
     const firstOverlappedString = findOverlap(selectedFirst.nodeValue, selectedString, selectedString, false);
     console.log("selectedLast >", selectedLast);
     const lastOverlappedString = findOverlap(
@@ -354,8 +346,8 @@ function selectText() {
       selectedLast.nodeValue,
       false
     );
-    // console.log("firstOverlappedString >", firstOverlappedString);
-    // console.log("lastOverlappedString >", lastOverlappedString);
+    console.log("firstOverlappedString >", firstOverlappedString);
+    console.log("lastOverlappedString >", lastOverlappedString);
     let startNode, endNode;
     const key = randomId();
 
