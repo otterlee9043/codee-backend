@@ -60,6 +60,10 @@ function show_file(element, file_name, username) {
 
         hljs.highlightAll();
         hljs.initLineNumbersOnLoad();
+
+        addMenuClass(code_tag) ;
+        addEventInMenumar(code_tag) ;
+
       });
     })
     .catch(function (error) {

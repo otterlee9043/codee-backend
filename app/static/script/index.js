@@ -47,9 +47,7 @@ function createEllipsisNode(line) {
   lnNumber.appendChild(ellipsisBtn);
   ellipsisLine.querySelector(".hljs-ln-code").innerText = ""; // <span2>
   ellipsisLine.addEventListener("click", () => {
-    const info = selectedInfo.find(
-      (item) => `L${item.start}` === ellipsisLine.id
-    );
+    const info = selectedInfo.find((item) => `L${item.start}` === ellipsisLine.id);
     const lineId = `L${info.start}`;
     const number = info.number;
     expand(lineId, number);
@@ -81,8 +79,7 @@ window.addEventListener("load", function () {
         start = Math.min(start, end);
         selectedInfo = selectedInfo.filter((item) => {
           // contained = 숨길 lines 중에 이미 숨김된 line이 있는지
-          const contained =
-            start < item.start && start + numberLinesSelected - 1 > item.start;
+          const contained = start < item.start && start + numberLinesSelected - 1 > item.start;
           if (contained) {
             expand(`L${String(item.start)}`, item.number);
           }
@@ -114,54 +111,51 @@ code.addEventListener("mouseup", selectText, false);
 function splitText(textNode, index, textLength, start, same = false) {
   const fullText = textNode.nodeValue;
   console.log(fullText);
-  text = start
-    ? fullText.substring(index, index + textLength)
-    : fullText.substring(0, index);
+  text = start ? fullText.substring(index, index + textLength) : fullText.substring(0, index);
   console.log(text);
   const span = document.createElement("span");
   //const span2 = document.createElement("span");
-  let span3;
-  let between = false;
+
   if (same) {
     if (fullText === text) {
       span.innerText = text;
       textNode.before(span);
       textNode.remove();
-      return fragmented(FALSE, span);
+      // return fragmented(FALSE, span);
+      return [FALSE, span];
     }
     if (index === 0) {
       span.innerText = text;
       //span2.innerText = fullText.substring(text.length, fullText.length);
       textNode.nodeValue = fullText.substring(text.length, fullText.length);
-      textNode.before(fragmented(HEAD, span));
+      //textNode.before(fragmented(HEAD, span));
+      textNode.before(span);
     } else if (index === fullText.length - text.length) {
       //span1.innerText = fullText.substring(0, index);
       textNode.nodeValue = fullText.substring(0, index);
       span.innerText = text;
-      textNode.after(fragmented(TAIL, span));
+      textNode.after(span);
     } else {
       const textNode2 = document.createTextNode("");
       textNode.nodeValue = fullText.substring(0, index);
       span.innerText = text;
-      textNode2.nodeValue = fullText.substring(
-        index + text.length,
-        fullText.length
-      );
-      textNode.after(fragmented(CENTER, span));
+      textNode2.nodeValue = fullText.substring(index + text.length, fullText.length);
+      textNode.after(span);
       span.after(textNode2);
+      return [CENTER, span];
     }
   } else {
     if (start) {
       textNode.nodeValue = fullText.substring(0, index);
       span.innerText = text;
-      textNode.after(fragmented(TAIL, span));
+      textNode.after(span);
     } else {
       span.innerText = text;
       textNode.nodeValue = fullText.substring(text.length, fullText.length);
-      textNode.before(fragmented(HEAD, span));
+      textNode.before(span);
     }
   }
-  // return start ? fragmented(TAIL, span) : fragmented(HEAD, span);
+  return start ? [TAIL, span] : [HEAD, span];
   return span;
 }
 
@@ -176,14 +170,12 @@ function splitSpan(span, index, textLength, start, same = false) {
   const fullText = span.innerText;
   const span2 = span.cloneNode(false);
   let span3;
-  text = start
-    ? fullText.substring(index, index + textLength)
-    : fullText.substring(0, index);
-  let between = false;
+  text = start ? fullText.substring(index, index + textLength) : fullText.substring(0, index);
   if (same) {
     if (fullText === text) {
       // split 하지 않는 경우
-      return fragmented(FALSE, span);
+      //return fragmented(FALSE, span);
+      return [FALSE, span];
     }
     span.after(span2);
     if (index === 0) {
@@ -199,13 +191,10 @@ function splitSpan(span, index, textLength, start, same = false) {
       span3 = span.cloneNode(false);
       span.innerText = fullText.substring(0, index);
       span2.innerText = text;
-      span3.innerText = fullText.substring(
-        index + text.length,
-        fullText.length
-      );
-      between = !between;
+      span3.innerText = fullText.substring(index + text.length, fullText.length);
       span2.after(span3);
-      return fragmented(CENTER, span2);
+      //return fragmented(CENTER, span2);
+      return [CENTER, span2];
     }
   } else {
     span.after(span2);
@@ -223,7 +212,8 @@ function splitSpan(span, index, textLength, start, same = false) {
 
   console.log("span >", span);
   console.log("span2 >", span2);
-  return start ? fragmented(TAIL, span2) : fragmented(HEAD, span);
+  //return start ? fragmented(TAIL, span2) : fragmented(HEAD, span);
+  return start ? [TAIL, span2] : [HEAD, span];
 }
 
 function merge(newSpan) {
@@ -253,14 +243,12 @@ function merge(newSpan) {
           el.remove();
           break;
         case CENTER:
-          el.previousSibling.nodeValue +=
-            el.innerText + el.nextSibling.nodeValue;
+          el.previousSibling.nodeValue += el.innerText + el.nextSibling.nodeValue;
           el.nextSibling.remove();
           el.remove();
           break;
         case TAIL:
-          el.previousSibling.nodeValue =
-            el.previousSibling.nodeValue + el.innerText;
+          el.previousSibling.nodeValue = el.previousSibling.nodeValue + el.innerText;
           el.remove();
           break;
       }
@@ -274,8 +262,7 @@ function merge(newSpan) {
           el.remove();
           break;
         case CENTER:
-          el.previousSibling.innerText +=
-            el.innerText + el.nextSibling.innerText;
+          el.previousSibling.innerText += el.innerText + el.nextSibling.innerText;
           el.nextSibling.remove();
           el.remove();
           break;
@@ -341,6 +328,7 @@ function selectText() {
   if (document.getSelection) {
     selectionText = document.getSelection();
     console.log(selectionText);
+    console.log(selectionText.toString());
     if (selectionText.toString() === "") {
       return;
     }
@@ -357,36 +345,15 @@ function selectText() {
 
     console.log("selectedFirst >", selectedFirst);
     console.log(indexAmongChildren(parent, selectedFirst));
-    if (
-      indexAmongChildren(parent, selectedFirst) >
-      indexAmongChildren(parent, selectedLast)
-    ) {
+    if (indexAmongChildren(parent, selectedFirst) >= indexAmongChildren(parent, selectedLast)) {
       [selectedFirst, selectedLast] = [selectedLast, selectedFirst];
+      [firstOffset, lastOffset] = [lastOffset, firstOffset];
     }
-    if (
-      !isString(selectedFirst.nodeValue) ||
-      !isString(selectedLast.nodeValue)
-    ) {
+    if (!isString(selectedFirst.nodeValue) || !isString(selectedLast.nodeValue)) {
       console.log("NOT STRING!!");
       return;
     }
 
-    const firstOverlappedString = findOverlap(
-      selectedFirst.nodeValue,
-      selectedString,
-      selectedString,
-      false
-    );
-    console.log("selectedLast >", selectedLast);
-    const lastOverlappedString = findOverlap(
-      selectedString,
-      selectedLast.nodeValue,
-      selectedLast.nodeValue,
-      false
-    );
-    // ====================================
-    // console.log("firstOverlappedString >", firstOverlappedString);
-    // console.log("lastOverlappedString >", lastOverlappedString);
     let startNode, endNode;
     const key = randomId();
 
@@ -394,25 +361,17 @@ function selectText() {
     const focusTagType = selectedLast.parentElement.tagName;
 
     const cutSpan = document.createElement("span");
+    let fragmented;
     cutSpan.textContent = ">>CUT<<";
     if (selectedFirst === selectedLast) {
       console.log("SAME!");
-      // const textLeength = selectedFirst.nodeValue.length -
-      const textLength = selectedFirst.nodeValue.substring(
-        firstOffset,
-        lastOffset
-      ).length;
+      const textLength = selectedFirst.nodeValue.substring(firstOffset, lastOffset).length;
+
       if (anchorTagType === "TD") {
         console.log(textLength);
-        startNode = splitText(
-          selectedFirst,
-          firstOffset,
-          textLength,
-          true,
-          true
-        );
+        [fragmented, startNode] = splitText(selectedFirst, firstOffset, textLength, true, true);
       } else {
-        startNode = splitSpan(
+        [fragmented, startNode] = splitSpan(
           selectedFirst.parentElement,
           firstOffset,
           textLength,
@@ -421,7 +380,9 @@ function selectText() {
         );
         startNode.parentElement.insertBefore(cutSpan, startNode);
         splitTree(parent, cutSpan);
+        startNode = startNode.closest("td>span");
       }
+      startNode.setAttribute("fragmented", fragmented);
       ellipsisSpan(startNode, null, true);
     } else {
       const textLength = selectedFirst.nodeValue.substring(
@@ -430,9 +391,9 @@ function selectText() {
       ).length;
       if (anchorTagType === "TD") {
         console.log(textLength);
-        startNode = splitText(selectedFirst, firstOffset, textLength, true);
+        [fragmented, startNode] = splitText(selectedFirst, firstOffset, textLength, true);
       } else if (anchorTagType === "SPAN") {
-        startNode = splitSpan(
+        [fragmented, startNode] = splitSpan(
           selectedFirst.parentElement,
           firstOffset,
           textLength,
@@ -442,6 +403,7 @@ function selectText() {
       startNode.parentElement.insertBefore(cutSpan, startNode);
       splitTree(parent, cutSpan);
       startNode = startNode.closest("td>span");
+      startNode.setAttribute("fragmented", fragmented);
       console.log("startNode >>", startNode);
 
       const textLength2 = selectedLast.nodeValue.substring(
@@ -449,9 +411,9 @@ function selectText() {
         selectedLast.nodeValue.length
       ).length;
       if (focusTagType === "TD") {
-        endNode = splitText(selectedLast, lastOffset, textLength2, false);
+        [fragmented, endNode] = splitText(selectedLast, lastOffset, textLength2, false);
       } else if (focusTagType === "SPAN") {
-        endNode = splitSpan(
+        [fragmented, endNode] = splitSpan(
           selectedLast.parentElement,
           lastOffset,
           textLength2,
@@ -461,10 +423,9 @@ function selectText() {
       endNode.parentElement.insertBefore(cutSpan, endNode.nextSibling);
       splitTree(parent, cutSpan);
       endNode = endNode.closest("td>span");
+      endNode.setAttribute("fragmented", fragmented);
       console.log("endNode >>", endNode);
 
-      // startNode.id = key;
-      // endNode.id = key;
       startNode.setAttribute("key", key);
       endNode.setAttribute("key", key);
       ellipsisSpan(startNode, endNode, false);
@@ -476,32 +437,8 @@ function selectText() {
   selectionText.removeAllRanges();
 }
 
-function findOverlap(a, b, originalB, reverse) {
-  if (!originalB) {
-    originalB = b;
-  }
-  if (b.length === 0 && !reverse) {
-    return findOverlap(a, originalB, originalB, true);
-  }
-  if (a.endsWith(b)) {
-    return b;
-  }
-  if (a.indexOf(b) >= 0) {
-    return b;
-  }
-  if (!reverse) {
-    return findOverlap(a, b.substring(0, b.length - 1), originalB, false);
-  } else {
-    return findOverlap(a, b.substring(1, b.length), originalB, true);
-  }
-}
-
 function splitTree(bound, cutElement) {
-  for (
-    var parent = cutElement.parentNode;
-    bound != parent;
-    parent = grandparent
-  ) {
+  for (var parent = cutElement.parentNode; bound != parent; parent = grandparent) {
     var right = parent.cloneNode(false); // parent node를 right로 복사
     while (cutElement.nextSibling) right.appendChild(cutElement.nextSibling); // cut 뒤에 오는 element들을 right에 append
     var grandparent = parent.parentNode;
