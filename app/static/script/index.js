@@ -9,6 +9,11 @@ const HEAD = 0;
 const CENTER = 1;
 const TAIL = 2;
 
+// 문제 1) 연속된 문자가 나오는 경우, overlapping 단어를 잘 찾지 못한다
+// --> focusNodeOffset, anchorNodeOffset으로 split할 index 결정하도록 수정
+// 문제 2) splitTree 하고 나오서 원래대로 복구하는 코드가 없음
+// --> 같은 level끼리 merge되게 하든지, split 되기 전 코드를 백업해놓든지
+
 function isString(inputText) {
   if (typeof inputText === "string" || inputText instanceof String) return true;
   else return false;
@@ -41,7 +46,9 @@ function createEllipsisNode(line) {
   lnNumber.appendChild(ellipsisBtn);
   ellipsisLine.querySelector(".hljs-ln-code").innerText = ""; // <span2>
   ellipsisLine.addEventListener("click", () => {
-    const info = selectedInfo.find((item) => `L${item.start}` === ellipsisLine.id);
+    const info = selectedInfo.find(
+      (item) => `L${item.start}` === ellipsisLine.id
+    );
     const lineId = `L${info.start}`;
     const number = info.number;
     expand(lineId, number);
@@ -55,6 +62,8 @@ function createEllipsisNode(line) {
 }
 
 window.addEventListener("load", function () {
+  // addMenuClass() ;
+  // addEventInMenumar() ;
   const numbers = document.querySelectorAll(".hljs-ln-numbers");
   //console.log(numbers);
   Array.from(numbers).map((item, index) => {
@@ -71,7 +80,8 @@ window.addEventListener("load", function () {
         start = Math.min(start, end);
         selectedInfo = selectedInfo.filter((item) => {
           // contained = 숨길 lines 중에 이미 숨김된 line이 있는지
-          const contained = start < item.start && start + numberLinesSelected - 1 > item.start;
+          const contained =
+            start < item.start && start + numberLinesSelected - 1 > item.start;
           if (contained) {
             expand(`L${String(item.start)}`, item.number);
           }
@@ -99,14 +109,17 @@ window.addEventListener("load", function () {
 
 code.addEventListener("mouseup", selectText, false);
 
-function splitText(textNode, text, start, same = false) {
+// function splitText(textNode, text, start, same = false) {
+function splitText(textNode, index, textLength, start, same = false) {
   const fullText = textNode.nodeValue;
   console.log(fullText);
-  // console.log(text);
+  text = start
+    ? fullText.substring(index, index + textLength)
+    : fullText.substring(0, index);
+  console.log(text);
   const span1 = document.createElement("span");
   const span2 = document.createElement("span");
   let span3;
-  const index = fullText.indexOf(text);
   let between = false;
   if (same) {
     if (fullText === text) {
@@ -125,7 +138,10 @@ function splitText(textNode, text, start, same = false) {
       span3 = document.createElement("span");
       span1.innerText = fullText.substring(0, index);
       span2.innerText = text;
-      span3.innerText = fullText.substring(index + text.length, fullText.length);
+      span3.innerText = fullText.substring(
+        index + text.length,
+        fullText.length
+      );
       between = !between;
     }
   } else {
@@ -156,12 +172,14 @@ function fragmented(value, element) {
   return element;
 }
 
-function splitSpan(span, text, start, same = false) {
+function splitSpan(span, index, textLength, start, same = false) {
   console.log(span);
   const fullText = span.innerText;
   const span2 = span.cloneNode(false);
   let span3;
-  const index = fullText.indexOf(text);
+  text = start
+    ? fullText.substring(index, index + textLength)
+    : fullText.substring(0, index);
   let between = false;
   if (same) {
     if (fullText === text) {
@@ -182,7 +200,10 @@ function splitSpan(span, text, start, same = false) {
       span3 = span.cloneNode(false);
       span.innerText = fullText.substring(0, index);
       span2.innerText = text;
-      span3.innerText = fullText.substring(index + text.length, fullText.length);
+      span3.innerText = fullText.substring(
+        index + text.length,
+        fullText.length
+      );
       between = !between;
       span2.after(span3);
       return fragmented(CENTER, span2);
@@ -233,12 +254,14 @@ function merge(newSpan) {
           el.remove();
           break;
         case CENTER:
-          el.previousSibling.nodeValue += el.innerText + el.nextSibling.nodeValue;
+          el.previousSibling.nodeValue +=
+            el.innerText + el.nextSibling.nodeValue;
           el.nextSibling.remove();
           el.remove();
           break;
         case TAIL:
-          el.previousSibling.nodeValue = el.previousSibling.nodeValue + el.innerText;
+          el.previousSibling.nodeValue =
+            el.previousSibling.nodeValue + el.innerText;
           el.remove();
           break;
       }
@@ -252,7 +275,8 @@ function merge(newSpan) {
           el.remove();
           break;
         case CENTER:
-          el.previousSibling.innerText += el.innerText + el.nextSibling.innerText;
+          el.previousSibling.innerText +=
+            el.innerText + el.nextSibling.innerText;
           el.nextSibling.remove();
           el.remove();
           break;
@@ -321,24 +345,39 @@ function selectText() {
     if (selectionText.toString() === "") {
       return;
     }
-    console.log(selectionText.toString());
+    //console.log(selectionText);
+    // ====================================
     const selectedString = selectionText.toString();
 
     let selectedFirst = selectionText.anchorNode;
     let selectedLast = selectionText.focusNode;
+    let firstOffset = selectionText.anchorOffset;
+    let lastOffset = selectionText.focusOffset;
     const parent = selectedFirst.parentElement.closest("td");
     console.log("parent> ", parent);
 
     console.log("selectedFirst >", selectedFirst);
     console.log(indexAmongChildren(parent, selectedFirst));
-    if (indexAmongChildren(parent, selectedFirst) > indexAmongChildren(parent, selectedLast))
+    if (
+      indexAmongChildren(parent, selectedFirst) >
+      indexAmongChildren(parent, selectedLast)
+    ) {
       [selectedFirst, selectedLast] = [selectedLast, selectedFirst];
-    if (!isString(selectedFirst.nodeValue) || !isString(selectedLast.nodeValue)) {
+    }
+    if (
+      !isString(selectedFirst.nodeValue) ||
+      !isString(selectedLast.nodeValue)
+    ) {
       console.log("NOT STRING!!");
       return;
     }
 
-    const firstOverlappedString = findOverlap(selectedFirst.nodeValue, selectedString, selectedString, false);
+    const firstOverlappedString = findOverlap(
+      selectedFirst.nodeValue,
+      selectedString,
+      selectedString,
+      false
+    );
     console.log("selectedLast >", selectedLast);
     const lastOverlappedString = findOverlap(
       selectedString,
@@ -346,8 +385,9 @@ function selectText() {
       selectedLast.nodeValue,
       false
     );
-    console.log("firstOverlappedString >", firstOverlappedString);
-    console.log("lastOverlappedString >", lastOverlappedString);
+    // ====================================
+    // console.log("firstOverlappedString >", firstOverlappedString);
+    // console.log("lastOverlappedString >", lastOverlappedString);
     let startNode, endNode;
     const key = randomId();
 
@@ -358,29 +398,66 @@ function selectText() {
     cutSpan.textContent = ">>CUT<<";
     if (selectedFirst === selectedLast) {
       console.log("SAME!");
+      // const textLeength = selectedFirst.nodeValue.length -
+      const textLength = selectedFirst.nodeValue.substring(
+        firstOffset,
+        lastOffset
+      ).length;
       if (anchorTagType === "TD") {
-        startNode = splitText(selectedFirst, firstOverlappedString, true, true);
+        console.log(textLength);
+        startNode = splitText(
+          selectedFirst,
+          firstOffset,
+          textLength,
+          true,
+          true
+        );
       } else {
-        startNode = splitSpan(selectedFirst.parentElement, firstOverlappedString, true, true);
+        startNode = splitSpan(
+          selectedFirst.parentElement,
+          firstOffset,
+          textLength,
+          true,
+          true
+        );
         startNode.parentElement.insertBefore(cutSpan, startNode);
         splitTree(parent, cutSpan);
       }
       ellipsisSpan(startNode, null, true);
     } else {
+      const textLength = selectedFirst.nodeValue.substring(
+        firstOffset,
+        selectedFirst.nodeValue.length
+      ).length;
       if (anchorTagType === "TD") {
-        startNode = splitText(selectedFirst, firstOverlappedString, true);
+        console.log(textLength);
+        startNode = splitText(selectedFirst, firstOffset, textLength, true);
       } else if (anchorTagType === "SPAN") {
-        startNode = splitSpan(selectedFirst.parentElement, firstOverlappedString, true);
+        startNode = splitSpan(
+          selectedFirst.parentElement,
+          firstOffset,
+          textLength,
+          true
+        );
       }
       startNode.parentElement.insertBefore(cutSpan, startNode);
       splitTree(parent, cutSpan);
       startNode = startNode.closest("td>span");
       console.log("startNode >>", startNode);
+
+      const textLength2 = selectedLast.nodeValue.substring(
+        lastOffset,
+        selectedLast.nodeValue.length
+      ).length;
       if (focusTagType === "TD") {
-        // text
-        endNode = splitText(selectedLast, lastOverlappedString, false);
+        endNode = splitText(selectedLast, lastOffset, textLength2, false);
       } else if (focusTagType === "SPAN") {
-        endNode = splitSpan(selectedLast.parentElement, lastOverlappedString, false);
+        endNode = splitSpan(
+          selectedLast.parentElement,
+          lastOffset,
+          textLength2,
+          false
+        );
       }
       endNode.parentElement.insertBefore(cutSpan, endNode.nextSibling);
       splitTree(parent, cutSpan);
@@ -421,7 +498,11 @@ function findOverlap(a, b, originalB, reverse) {
 }
 
 function splitTree(bound, cutElement) {
-  for (var parent = cutElement.parentNode; bound != parent; parent = grandparent) {
+  for (
+    var parent = cutElement.parentNode;
+    bound != parent;
+    parent = grandparent
+  ) {
     var right = parent.cloneNode(false); // parent node를 right로 복사
     while (cutElement.nextSibling) right.appendChild(cutElement.nextSibling); // cut 뒤에 오는 element들을 right에 append
     var grandparent = parent.parentNode;
