@@ -5,6 +5,7 @@ let end = -1;
 let selectedInfo = [];
 const tbody = document.querySelector("tbody");
 const FALSE = -1;
+// 기존 element의 ~~ part이다
 const HEAD = 0;
 const CENTER = 1;
 const TAIL = 2;
@@ -117,53 +118,51 @@ function splitText(textNode, index, textLength, start, same = false) {
     ? fullText.substring(index, index + textLength)
     : fullText.substring(0, index);
   console.log(text);
-  const span1 = document.createElement("span");
-  const span2 = document.createElement("span");
+  const span = document.createElement("span");
+  //const span2 = document.createElement("span");
   let span3;
   let between = false;
   if (same) {
     if (fullText === text) {
-      span1.innerText = text;
-      textNode.before(span1);
+      span.innerText = text;
+      textNode.before(span);
       textNode.remove();
-      return fragmented(FALSE, span1);
+      return fragmented(FALSE, span);
     }
     if (index === 0) {
-      span1.innerText = text;
-      span2.innerText = fullText.substring(text.length, fullText.length);
+      span.innerText = text;
+      //span2.innerText = fullText.substring(text.length, fullText.length);
+      textNode.nodeValue = fullText.substring(text.length, fullText.length);
+      textNode.before(fragmented(HEAD, span));
     } else if (index === fullText.length - text.length) {
-      span1.innerText = fullText.substring(0, index);
-      span2.innerText = text;
+      //span1.innerText = fullText.substring(0, index);
+      textNode.nodeValue = fullText.substring(0, index);
+      span.innerText = text;
+      textNode.after(fragmented(TAIL, span));
     } else {
-      span3 = document.createElement("span");
-      span1.innerText = fullText.substring(0, index);
-      span2.innerText = text;
-      span3.innerText = fullText.substring(
+      const textNode2 = document.createTextNode("");
+      textNode.nodeValue = fullText.substring(0, index);
+      span.innerText = text;
+      textNode2.nodeValue = fullText.substring(
         index + text.length,
         fullText.length
       );
-      between = !between;
+      textNode.after(fragmented(CENTER, span));
+      span.after(textNode2);
     }
   } else {
     if (start) {
-      span1.innerText = fullText.substring(0, index);
-      span2.innerText = text;
+      textNode.nodeValue = fullText.substring(0, index);
+      span.innerText = text;
+      textNode.after(fragmented(TAIL, span));
     } else {
-      span1.innerText = text;
-      span2.innerText = fullText.substring(text.length, fullText.length);
+      span.innerText = text;
+      textNode.nodeValue = fullText.substring(text.length, fullText.length);
+      textNode.before(fragmented(HEAD, span));
     }
   }
-
-  textNode.before(span1);
-  textNode.before(span2);
-  if (between) {
-    textNode.before(span3);
-    textNode.remove();
-    console.log(span1, span2, span3);
-    return fragmented(CENTER, span2);
-  }
-  textNode.remove();
-  return start ? fragmented(TAIL, span2) : fragmented(HEAD, span1);
+  // return start ? fragmented(TAIL, span) : fragmented(HEAD, span);
+  return span;
 }
 
 function fragmented(value, element) {
