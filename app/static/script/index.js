@@ -105,7 +105,7 @@ window.addEventListener("load", function () {
   });
 });
 
-code.addEventListener("mouseup", selectText, false);
+// code.addEventListener("mouseup", selectText, false);
 
 // function splitText(textNode, text, start, same = false) {
 function splitText(textNode, index, textLength, start, same = false) {
@@ -170,7 +170,7 @@ function splitSpan(span, index, textLength, start, same = false) {
   const fullText = span.innerText;
   const span2 = span.cloneNode(false);
   let span3;
-  text = start ? fullText.substring(index, index + textLength) : fullText.substring(0, index);
+  const text = start ? fullText.substring(index, index + textLength) : fullText.substring(0, index);
   if (same) {
     if (fullText === text) {
       // split 하지 않는 경우
@@ -182,10 +182,12 @@ function splitSpan(span, index, textLength, start, same = false) {
       // text가 마지막 부분
       span.innerText = text;
       span2.innerText = fullText.substring(text.length, fullText.length);
+      return [HEAD, span];
     } else if (index === fullText.length - text.length) {
       // text가 첫번째 부분
       span.innerText = fullText.substring(0, index);
       span2.innerText = text;
+      return [TAIL, span2];
     } else {
       // text가 가운데 부분
       span3 = span.cloneNode(false);
@@ -275,16 +277,7 @@ function merge(newSpan) {
   });
 }
 
-function ellipsisSpan(startNode, endNode) {
-  const ellipsisButton = document.createElement("span");
-  ellipsisButton.innerText = "⋯";
-  ellipsisButton.classList.add("ellipsis");
-  ellipsisButton.addEventListener("click", () => {
-    newSpan.classList.remove("hidden");
-    ellipsisButton.remove();
-    merge(newSpan);
-  });
-
+function createNewSpan(startNode, endNode) {
   const newSpan = document.createElement("span");
   newSpan.classList.add("hidden");
 
@@ -307,6 +300,18 @@ function ellipsisSpan(startNode, endNode) {
     }
   }
 
+  return newSpan;
+}
+
+function ellipsisSpan(newSpan) {
+  const ellipsisButton = document.createElement("span");
+  ellipsisButton.innerText = "⋯";
+  ellipsisButton.classList.add("ellipsis");
+  ellipsisButton.addEventListener("click", () => {
+    newSpan.classList.remove("hidden");
+    ellipsisButton.remove();
+    merge(newSpan);
+  });
   newSpan.before(ellipsisButton);
 }
 
@@ -315,12 +320,20 @@ function randomId() {
 }
 
 function indexAmongChildren(parent, child) {
+  // var nodes = Array.prototype.slice.call(parent.childNodes);
+  // console.log(nodes);
+  // console.log(nodes.indexOf(child));
+  // return nodes.indexOf(child);
+  console.log(...parent.childNodes);
+  const index = [...parent.childNodes].indexOf(child);
+  console.log(index);
+  return index;
   // console.log("children> ", parent.childNodes);
-  if (child.parentElement.tagName == "SPAN") child = child.parentElement;
-  const children = parent.childNodes;
-  for (let i = 0; i < children.length; i++) {
-    if (children[i].isEqualNode(child)) return i;
-  }
+  // if (child.parentElement.tagName == "SPAN") child = child.parentElement;
+  // const children = parent.childNodes;
+  // for (let i = 0; i < children.length; i++) {
+  //   if (children[i].isEqualNode(child)) return i;
+  // }
 }
 
 function selectText() {
@@ -332,9 +345,6 @@ function selectText() {
     if (selectionText.toString() === "") {
       return;
     }
-    //console.log(selectionText);
-    // ====================================
-    const selectedString = selectionText.toString();
 
     let selectedFirst = selectionText.anchorNode;
     let selectedLast = selectionText.focusNode;
@@ -351,27 +361,26 @@ function selectText() {
     let fragmented;
     cutSpan.textContent = "✂️";
     console.log("parent> ", parent);
-
     console.log("selectedFirst >", selectedFirst);
-    console.log(indexAmongChildren(parent, selectedFirst));
-    if (indexAmongChildren(parent, selectedFirst) > indexAmongChildren(parent, selectedLast)) {
+    if (selectedFirst.compareDocumentPosition(selectedLast) & Node.DOCUMENT_POSITION_PRECEDING) {
       [selectedFirst, selectedLast] = [selectedLast, selectedFirst];
       [firstOffset, lastOffset] = [lastOffset, firstOffset];
       [anchorTagType, focusTagType] = [focusTagType, anchorTagType];
-    } else if (indexAmongChildren(parent, selectedFirst) === indexAmongChildren(parent, selectedLast)) {
+    } else if (selectedFirst === selectedLast) {
       const textLength = selectedFirst.nodeValue.substring(firstOffset, lastOffset).length;
       if (lastOffset < firstOffset) [firstOffset, lastOffset] = [lastOffset, firstOffset];
       if (anchorTagType === "TD") {
-        console.log(textLength);
         [fragmented, startNode] = splitText(selectedFirst, firstOffset, textLength, true, true);
       } else {
         [fragmented, startNode] = splitSpan(selectedFirst.parentElement, firstOffset, textLength, true, true);
-        startNode.parentElement.insertBefore(cutSpan, startNode);
+        if (fragmented === HEAD) startNode.parentElement.insertBefore(cutSpan, startNode.nextSibling);
+        else startNode.parentElement.insertBefore(cutSpan, startNode);
         splitTree(parent, cutSpan);
         startNode = startNode.closest("td>span");
       }
       startNode.setAttribute("fragmented", fragmented);
-      ellipsisSpan(startNode, null, true);
+      const newSpan = createNewSpan(startNode, null);
+      ellipsisSpan(newSpan);
       return;
     }
 
@@ -403,11 +412,12 @@ function selectText() {
     splitTree(parent, cutSpan);
     endNode = endNode.closest("td>span");
     endNode.setAttribute("fragmented", fragmented);
-    console.log("endNode >>", endNode);
+    //console.log("endNode >>", endNode);
 
     startNode.setAttribute("key", key);
     endNode.setAttribute("key", key);
-    ellipsisSpan(startNode, endNode, false);
+    const newSpan = createNewSpan(startNode, endNode);
+    ellipsisSpan(newSpan);
   } else if (document.selection) {
     console.log("2");
     selectionText = document.selection.createRange().text;
