@@ -340,96 +340,74 @@ function selectText() {
     let selectedLast = selectionText.focusNode;
     let firstOffset = selectionText.anchorOffset;
     let lastOffset = selectionText.focusOffset;
+    let anchorTagType = selectedFirst.parentElement.tagName;
+    let focusTagType = selectedLast.parentElement.tagName;
     const parent = selectedFirst.parentElement.closest("td");
-    console.log("parent> ", parent);
-
-    console.log("selectedFirst >", selectedFirst);
-    console.log(indexAmongChildren(parent, selectedFirst));
-    if (indexAmongChildren(parent, selectedFirst) >= indexAmongChildren(parent, selectedLast)) {
-      [selectedFirst, selectedLast] = [selectedLast, selectedFirst];
-      [firstOffset, lastOffset] = [lastOffset, firstOffset];
-    }
-    if (!isString(selectedFirst.nodeValue) || !isString(selectedLast.nodeValue)) {
-      console.log("NOT STRING!!");
-      return;
-    }
 
     let startNode, endNode;
     const key = randomId();
 
-    const anchorTagType = selectedFirst.parentElement.tagName;
-    const focusTagType = selectedLast.parentElement.tagName;
-
     const cutSpan = document.createElement("span");
     let fragmented;
-    cutSpan.textContent = ">>CUT<<";
-    if (selectedFirst === selectedLast) {
-      console.log("SAME!");
-      const textLength = selectedFirst.nodeValue.substring(firstOffset, lastOffset).length;
+    cutSpan.textContent = "✂️";
+    console.log("parent> ", parent);
 
+    console.log("selectedFirst >", selectedFirst);
+    console.log(indexAmongChildren(parent, selectedFirst));
+    if (indexAmongChildren(parent, selectedFirst) > indexAmongChildren(parent, selectedLast)) {
+      [selectedFirst, selectedLast] = [selectedLast, selectedFirst];
+      [firstOffset, lastOffset] = [lastOffset, firstOffset];
+      [anchorTagType, focusTagType] = [focusTagType, anchorTagType];
+    } else if (indexAmongChildren(parent, selectedFirst) === indexAmongChildren(parent, selectedLast)) {
+      const textLength = selectedFirst.nodeValue.substring(firstOffset, lastOffset).length;
+      if (lastOffset < firstOffset) [firstOffset, lastOffset] = [lastOffset, firstOffset];
       if (anchorTagType === "TD") {
         console.log(textLength);
         [fragmented, startNode] = splitText(selectedFirst, firstOffset, textLength, true, true);
       } else {
-        [fragmented, startNode] = splitSpan(
-          selectedFirst.parentElement,
-          firstOffset,
-          textLength,
-          true,
-          true
-        );
+        [fragmented, startNode] = splitSpan(selectedFirst.parentElement, firstOffset, textLength, true, true);
         startNode.parentElement.insertBefore(cutSpan, startNode);
         splitTree(parent, cutSpan);
         startNode = startNode.closest("td>span");
       }
       startNode.setAttribute("fragmented", fragmented);
       ellipsisSpan(startNode, null, true);
-    } else {
-      const textLength = selectedFirst.nodeValue.substring(
-        firstOffset,
-        selectedFirst.nodeValue.length
-      ).length;
-      if (anchorTagType === "TD") {
-        console.log(textLength);
-        [fragmented, startNode] = splitText(selectedFirst, firstOffset, textLength, true);
-      } else if (anchorTagType === "SPAN") {
-        [fragmented, startNode] = splitSpan(
-          selectedFirst.parentElement,
-          firstOffset,
-          textLength,
-          true
-        );
-      }
-      startNode.parentElement.insertBefore(cutSpan, startNode);
-      splitTree(parent, cutSpan);
-      startNode = startNode.closest("td>span");
-      startNode.setAttribute("fragmented", fragmented);
-      console.log("startNode >>", startNode);
-
-      const textLength2 = selectedLast.nodeValue.substring(
-        lastOffset,
-        selectedLast.nodeValue.length
-      ).length;
-      if (focusTagType === "TD") {
-        [fragmented, endNode] = splitText(selectedLast, lastOffset, textLength2, false);
-      } else if (focusTagType === "SPAN") {
-        [fragmented, endNode] = splitSpan(
-          selectedLast.parentElement,
-          lastOffset,
-          textLength2,
-          false
-        );
-      }
-      endNode.parentElement.insertBefore(cutSpan, endNode.nextSibling);
-      splitTree(parent, cutSpan);
-      endNode = endNode.closest("td>span");
-      endNode.setAttribute("fragmented", fragmented);
-      console.log("endNode >>", endNode);
-
-      startNode.setAttribute("key", key);
-      endNode.setAttribute("key", key);
-      ellipsisSpan(startNode, endNode, false);
+      return;
     }
+
+    if (!isString(selectedFirst.nodeValue) || !isString(selectedLast.nodeValue)) {
+      console.log("NOT STRING!!");
+      return;
+    }
+
+    const textLength = selectedFirst.nodeValue.substring(firstOffset, selectedFirst.nodeValue.length).length;
+    if (anchorTagType === "TD") {
+      console.log(textLength);
+      [fragmented, startNode] = splitText(selectedFirst, firstOffset, textLength, true);
+    } else if (anchorTagType === "SPAN") {
+      [fragmented, startNode] = splitSpan(selectedFirst.parentElement, firstOffset, textLength, true);
+    }
+    startNode.parentElement.insertBefore(cutSpan, startNode);
+    splitTree(parent, cutSpan);
+    startNode = startNode.closest("td>span");
+    startNode.setAttribute("fragmented", fragmented);
+    console.log("startNode >>", startNode);
+
+    const textLength2 = selectedLast.nodeValue.substring(lastOffset, selectedLast.nodeValue.length).length;
+    if (focusTagType === "TD") {
+      [fragmented, endNode] = splitText(selectedLast, lastOffset, textLength2, false);
+    } else if (focusTagType === "SPAN") {
+      [fragmented, endNode] = splitSpan(selectedLast.parentElement, lastOffset, textLength2, false);
+    }
+    endNode.parentElement.insertBefore(cutSpan, endNode.nextSibling);
+    splitTree(parent, cutSpan);
+    endNode = endNode.closest("td>span");
+    endNode.setAttribute("fragmented", fragmented);
+    console.log("endNode >>", endNode);
+
+    startNode.setAttribute("key", key);
+    endNode.setAttribute("key", key);
+    ellipsisSpan(startNode, endNode, false);
   } else if (document.selection) {
     console.log("2");
     selectionText = document.selection.createRange().text;

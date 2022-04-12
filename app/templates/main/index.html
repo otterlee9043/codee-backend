@@ -6,15 +6,18 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=deivce-width, initial-scale=1.0">
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
-  <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
+
+  <script src="https://kit.fontawesome.com/16fd5c8b77.js" crossorigin="anonymous"></script>
+  <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.7.1/jquery.contextMenu.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.7.1/jquery.contextMenu.min.js"></script>
 
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
   <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/go.min.js"></script>
-  <script
-    src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
   <script>hljs.highlightAll(); hljs.initLineNumbersOnLoad();</script>
@@ -52,8 +55,8 @@
     <div class="box" id='export'>
       <div><button type="button" onclick="copyToClip(document.getElementById('code'))">export</button>
       </div>
-      <pre id="pre">
-    <code id="code">{{data}}</code>
+      <pre id="pre" class="context-menu-one">
+    <code id="code" >{{data}}</code>
       </pre>
     </div>
   </div>
@@ -67,6 +70,6 @@
 <script src="{{ url_for('static', filename = 'script/showdir.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/copy.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/push_pull.js') }}"></script>
-
+<script src="{{ url_for('static', filename = 'script/menubar.js') }}"></script>
 
 </html>

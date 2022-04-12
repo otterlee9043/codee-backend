@@ -155,3 +155,10 @@ ul#treeitem {
   padding-right: 4px;
   letter-spacing: -3px;
 }
+
+/* contextmenu */
+.context-menu-list {
+  /* left: min(var(-mouse-x), calc(100vw - 100%)) ;
+  top: min(var(--mouse--y), calc(100vh - 100%)) ; */
+  /* transform: translateX(min(var(--mouse-x), calc(100vw - 100%))) translateY(min(var(--mouse-y), calc(100vh - 100%))) ; */
+}
