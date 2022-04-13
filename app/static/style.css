@@ -157,8 +157,34 @@ ul#treeitem {
 }
 
 /* contextmenu */
-.context-menu-list {
-  /* left: min(var(-mouse-x), calc(100vw - 100%)) ;
-  top: min(var(--mouse--y), calc(100vh - 100%)) ; */
-  /* transform: translateX(min(var(--mouse-x), calc(100vw - 100%))) translateY(min(var(--mouse-y), calc(100vh - 100%))) ; */
+.context-menu-submenu .context-menu-input:hover {
+  background-color: rgb(201, 201, 201);
+}
+
+li.context-menu-item:hover {
+  background-color: rgb(201, 201, 201);
+  font-weight: 600;
+}
+li.context-menu-item {
+  color: rgb(40, 40, 40);
+}
+li.context-menu-item span {
+  font-weight: 600;
+}
+
+a:visited {
+  color: #0000ff;
+  text-decoration: none;
+}
+
+.red {
+  background-color: tomato;
+}
+
+.yellow {
+  background-color: yellow;
+}
+
+.green {
+  background-color: greenyellow;
 }

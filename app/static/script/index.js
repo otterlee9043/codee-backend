@@ -14,6 +14,28 @@ const TAIL = 2;
 // --> focusNodeOffset, anchorNodeOffset으로 split할 index 결정하도록 수정
 // 문제 2) splitTree 하고 나오서 원래대로 복구하는 코드가 없음
 // --> 같은 level끼리 merge되게 하든지, split 되기 전 코드를 백업해놓든지
+var fragment = null;
+function saveSelection() {
+  if (window.getSelection) {
+    const selection = window.getSelection();
+    if (selection.getRangeAt && selection.rangeCount) {
+      return selection.getRangeAt(0);
+    }
+  } else if (document.selection && document.selection.createRange) {
+    return document.selection.createRange();
+  }
+  return null;
+}
+
+function saveRangeEvent(event) {
+  range = saveSelection();
+  if (range && !range.collapsed) {
+    fragment = range.cloneContents();
+  }
+}
+
+window.addEventListener("mouseup", saveRangeEvent);
+window.addEventListener("keyup", saveRangeEvent);
 
 function isString(inputText) {
   if (typeof inputText === "string" || inputText instanceof String) return true;
@@ -277,9 +299,9 @@ function merge(newSpan) {
   });
 }
 
-function createNewSpan(startNode, endNode) {
+function bindTags(startNode, endNode) {
   const newSpan = document.createElement("span");
-  newSpan.classList.add("hidden");
+  // newSpan.classList.add("hidden");
 
   const key = startNode.getAttribute("key");
   let node = startNode;
@@ -290,7 +312,7 @@ function createNewSpan(startNode, endNode) {
   if (endNode) {
     while (1) {
       node = nextNode;
-      console.log(node);
+      // console.log(node);
       if (node.nodeType === 1 && node.getAttribute("key") === key) {
         newSpan.appendChild(node);
         break;
@@ -313,6 +335,7 @@ function ellipsisSpan(newSpan) {
     merge(newSpan);
   });
   newSpan.before(ellipsisButton);
+  newSpan.classList.add("hidden");
 }
 
 function randomId() {
@@ -336,88 +359,93 @@ function indexAmongChildren(parent, child) {
   // }
 }
 
-function selectText() {
+function createNewSpan(selectionText) {
+  console.log(selectionText);
+  // console.log(selectionText.toString());
+  if (selectionText.toString() === "") {
+    return;
+  }
+
+  let selectedFirst = selectionText.anchorNode;
+  let selectedLast = selectionText.focusNode;
+  let firstOffset = selectionText.anchorOffset;
+  let lastOffset = selectionText.focusOffset;
+  let anchorTagType = selectedFirst.parentElement.tagName;
+  let focusTagType = selectedLast.parentElement.tagName;
+  const parent = selectedFirst.parentElement.closest("td");
+  // console.log("parent> ", parent);
+  // console.log("selectedFirst >", selectedFirst);
+  let startNode, endNode;
+  const key = randomId();
+
+  const cutSpan = document.createElement("span");
+  let fragmented;
+  cutSpan.textContent = "✂️";
+
+  if (selectedFirst.compareDocumentPosition(selectedLast) & Node.DOCUMENT_POSITION_PRECEDING) {
+    [selectedFirst, selectedLast] = [selectedLast, selectedFirst];
+    [firstOffset, lastOffset] = [lastOffset, firstOffset];
+    [anchorTagType, focusTagType] = [focusTagType, anchorTagType];
+  } else if (selectedFirst === selectedLast) {
+    const textLength = selectedFirst.nodeValue.substring(firstOffset, lastOffset).length;
+    if (lastOffset < firstOffset) [firstOffset, lastOffset] = [lastOffset, firstOffset];
+    if (anchorTagType === "TD") {
+      [fragmented, startNode] = splitText(selectedFirst, firstOffset, textLength, true, true);
+    } else {
+      [fragmented, startNode] = splitSpan(selectedFirst.parentElement, firstOffset, textLength, true, true);
+      if (fragmented === HEAD) startNode.parentElement.insertBefore(cutSpan, startNode.nextSibling);
+      else startNode.parentElement.insertBefore(cutSpan, startNode);
+      splitTree(parent, cutSpan);
+      startNode = startNode.closest("td>span");
+    }
+    startNode.setAttribute("fragmented", fragmented);
+    const newSpan = bindTags(startNode, null);
+    //ellipsisSpan(newSpan);
+    return newSpan;
+  }
+
+  const textLength = selectedFirst.nodeValue.substring(firstOffset, selectedFirst.nodeValue.length).length;
+  if (anchorTagType === "TD") {
+    [fragmented, startNode] = splitText(selectedFirst, firstOffset, textLength, true);
+  } else if (anchorTagType === "SPAN") {
+    [fragmented, startNode] = splitSpan(selectedFirst.parentElement, firstOffset, textLength, true);
+  }
+  startNode.parentElement.insertBefore(cutSpan, startNode);
+  splitTree(parent, cutSpan);
+  startNode = startNode.closest("td>span");
+  startNode.setAttribute("fragmented", fragmented);
+  //console.log("startNode >>", startNode);
+
+  const textLength2 = selectedLast.nodeValue.substring(lastOffset, selectedLast.nodeValue.length).length;
+  if (focusTagType === "TD") {
+    [fragmented, endNode] = splitText(selectedLast, lastOffset, textLength2, false);
+  } else if (focusTagType === "SPAN") {
+    [fragmented, endNode] = splitSpan(selectedLast.parentElement, lastOffset, textLength2, false);
+  }
+  endNode.parentElement.insertBefore(cutSpan, endNode.nextSibling);
+  splitTree(parent, cutSpan);
+  endNode = endNode.closest("td>span");
+  endNode.setAttribute("fragmented", fragmented);
+  //console.log("endNode >>", endNode);
+
+  startNode.setAttribute("key", key);
+  endNode.setAttribute("key", key);
+  const newSpan = bindTags(startNode, endNode);
+  return newSpan;
+}
+
+function hideText() {
   var selectionText;
   if (document.getSelection) {
     selectionText = document.getSelection();
-    console.log(selectionText);
-    console.log(selectionText.toString());
-    if (selectionText.toString() === "") {
-      return;
-    }
-
-    let selectedFirst = selectionText.anchorNode;
-    let selectedLast = selectionText.focusNode;
-    let firstOffset = selectionText.anchorOffset;
-    let lastOffset = selectionText.focusOffset;
-    let anchorTagType = selectedFirst.parentElement.tagName;
-    let focusTagType = selectedLast.parentElement.tagName;
-    const parent = selectedFirst.parentElement.closest("td");
-
-    let startNode, endNode;
-    const key = randomId();
-
-    const cutSpan = document.createElement("span");
-    let fragmented;
-    cutSpan.textContent = "✂️";
-    console.log("parent> ", parent);
-    console.log("selectedFirst >", selectedFirst);
-    if (selectedFirst.compareDocumentPosition(selectedLast) & Node.DOCUMENT_POSITION_PRECEDING) {
-      [selectedFirst, selectedLast] = [selectedLast, selectedFirst];
-      [firstOffset, lastOffset] = [lastOffset, firstOffset];
-      [anchorTagType, focusTagType] = [focusTagType, anchorTagType];
-    } else if (selectedFirst === selectedLast) {
-      const textLength = selectedFirst.nodeValue.substring(firstOffset, lastOffset).length;
-      if (lastOffset < firstOffset) [firstOffset, lastOffset] = [lastOffset, firstOffset];
-      if (anchorTagType === "TD") {
-        [fragmented, startNode] = splitText(selectedFirst, firstOffset, textLength, true, true);
-      } else {
-        [fragmented, startNode] = splitSpan(selectedFirst.parentElement, firstOffset, textLength, true, true);
-        if (fragmented === HEAD) startNode.parentElement.insertBefore(cutSpan, startNode.nextSibling);
-        else startNode.parentElement.insertBefore(cutSpan, startNode);
-        splitTree(parent, cutSpan);
-        startNode = startNode.closest("td>span");
-      }
-      startNode.setAttribute("fragmented", fragmented);
-      const newSpan = createNewSpan(startNode, null);
-      ellipsisSpan(newSpan);
-      return;
-    }
-
-    if (!isString(selectedFirst.nodeValue) || !isString(selectedLast.nodeValue)) {
+    if (!isString(selectionText.anchorNode.nodeValue) || !isString(selectionText.focusNode.nodeValue)) {
       console.log("NOT STRING!!");
       return;
     }
+    const collection = createNewSpan(selectionText);
+    //if (selectionText.anchorNode === selectionText.focusNode) ellipsisSpan(collection);
 
-    const textLength = selectedFirst.nodeValue.substring(firstOffset, selectedFirst.nodeValue.length).length;
-    if (anchorTagType === "TD") {
-      console.log(textLength);
-      [fragmented, startNode] = splitText(selectedFirst, firstOffset, textLength, true);
-    } else if (anchorTagType === "SPAN") {
-      [fragmented, startNode] = splitSpan(selectedFirst.parentElement, firstOffset, textLength, true);
-    }
-    startNode.parentElement.insertBefore(cutSpan, startNode);
-    splitTree(parent, cutSpan);
-    startNode = startNode.closest("td>span");
-    startNode.setAttribute("fragmented", fragmented);
-    console.log("startNode >>", startNode);
-
-    const textLength2 = selectedLast.nodeValue.substring(lastOffset, selectedLast.nodeValue.length).length;
-    if (focusTagType === "TD") {
-      [fragmented, endNode] = splitText(selectedLast, lastOffset, textLength2, false);
-    } else if (focusTagType === "SPAN") {
-      [fragmented, endNode] = splitSpan(selectedLast.parentElement, lastOffset, textLength2, false);
-    }
-    endNode.parentElement.insertBefore(cutSpan, endNode.nextSibling);
-    splitTree(parent, cutSpan);
-    endNode = endNode.closest("td>span");
-    endNode.setAttribute("fragmented", fragmented);
-    //console.log("endNode >>", endNode);
-
-    startNode.setAttribute("key", key);
-    endNode.setAttribute("key", key);
-    const newSpan = createNewSpan(startNode, endNode);
-    ellipsisSpan(newSpan);
+    ellipsisSpan(collection);
   } else if (document.selection) {
     console.log("2");
     selectionText = document.selection.createRange().text;

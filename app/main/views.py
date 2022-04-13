@@ -158,7 +158,7 @@ def push():
     origin = repo.remotes.origin
     branch = repo.active_branch
     token = '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' # otterlee9043
-    # token = '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' # neobomoon
+    # token = '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' # neobomoon
     git_name = 'otterlee9043'
     
     print(origin)
