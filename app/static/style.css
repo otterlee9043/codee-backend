@@ -172,6 +172,14 @@ li.context-menu-item span {
   font-weight: 600;
 }
 
+li.context-menu-item.context-menu-icon {
+  float: left;
+}
+
+ul.context-menu-list.context-menu-root {
+  width: inherit;
+  padding: 2px;
+}
 a:visited {
   color: #0000ff;
   text-decoration: none;

@@ -66,15 +66,15 @@ $.contextMenu({
   },
   items: {
     comment: {
-      name: "Comment",
+      // name: "Comment",
       icon: "fa-light fa-comment-dots",
     },
     highlight: {
-      name: "Highlight",
+      // name: "Highlight",
       icon: "fa-light fa-highlighter",
       items: {
         red: {
-          name: "Red",
+          // name: "Red",
           icon: "fa-solid fa-circle",
           events: {
             click: function (e) {
@@ -83,26 +83,25 @@ $.contextMenu({
           },
         },
         yellow: {
-          name: "Yellow",
+          // name: "Yellow",
           icon: "fa-solid fa-circle",
         },
         green: {
-          name: "Green",
+          // name: "Green",
           icon: "fa-solid fa-circle",
         },
       },
     },
     record: {
-      name: "Record",
+      // name: "Record",
       icon: "fa-light fa-microphone",
     },
     hide: {
-      name: "Hide",
+      // name: "Hide",
       icon: "fa-light fa-ellipsis",
     },
-    sep: "-------",
     link: {
-      name: "Link",
+      // name: "Link",
       icon: "fa-light fa-link",
       items: {
         "link-1": {
