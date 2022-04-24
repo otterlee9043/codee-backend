@@ -66,6 +66,7 @@ $.contextMenu({
   },
   items: {
     comment: {
+      
       // name: "Comment",
       icon: "fa-light fa-comment-dots",
     },
@@ -75,6 +76,7 @@ $.contextMenu({
       items: {
         red: {
           // name: "Red",
+          selector: "#red",
           icon: "fa-solid fa-circle",
           events: {
             click: function (e) {

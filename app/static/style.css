@@ -167,6 +167,7 @@ li.context-menu-item:hover {
 }
 li.context-menu-item {
   color: rgb(40, 40, 40);
+  padding: 10px 15px;
 }
 li.context-menu-item span {
   font-weight: 600;
@@ -176,9 +177,28 @@ li.context-menu-item.context-menu-icon {
   float: left;
 }
 
+ul.context-menu-list {
+  width: auto !important;
+}
+
 ul.context-menu-list.context-menu-root {
-  width: inherit;
-  padding: 2px;
+  padding: 10px;
+}
+
+.context-menu-submenu.context-menu-icon:after {
+  border-style: none;
+}
+
+.context-menu-root .context-menu-list li:nth-child(1)::before{
+  color:  tomato;
+}
+
+.context-menu-root .context-menu-list li:nth-child(2)::before{
+  color:  rgb(255, 225, 0);
+}
+
+.context-menu-root .context-menu-list li:nth-child(3)::before{
+  color:  greenyellow;
 }
 a:visited {
   color: #0000ff;
@@ -190,7 +210,7 @@ a:visited {
 }
 
 .yellow {
-  background-color: yellow;
+  background-color: rgb(255, 225, 0);
 }
 
 .green {
