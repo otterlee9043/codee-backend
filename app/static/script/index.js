@@ -282,6 +282,9 @@ function merge(newSpan) {
           el.removeAttribute("fragmented");
           break;
         case HEAD:
+          console.log(el.innerText);
+          console.log(el.nextSibling.innerText);
+          mergeSpan(el, el.nextSibling);
           el.nextSibling.innerText = el.innerText + el.nextSibling.innerText;
           el.remove();
           break;
@@ -299,6 +302,16 @@ function merge(newSpan) {
   });
 }
 
+function mergeSpan(a, b) {
+  console.log(getLeafNodes(a));
+  console.log(getLeafNodes(b));
+}
+
+function getLeafNodes(element) {
+  let e;
+  for (e = element; e != null; e = e.hasChildNodes());
+  return e.parentElement.childNodes;
+}
 function bindTags(startNode, endNode) {
   const newSpan = document.createElement("span");
   // newSpan.classList.add("hidden");

@@ -66,7 +66,6 @@ $.contextMenu({
   },
   items: {
     comment: {
-      
       // name: "Comment",
       icon: "fa-light fa-comment-dots",
     },
@@ -112,16 +111,6 @@ $.contextMenu({
             mouseover: function (e) {
               selectedNode = document.getSelection();
               console.log(selectedNode);
-              // const selectionJSON = {
-              //   toString: selectedNode.toString,
-              //   anchorNode: selectedNode.anchorNode,
-              //   focusNode: selectedNode.focusNode,
-              //   anchorOffset: selectedNode.anchorOffset,
-              //   focusOffset: selectedNode.focusOffset,
-              // };
-              // console.log(selectionJSON);
-              // console.log(JSON.stringify(selectionJSON));
-              //if (selectedNode) localStorage.setItem("selection", JSON.stringify(selectionJSON));
               console.log("im activated");
             },
             keyup: function (e) {
@@ -158,6 +147,58 @@ $.contextMenu({
       },
     },
   },
+  events: {
+      show: function(e) {
+        var input = document.getElementsByName("context-menu-input-link-1")[0] ;
+        var code = document.getElementById('code') ;
+        console.log(input) ;
+        var fragment = null ;
+        var range = null ;
+
+        function saveSelection() {
+          if (window.getSelection) {
+            selected = window.getSelection() ;
+            if (selected.getRangeAt && selected.rangeCount) {
+              return selected.getRangeAt(0) ;
+            }
+            else if (document.selection && document.selection.createRange) {
+              return document.selection.createRange() ;
+            }
+            return null ;
+          }
+        }
+
+        function saveRangeEvent(event) {
+          range = saveSelection() ;
+          if (range && !range.collapsed) {
+            fragment = range.cloneContents() ;
+          }
+        }
+
+        code.addEventListener('mouseup', saveRangeEvent) ;
+        code.addEventListener('keyup', saveRangeEvent) ; 
+
+        input.addEventListener('mousedown', function(event) {
+          // create fake selection
+          if (fragment) {
+            var span = document.createElement('span') ;
+            span.className = 'selected' ;
+            range.surroundContents(span) ;
+          }
+        }) ;
+
+
+        // remove fake selection
+        input.addEventListener('blur', function(event) {
+          // remove fake selection
+          if (fragment) {
+            range.deleteContents() ;
+            range.insertNode(fragment) ;
+          }
+          fragment = null ;
+        }, true ) ;
+    }
+  }
   // events: {
   //     show: function(opt) {
   //         var $this = this ;
@@ -174,5 +215,3 @@ $.contextMenu({
 function randomId() {
   return Math.random().toString(12).substring(2, 11);
 }
-
-// function color(e, )
