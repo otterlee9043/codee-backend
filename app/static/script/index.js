@@ -284,7 +284,7 @@ function merge(newSpan) {
         case HEAD:
           console.log(el.innerText);
           console.log(el.nextSibling.innerText);
-          mergeSpan(el, el.nextSibling);
+          //mergeSpan(el, el.nextSibling);
           el.nextSibling.innerText = el.innerText + el.nextSibling.innerText;
           el.remove();
           break;

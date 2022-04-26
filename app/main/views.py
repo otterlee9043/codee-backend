@@ -70,12 +70,15 @@ def path_to_dict(path):
 # log in required 하기
 def index():
     # data = read_file('/home/codination/ver1/app/main/forms.py')
-    data = read_file(root + 'user2/clipboard/script.js')
+    # data = read_file(os.path.join(root, username, '/clipboard/script.js' ))
+    data = read_file(root + username +'/clipboard/script.js')
+    # data = None
     
     dir_tree = dir_list(root, username)
     
     print(dir_tree)
     
+    # clone 
     if request.method == 'POST':
         url = request.form['repository']
         url_parsed = urlparse(url)
@@ -97,12 +100,22 @@ def index():
             make_dir(repo_path, url)
             dir_tree = dir_list(root, username)
         
-    return render_template('main/index.html', data = data, dir_tree = dir_tree, username = username)
+    return render_template('main/index.html', dir_tree = dir_tree, username = username, data = data)
+
+@main.route('/<path:filepath>', methods = ['GET']) 
+#log in required 하기
+def showfile(filepath):
+    print("FILEPATH!!!!: "+filepath)
+    dir_tree = dir_list(root, username)
+    data = read_file(root + username + '/' + filepath)
+    filename = os.path.basename(os.path.normpath(filepath))
+    return render_template('main/index.html', dir_tree = dir_tree, username = username, data = data, filename = filename )
+    
 
 
 
 @main.route('/showcode', methods=['GET', 'POST'])
-# log in required 하기
+# log in required 하기:
 def show_code():
     if request.method == 'POST':
         error = None
@@ -116,10 +129,11 @@ def show_code():
         else:
             data = read_file( os.path.join(root, username, path) )
             # if로 file 없으면 data = None으로 하기  
-            print(data) ;  
+            # print(data) ;  
             if data is not None:
                 print('not none') 
                 data_dict = {
+                    "path" : path,
                     "filedata" : data
                 }
                 return make_response(jsonify( data_dict ), 200)

@@ -7,20 +7,23 @@ ul {
   padding-inline-start: 10px;
   list-style: none;
 }
-
 div {
   width: 100%;
+}
+body {
+  margin: 20px 30px 20px 30px;
 }
 pre {
   margin-top: 0px;
 }
 
 div#export {
-  padding-top: 30px;
-  padding-left: 30px;
+  /* padding-top: 30px;
+  padding-left: 30px; */
 }
 div.filelist {
   padding-top: 10px;
+  margin-bottom: 10px;
   float: left;
   overflow: auto;
   height: 60vh;
@@ -60,7 +63,6 @@ ul#treeitem {
 #treeitem.file::before {
   font-family: "Font Awesome 5 Free";
   content: "\f15c";
-  display: inline-block;
   padding-right: 2px;
   padding-left: 5px;
   vertical-align: middle;
@@ -177,12 +179,12 @@ li.context-menu-item.context-menu-icon {
   float: left;
 }
 
-ul.context-menu-list {
-  /* width: auto !important; */
+.context-menu-list {
+  box-shadow: 0 2px 2px rgb(0 0 0 / 10%) !important;
 }
 
 ul.context-menu-list.context-menu-root {
-  padding: 10px;
+  padding: 3px;
 }
 
 .context-menu-submenu.context-menu-icon:after {
@@ -217,8 +219,142 @@ a:visited {
   background-color: greenyellow;
 }
 
-
 .selected {
   background-color: dodgerblue;
   color: white;
+}
+
+.border-box {
+  border: solid 1px rgb(225, 225, 225);
+  border-radius: 10px;
+  padding: 0;
+}
+
+.button {
+  border: solid 1px rgb(225, 225, 225);
+  border-radius: 5px;
+  padding: 6px 10px;
+  background-color: #f6f8fa;
+  font-size: 15px;
+}
+
+.sidebar {
+  width: 20%;
+  margin-right: 20px;
+}
+
+.clonebar {
+  margin-bottom: 10px;
+}
+
+.buttonbar {
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.right {
+  display: inline-block;
+  float: right;
+}
+
+.clone-btn {
+  background-color: #238636;
+  color: white;
+  border-color: #238636;
+}
+
+.filename {
+  display: flex;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  border-bottom-style: solid;
+  border-width: 1px;
+  border-color: rgb(225, 225, 225);
+  background-color: rgb(245, 245, 245);
+  padding: 10px 45px 10px 45px;
+  font-weight: bold;
+}
+
+#code {
+  padding: 0;
+}
+
+#pull-push {
+  display: flex;
+  /* justify-content: space-around; */
+}
+
+.filelist::-webkit-scrollbar {
+  width: 4px;
+}
+.filelist::-webkit-scrollbar-thumb {
+  height: 4px;
+  background-color: rgba(33, 133, 133, 1);
+  border-radius: 10px;
+}
+.filelist::-webkit-scrollbar-track {
+  background-color: rgba(33, 133, 133, 0.33);
+}
+
+.filelist ul {
+  padding: 0;
+}
+
+.filelist li {
+  font-size: 14px;
+}
+
+@media screen and (max-height: 450px) {
+  .hiddenbar {
+    padding-top: 15px;
+  }
+  .hiddenbar a {
+    font-size: 18px;
+  }
+}
+
+.hiddenbar {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  overflow-x: hidden;
+  transition: 0.5s;
+  padding-top: 60px;
+}
+
+.hiddenbar a {
+  padding: 8px 8px 8px 32px;
+  text-decoration: none;
+  font-size: 25px;
+  color: #818181;
+  display: block;
+  transition: 0.3s;
+}
+
+.hiddenbar a:hover {
+  color: #f1f1f1;
+}
+
+.hiddenbar .closebtn {
+  position: absolute;
+  top: 0;
+  right: 25px;
+  font-size: 36px;
+  margin-left: 50px;
+}
+
+.openbtn {
+  font-size: 20px;
+  cursor: pointer;
+  color: rgb(117, 117, 117);
+  padding: 5px;
+  border: none;
+  background-color: white;
+}
+
+.openbtn:hover {
+  color: rgb(56, 56, 56);
 }

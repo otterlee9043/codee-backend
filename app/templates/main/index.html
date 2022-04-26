@@ -25,17 +25,31 @@
   <script>hljs.highlightAll(); hljs.initLineNumbersOnLoad();</script>
   <title>Codee</title>
 </head>
+<div id="mySidebar" class="hiddenbar">
+  <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
+  <a href="#">Project 1</a>
+  <a href="#">Project 2</a>
+  <a href="#">Project 3</a>
+  <a href="#">Project 4</a>
+</div>
 
 <body>
+
+  <button class="openbtn" onclick="openNav()">☰</button>
   <h1>Codee</h1>
 
-  <form method="post">
-    <input type="text" name="repository">
-    <input type="submit" value="clone">
-  </form>
+  <div class="buttonbar">
+    <!-- <div class="clonebar right">
+      <form method="post">
+        <input type="text" name="repository">
+        <input class="button clone-btn" type="submit" value="clone">
+      </form>
+    </div> -->
+    <button type="button" class="button right" onclick="copyToClip(document.getElementById('code'))">export</button>
+  </div>
   <div class="container">
-    <div style="width: 20%">
-      <div class="filelist">
+    <div class="sidebar">
+      <div class="filelist border-box scroll">
         <ul id="dir_tree" aria-labelledby="tree_label">
           <li id="{{username}}" class="dir">
           </li>
@@ -50,21 +64,40 @@
         </ul>
       </div>
       <div id="pull-push">
-        <button type="button" onclick="pull('clipboard')">pull</button>
-        <button type="button" onclick="push('clipboard')">push</button>
+        <button class="button" type="button" onclick="pull('clipboard')">pull</button>
+        <button class="button" type="button" onclick="push('clipboard')">push</button>
       </div>
     </div>
     <div class="box" id='export'>
-      <div><button type="button" onclick="copyToClip(document.getElementById('code'))">export</button>
+
+      <div class="border-box">
+        <div class="filename">{{filename}}</div>
+        <pre id="pre" class="context-menu-one">
+          <code id="code" >{{data}}</code>
+        </pre>
       </div>
-      <pre id="pre" class="context-menu-one">
-        <code id="code" >{{data}}</code>
-      </pre>
     </div>
   </div>
 
 
 </body>
+<script>
+  function openNav() {
+    document.getElementById("mySidebar").style.width = "250px";
+    document.querySelector("body").style.marginLeft = "250px";
+  }
+
+  function closeNav() {
+    document.getElementById("mySidebar").style.width = "0";
+    document.querySelector("body").style.marginLeft = "0";
+  }
+
+
+  const code_tag = document.getElementById("code");
+  if (code_tag != null) {
+    code_tag.className = get_extension({{ file_name }});
+  }
+</script>
 <script src="{{ url_for('static', filename = 'script/html-to-rtf-browser.min.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/index.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/dir_upload.js') }}"></script>
@@ -73,5 +106,7 @@
 <script src="{{ url_for('static', filename = 'script/copy.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/push_pull.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/menubar.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/writecodee.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/projectbar.js') }}"></script>
 
 </html>
