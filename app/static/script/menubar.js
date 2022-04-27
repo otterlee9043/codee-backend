@@ -18,7 +18,85 @@ menu.addEventListener("click", function (e) {
   }
 });
 
-var selectedNode;
+// let ran = null ;
+// function cloneSelection() {
+//   ran = document.createRange() ;
+//   if (window.getSelection) {
+//     let selected = document.getSelection() ;
+//     let ran = document.createRange() ;
+//     let selectedFirst = selected.anchorNode ;
+//     let selectedLast = selected.focusNode ;
+//     let firstOffset = selected.anchorOffset ;
+//     let lastOffset = selectionText.focusOffset ;
+//     if (selectedFirst.compareDocumentPosition(selectedLast) & Node.DOCUMENT_POSITION_PRECEDING) {
+//       [selectedFirst, selectedLast] = [selectedLast, selectedFirst];
+//       [firstOffset, lastOffset] = [lastOffset, firstOffset];
+//     }
+//     else if (selectedFirst === selectedLast) {
+//       const len = selectedFirst.nodeValue.substring(firstOffset, lastOffset).length ;
+//       if (lastOffset < firstOffset)
+//         [firstOffset, lastOffset] = [lastOffset, firstOffset] ;
+//     }
+//     ran.setStart(selectedFirst, firstOffset) ;
+//     ran.setStart(selectedLast, lastOffset) ;
+//     // ran.setBaseAndExten(selectedFirst, firstOffset, selectedLast, lastOffset) ;
+//     // document.getSelection().removeAllRanges();
+//     // document.getSelection().addRange(ran) ;
+//     console.log(ran) ;
+//   }
+// }
+
+function saveSelection() {
+  if (window.getSelection) {
+    var selected = window.getSelection();
+    if (selected.getRangeAt && selected.rangeCount) {
+      console.log(selected.getRangeAt(0).cloneContents);
+      return selected.getRangeAt(0);
+    } else if (document.selection && document.selection.createRange) {
+      return document.selection.createRange();
+    }
+    return null;
+  }
+}
+var fragment = null;
+function saveRangeEvent(event) {
+  var range = saveSelection();
+  // cloneSelection() ;
+  console.log(range);
+  // if (range && !range.collapsed) {
+  //   fragment = range.cloneContents() ;
+  //   console.log(fragment) ;
+  // }
+}
+
+var flag = 0;
+function createFakeSelection(event) {
+  // create fake selection
+  if (document.getSelection) {
+    var span = createNewSpan(document.getSelection());
+    console.log("imdone");
+    span.classList.add("selected");
+    flag = 1;
+  }
+}
+function removeFakeSelection(event) {
+  // remove fake selection
+  // console.log(ran) ;
+  if (flag) {
+    var selected = document.querySelector(".selected");
+    selected.classList.remove("selected");
+    merge(selected);
+  }
+  var temp = document.createRange();
+  var title = document.getElementById("title");
+  // temp.selectNodeContents(title) ;
+  temp.setStart(title, 0);
+  temp.setEnd(title, 1);
+  window.getSelection().removeAllRanges();
+  window.getSelection().addRange(temp);
+  flag = 0;
+}
+
 $.contextMenu({
   selector: ".context-menu-one",
   trigger: "none",
@@ -123,16 +201,18 @@ $.contextMenu({
                 console.log(link);
 
                 // create a tag
-                var a_tag = document.createElement("a");
-                a_tag.classList.add("link");
-                a_tag.href = link;
-                a_tag.setAttribute("id", randomId());
-                a_tag.setAttribute("target", "_blank");
+                // var a_tag = document.createElement("a");
+                // a_tag.classList.add("link");
+                // a_tag.href = link;
+                // a_tag.setAttribute("id", randomId());
+                // a_tag.setAttribute("target", "_blank");
 
                 // add to a tag
-                selected = document.querySelector(".selected") ;
+                $(".selected").wrap(`<a id="${randomId()}" class="link" href="${link}" target="_blank"></a>`);
+                // selected = document.querySelector(".selected") ;
+                // selected.wrap(`<a id="${randomId()}" class="link" href="${link} target="_blank"></a>`) ;
                 // console.log(selected.toString());
-                a_tag.appendChild(selected);
+                // a_tag.appendChild(selected);
 
                 // store the lick to local storage
                 // sessionStorage.setItem(
@@ -147,115 +227,51 @@ $.contextMenu({
     },
   },
   events: {
-      hide: function(e) {
-        var input = document.getElementsByName("context-menu-input-link-1")[0] ;
-        var code = document.getElementById('code') ;
-        code.removeEventListener('mouseup', null) ;
-        input.removeEventListener('mousedown', null) ;
-        input.removeEventListener('blur', null) ;
-      },
-      show: function(e) { // show
-        var input = document.getElementsByName("context-menu-input-link-1")[0] ;
-        var code = document.getElementById('code') ;
-        var menuBar = document.querySelector(".context-menu-list.context-menu-root");
-        console.log(input) ;
-        var fragment = null ;
-        var range = null ;
+    hide: function (e) {
+      var input = document.getElementsByName("context-menu-input-link-1")[0];
+      var code = document.getElementById("code");
+      code.removeEventListener("mouseup", null);
+      input.removeEventListener("mousedown", null);
+      input.removeEventListener("blur", null);
+      console.log("hide");
+    },
+    show: function (e) {
+      // show
+      var input = document.getElementsByName("context-menu-input-link-1")[0];
+      var code = document.getElementById("code");
+      console.log(input);
 
-        function saveSelection() {
-          if (window.getSelection) {
-            selected = window.getSelection() ;
-            if (selected.getRangeAt && selected.rangeCount) {
-              return selected.getRangeAt(0) ;
-            }
-            else if (document.selection && document.selection.createRange) {
-              return document.selection.createRange() ;
-            }
-            return null ;
-          }
-        }
-        
-        // function saveSelection() {
-        //   if (window.getSelection) {
-        //     let selected = document.getSelection() ;
-        //     let ran = new Range() ;
-        //     let selectedFirst = selected.anchorNode ;
-        //     let selectedLast = selected.focusNode ;
-        //     let firstOffset = selected.anchorOffset ;
-        //     let lastOffset = selectionText.focusOffset ;
-        //     if (selectedFirst.compareDocumentPosition(selectedLast) & Node.DOCUMENT_POSITION_PRECEDING) {
-        //       [selectedFirst, selectedLast] = [selectedLast, selectedFirst];
-        //       [firstOffset, lastOffset] = [lastOffset, firstOffset];
-        //     }
-        //     else if (selectedFirst === selectedLast) {
-        //       const len = selectedFirst.nodeValue.substring(firstOffset, lastOffset).length ;
-        //       if (lastOffset < firstOffset)
-        //         [firstOffset, lastOffset] = [lastOffset, firstOffset] ;
-        //     }
-        //     ran.setStart(selectedFirst, firstOffset) ;
-        //     ran.setEnd(selectedLast, lastOffset) ;
-        //     console.log(ran) ;
-        //     return ran ;
-        //   }
-        // }
+      // function saveSelection() {
+      //   if (window.getSelection) {
+      //     let selected = document.getSelection() ;
+      //     let ran = new Range() ;
+      //     let selectedFirst = selected.anchorNode ;
+      //     let selectedLast = selected.focusNode ;
+      //     let firstOffset = selected.anchorOffset ;
+      //     let lastOffset = selectionText.focusOffset ;
+      //     if (selectedFirst.compareDocumentPosition(selectedLast) & Node.DOCUMENT_POSITION_PRECEDING) {
+      //       [selectedFirst, selectedLast] = [selectedLast, selectedFirst];
+      //       [firstOffset, lastOffset] = [lastOffset, firstOffset];
+      //     }
+      //     else if (selectedFirst === selectedLast) {
+      //       const len = selectedFirst.nodeValue.substring(firstOffset, lastOffset).length ;
+      //       if (lastOffset < firstOffset)
+      //         [firstOffset, lastOffset] = [lastOffset, firstOffset] ;
+      //     }
+      //     ran.setStart(selectedFirst, firstOffset) ;
+      //     ran.setEnd(selectedLast, lastOffset) ;
+      //     console.log(ran) ;
+      //     return ran ;
+      //   }
+      // }
 
-
-        function saveRangeEvent(event) {
-          range = saveSelection() ;
-          console.log(range.anchorNode) ;
-          // if (range && !range.collapsed) {
-          //   fragment = range.cloneContents() ;
-          // }
-        }
-
-        code.addEventListener('mouseup', saveRangeEvent) ;
-        // code.addEventListener('keyup', saveRangeEvent) ; 
-        var flag = 0 ;
-        input.addEventListener('mousedown', function(event) {
-          // create fake selection
-          if (document.getSelection) {
-            var span = createNewSpan(document.getSelection()) ;
-            console.log("imdone") ;
-            span.classList.add("selected") ;
-            flag = 1 ;
-          }
-        }) ;
-
-
-        // remove fake selection
-        input.addEventListener('blur', function(event) {
-          // remove fake selection
-          // document.getSelection().addRange(range) ;
-          if (flag) {
-            var selected = document.querySelector(".selected") ;
-            selected.classList.remove("selected") ;
-            merge(selected) ;
-          }
-          flag = 0 ;
-        }, true ) ;
-
-        // input.addEventListener('mousedown', function(event) {
-        //   // create fake selection
-        //   if (fragment) {
-        //     var span = createNewSpan(document.getSelection()) ;
-        //     span.classList.add("selected") ;
-        //     // range.surroundContents(span) ;
-        //   }
-        // }) ;
-
-
-        // // remove fake selection
-        // input.addEventListener('blur', function(event) {
-        //   // remove fake selection
-        //   if (fragment) {
-        //     var selected = document.querySelector(".selected") ;
-        //     // selected.classList.remove("selected") ;
-        //     merge(selected) ;
-        //   }
-        //   fragment = null ;
-        // }, true ) ;
-    }
-  }
+      // code.addEventListener("mouseup", saveRangeEvent);
+      // code.addEventListener('keyup', saveRangeEvent) ;
+      input.addEventListener("mousedown", createFakeSelection);
+      // remove fake selection
+      input.addEventListener("blur", removeFakeSelection, true);
+    },
+  },
   // events: {
   //     show: function(opt) {
   //         var $this = this ;

@@ -275,6 +275,9 @@ a:visited {
   font-weight: bold;
 }
 
+code {
+  overflow: auto;
+}
 #code {
   padding: 0;
 }
@@ -357,4 +360,8 @@ a:visited {
 
 .openbtn:hover {
   color: rgb(56, 56, 56);
+}
+
+.projectbar {
+  margin-left: 250px;
 }

@@ -24,7 +24,7 @@ function openDirectoryTree() {
   let tree = document.getElementById("dir_tree");
   dirs.map((dir) => {
     console.log(dir);
-    const li = document.querySelector(`[name="${dir}"]`);
+    const li = tree.querySelector(`[name="${dir}"]`);
     console.log(li);
     li.ariaExpanded = true;
     tree = li.querySelector("ul");

@@ -36,7 +36,7 @@
 <body>
 
   <button class="openbtn" onclick="openNav()">☰</button>
-  <h1>Codee</h1>
+  <h1 id="title">Codee</h1>
 
   <div class="buttonbar">
     <!-- <div class="clonebar right">
@@ -71,7 +71,7 @@
     <div class="box" id='export'>
 
       <div class="border-box">
-        <div class="filename">{{filename}}</div>
+        <div class="filename" id="filename">{{filename}}</div>
         <pre id="pre" class="context-menu-one">
           <code id="code" >{{data}}</code>
         </pre>
@@ -82,27 +82,12 @@
 
 </body>
 <script>
-  function openNav() {
-    document.getElementById("mySidebar").style.width = "250px";
-    document.querySelector("body").style.marginLeft = "250px";
-  }
 
-  function closeNav() {
-    document.getElementById("mySidebar").style.width = "0";
-    document.querySelector("body").style.marginLeft = "0";
-  }
-
-
-  const code_tag = document.getElementById("code");
-  if (code_tag != null) {
-    code_tag.className = get_extension({{ file_name }});
-  }
 </script>
 <script src="{{ url_for('static', filename = 'script/html-to-rtf-browser.min.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/index.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/dir_upload.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/showcode.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/showdir.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/copy.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/push_pull.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/menubar.js') }}"></script>
