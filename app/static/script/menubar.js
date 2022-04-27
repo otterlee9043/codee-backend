@@ -147,12 +147,17 @@ $.contextMenu({
     },
   },
   events: {
-      preShow: function(e) {
-        console.log(document.getElementsByName("context-menu-input-link-1")[0]) ;
+      hide: function(e) {
+        var input = document.getElementsByName("context-menu-input-link-1")[0] ;
+        var code = document.getElementById('code') ;
+        code.removeEventListener('mouseup', null) ;
+        input.removeEventListener('mousedown', null) ;
+        input.removeEventListener('blur', null) ;
       },
       show: function(e) { // show
         var input = document.getElementsByName("context-menu-input-link-1")[0] ;
         var code = document.getElementById('code') ;
+        var menuBar = document.querySelector(".context-menu-list.context-menu-root");
         console.log(input) ;
         var fragment = null ;
         var range = null ;
@@ -169,16 +174,41 @@ $.contextMenu({
             return null ;
           }
         }
-
-
-        // function saveRangeEvent(event) {
-        //   range = saveSelection() ;
-        //   if (range && !range.collapsed) {
-        //     fragment = range.cloneContents() ;
+        
+        // function saveSelection() {
+        //   if (window.getSelection) {
+        //     let selected = document.getSelection() ;
+        //     let ran = new Range() ;
+        //     let selectedFirst = selected.anchorNode ;
+        //     let selectedLast = selected.focusNode ;
+        //     let firstOffset = selected.anchorOffset ;
+        //     let lastOffset = selectionText.focusOffset ;
+        //     if (selectedFirst.compareDocumentPosition(selectedLast) & Node.DOCUMENT_POSITION_PRECEDING) {
+        //       [selectedFirst, selectedLast] = [selectedLast, selectedFirst];
+        //       [firstOffset, lastOffset] = [lastOffset, firstOffset];
+        //     }
+        //     else if (selectedFirst === selectedLast) {
+        //       const len = selectedFirst.nodeValue.substring(firstOffset, lastOffset).length ;
+        //       if (lastOffset < firstOffset)
+        //         [firstOffset, lastOffset] = [lastOffset, firstOffset] ;
+        //     }
+        //     ran.setStart(selectedFirst, firstOffset) ;
+        //     ran.setEnd(selectedLast, lastOffset) ;
+        //     console.log(ran) ;
+        //     return ran ;
         //   }
         // }
 
-        // code.addEventListener('mouseup', saveRangeEvent) ;
+
+        function saveRangeEvent(event) {
+          range = saveSelection() ;
+          console.log(range.anchorNode) ;
+          // if (range && !range.collapsed) {
+          //   fragment = range.cloneContents() ;
+          // }
+        }
+
+        code.addEventListener('mouseup', saveRangeEvent) ;
         // code.addEventListener('keyup', saveRangeEvent) ; 
         var flag = 0 ;
         input.addEventListener('mousedown', function(event) {
@@ -188,7 +218,6 @@ $.contextMenu({
             console.log("imdone") ;
             span.classList.add("selected") ;
             flag = 1 ;
-            // range.surroundContents(span) ;
           }
         }) ;
 
@@ -196,6 +225,7 @@ $.contextMenu({
         // remove fake selection
         input.addEventListener('blur', function(event) {
           // remove fake selection
+          // document.getSelection().addRange(range) ;
           if (flag) {
             var selected = document.querySelector(".selected") ;
             selected.classList.remove("selected") ;
@@ -203,6 +233,7 @@ $.contextMenu({
           }
           flag = 0 ;
         }, true ) ;
+
         // input.addEventListener('mousedown', function(event) {
         //   // create fake selection
         //   if (fragment) {

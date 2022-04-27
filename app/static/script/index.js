@@ -125,6 +125,7 @@ window.addEventListener("load", function () {
       lineSelected = !lineSelected;
     });
   });
+  openDirectoryTree();
 });
 
 // code.addEventListener("mouseup", selectText, false);
