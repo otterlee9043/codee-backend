@@ -4,18 +4,14 @@ function pull(project) {
 
   var url = new URL(`${window.origin}/codination/ver1/pull`);
   var params = { proj: project };
-  Object.keys(params).forEach((key) =>
-    url.searchParams.append(key, params[key])
-  );
+  Object.keys(params).forEach((key) => url.searchParams.append(key, params[key]));
   console.log(url);
   fetch(url, {
     method: "GET",
   })
     .then(function (response) {
       if (request.status != 200) {
-        console.log(
-          `Looks like there was a problem. Status code: ${response.status}`
-        );
+        console.log(`Looks like there was a problem. Status code: ${response.status}`);
         return;
       }
       response.json().then(function (data) {
@@ -34,9 +30,7 @@ function push(project) {
   // var url = new URL('http://203.245.41.143:9999/push') ;
   var url = new URL(`${window.origin}/codination/ver1/push`);
   var params = { proj: project };
-  Object.keys(params).forEach((key) =>
-    url.searchParams.append(key, params[key])
-  );
+  Object.keys(params).forEach((key) => url.searchParams.append(key, params[key]));
   console.log(url);
 
   fetch(url, {
@@ -44,9 +38,35 @@ function push(project) {
   })
     .then(function (response) {
       if (request.status != 200) {
-        console.log(
-          `Looks like there was a problem. Status code: ${response.status}`
-        );
+        console.log(`Looks like there was a problem. Status code: ${response.status}`);
+        return;
+      }
+      response.json().then(function (data) {
+        console.log("done");
+      });
+    })
+    .catch(function (error) {
+      console.log("Fetch error: " + error);
+    });
+}
+
+function createCodeeFile(fileName, path) {
+  const url = new URL(`${window.origin}/codination/ver1/createCodee`);
+  console.log(path, fileName);
+  const opts = {
+    method: "POST",
+    body: JSON.stringify({
+      path: path,
+      fileName: fileName,
+    }),
+    headers: new Headers({
+      "content-type": "application/json",
+    }),
+  };
+  fetch(url, opts)
+    .then(function (response) {
+      if (request.status != 200) {
+        console.log(`Looks like there was a problem. Status code: ${response.status}`);
         return;
       }
       response.json().then(function (data) {

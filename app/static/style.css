@@ -238,6 +238,10 @@ a:visited {
   font-size: 15px;
 }
 
+.button:hover {
+  background: rgb(225, 225, 225);
+  color: white;
+}
 .sidebar {
   width: 20%;
   margin-right: 20px;

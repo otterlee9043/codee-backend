@@ -14,6 +14,7 @@ import shutil
 from urllib.parse import urlparse
 import sys
 import subprocess
+from os.path import exists
 
 username = 'user2'
 root = '/home/codination/ver1/app/static/files/'
@@ -192,6 +193,16 @@ def push():
 
     return make_response("done push request", 200)
 
+
+@main.route('/createCodee', methods=['POST'])
+def create_codee():
+    jsonData = request.get_json(force = True)
+    path = jsonData['path']
+    fileName = jsonData['fileName']
+    if exists(f"{path}/{fileName}.cd"):
+        print("ALREADY EXISTS!")
+        f = open(f"{path}/{fileName}.cd", "w")
+    return make_response("codee file created", 200)
 # @main.route('/upload', methods = ['GET', 'POST'])
 # def upload():
 #     if request.method == 'POST':

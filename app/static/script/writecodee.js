@@ -3,7 +3,7 @@
 //   codee = new Map();
 // }
 
-// const map1 = new Map();
+const map = new Map();
 // const map2 = new Map();
 // map1.set("a", 1);
 // map1.set("b", 2);
@@ -18,6 +18,6 @@
 // console.log(jsonString);
 // const map = new Map(Object.entries(JSON.parse(jsonString)));
 // console.log(map);
-// function write(filepath, task, type) {
-//   codee;
-// }
+function write(filepath, task, type) {
+  map.set();
+}
