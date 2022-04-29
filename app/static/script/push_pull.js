@@ -10,7 +10,7 @@ function pull(project) {
     method: "GET",
   })
     .then(function (response) {
-      if (request.status != 200) {
+      if (response.status != 200) {
         console.log(`Looks like there was a problem. Status code: ${response.status}`);
         return;
       }
@@ -37,7 +37,7 @@ function push(project) {
     method: "GET",
   })
     .then(function (response) {
-      if (request.status != 200) {
+      if (response.status != 200) {
         console.log(`Looks like there was a problem. Status code: ${response.status}`);
         return;
       }
@@ -51,7 +51,7 @@ function push(project) {
 }
 
 function createCodeeFile(fileName, path) {
-  const url = new URL(`${window.origin}/codination/ver1/createCodee`);
+  const url = new URL(`${window.origin}/codination/ver1/create_codee`);
   console.log(path, fileName);
   const opts = {
     method: "POST",
@@ -65,15 +65,41 @@ function createCodeeFile(fileName, path) {
   };
   fetch(url, opts)
     .then(function (response) {
-      if (request.status != 200) {
+      if (response.status != 200) {
         console.log(`Looks like there was a problem. Status code: ${response.status}`);
         return;
       }
-      response.json().then(function (data) {
-        console.log("done");
-      });
+      // response.json().then(function (data) {
+      //   console.log("done");
+      // });
     })
     .catch(function (error) {
       console.log("Fetch error: " + error);
     });
+  // readCodeeFile();
 }
+
+// async function readCodeeFile() {
+//   const codee_path = "home/codination/ver1/app/static/files/user2/OSSLab_0420_test/codee.cd";
+//   const url2 = new URL(`${window.origin}/codination/ver1/get_codee/${codee_path}`);
+//   let refFile, refFileName;
+//   // console.log(path, fileName);
+//   const opts2 = {
+//     method: "GET",
+//   };
+//   fetch(url2, opts2)
+//     .then(function (response) {
+//       if (response.status != 200) {
+//         console.log(`Looks like there was a problem. Status code: ${response.status}`);
+//         return;
+//       }
+//       // console.log(response.json());
+//       response.json().then(function (data) {
+//         localStorage.setItem(codee_path, data[0]);
+//       });
+//       // refFile = await response.json();
+//     })
+//     .catch(function (error) {
+//       console.log("Fetch error: " + error);
+//     });
+// }

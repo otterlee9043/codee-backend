@@ -71,15 +71,28 @@
           codee</button>
       </div>
     </div>
+    {% if data is none %}
     <div class="box" id='export'>
-
+      <h3 id="cd">{{filename}}</h3>
       <div class="border-box">
-        <div class="filename" id="filename">{{filename}}</div>
+        <div class="filename" id="filename"></div>
         <pre id="pre" class="context-menu-one">
-          <code id="code" >{{data}}</code>
+          <code id="code"></code>
         </pre>
       </div>
     </div>
+
+    {% else %}
+    <div class="box" id='export'>
+      <div class="border-box">
+        <div class="filename" id="filename">{{filename}}</div>
+        <pre id="pre">
+              <code id="code" >{{data}}</code>
+            </pre>
+      </div>
+    </div>
+    {% endif %}
+
   </div>
 
 
@@ -96,5 +109,6 @@
 <script src="{{ url_for('static', filename = 'script/menubar.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/writecodee.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/projectbar.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/codeedit.js') }}"></script>
 
 </html>

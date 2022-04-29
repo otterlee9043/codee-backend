@@ -31,6 +31,12 @@ def read_file(path):
     
     return data
 
+def read_json_file(path):
+    test_file = open(path, 'r', encoding = 'utf_8')
+    json_data = json.load(test_file)
+    
+    return json_data
+
 def dir_list(path, filename = None):
     dir_tree = { filename : [] }
     
@@ -108,11 +114,42 @@ def index():
 def showfile(filepath):
     print("FILEPATH!!!!: "+filepath)
     dir_tree = dir_list(root, username)
-    data = read_file(root + username + '/' + filepath)
     filename = os.path.basename(os.path.normpath(filepath))
+    tmp, ext = os.path.splitext(filename)
+    
+    if ext == ".cd":
+        # cd 파일 읽어서  
+        cd_data = read_json_file( os.path.join(root, username, filepath) )
+        
+        data = read_file( os.path.join(root, username, cd_data[0]['filepath']) )
+        
+        # ref하고있는 파일 읽고 data에 저장하기
+        # cd_data에는 cd파일의 데이터 저장하기
+        return render_template('main/index.html', dir_tree = dir_tree, username = username, data = None, filename = filename )
+    
+    data = read_file( os.path.join(root, username, filepath) )
     return render_template('main/index.html', dir_tree = dir_tree, username = username, data = data, filename = filename )
     
+@main.route('/show_ref_file', methods = ['POST'])
+def show_ref_file():
+    if request.method == 'POST':
+        error = None
+        jsonData = request.get_json(force = True)
+        cd_path = jsonData['cd_filepath']        
 
+        if not cd_path:
+            error = f'there is no such a file: {cd_path}'
+        if error is not None:
+            flash(error)
+        else:
+            cd_data = read_json_file( os.path.join(root, username, cd_path) )
+            ref_data = read_file( os.path.join(root, username, cd_data[0]['filepath']) )
+            if ref_data is not None:
+                data_dict = {
+                    "ref_data": ref_data,
+                    "cd_data": cd_data
+                }
+                return make_response( jsonify(data_dict), 200 )
 
 
 @main.route('/showcode', methods=['GET', 'POST'])
@@ -194,15 +231,38 @@ def push():
     return make_response("done push request", 200)
 
 
-@main.route('/createCodee', methods=['POST'])
+@main.route('/create_codee', methods=['POST'])
 def create_codee():
     jsonData = request.get_json(force = True)
     path = jsonData['path']
     fileName = jsonData['fileName']
-    if exists(f"{path}/{fileName}.cd"):
-        print("ALREADY EXISTS!")
-        f = open(f"{path}/{fileName}.cd", "w")
+    # if exists(f"{path}/{fileName}.cd") is None:
+    #     print("ALREADY EXISTS!")
+    #     f = open(f"{path}/{fileName}.cd", "w")
+    #     f.write("[]")
+    #     f.close()
+    print("ALREADY EXISTS!")
+    f = open(f"{path}/{fileName}.cd", "w")
+    content = [{ 'filepath': 'OSSLab_0420_test/main.c' }]
+    json_content = json.dumps(content)
+    f.write(json_content)
+    f.close()
     return make_response("codee file created", 200)
+
+@main.route('/get_codee/<path:filepath>', methods=['GET'])
+def get_codee(filepath):
+    data = None
+    if exists(filepath):
+        print("ALREADY EXISTS!")
+        f = open(f"{filepath}", "r")
+        print(filepath)
+        data = f.read()
+        print("DATA")
+        print(data)
+    return make_response(data, 200)
+
+
+
 # @main.route('/upload', methods = ['GET', 'POST'])
 # def upload():
 #     if request.method == 'POST':
