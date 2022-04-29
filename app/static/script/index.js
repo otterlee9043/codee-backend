@@ -84,7 +84,6 @@ function createEllipsisNode(line) {
 
 window.addEventListener("load", function () {
   // addMenuClass() ;
-  // addEventInMenumar() ;
   const numbers = document.querySelectorAll(".hljs-ln-numbers");
   //console.log(numbers);
   Array.from(numbers).map((item, index) => {
