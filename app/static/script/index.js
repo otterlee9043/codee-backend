@@ -4,11 +4,7 @@ let start = -1;
 let end = -1;
 let selectedInfo = [];
 const tbody = document.querySelector("tbody");
-// `const FALSE = -1;
-// 기존 element의 ~~ part이다
-// const HEAD = 0;
-// const CENTER = 1;
-// const TAIL = 2;
+
 const FRAGMENT = {
   FALSE: -1,
   HEAD: 0,
@@ -16,6 +12,10 @@ const FRAGMENT = {
   TAIL: 2,
 };
 
+const NODE = {
+  SPAN: 0,
+  TEXT: 1,
+};
 // 문제 1) 연속된 문자가 나오는 경우, overlapping 단어를 잘 찾지 못한다
 // --> focusNodeOffset, anchorNodeOffset으로 split할 index 결정하도록 수정
 // 문제 2) splitTree 하고 나오서 원래대로 복구하는 코드가 없음
@@ -173,6 +173,13 @@ function splitText(textNode, index, textLength, start, same = false) {
       return [FRAGMENT.CENTER, span];
     }
   } else {
+    if (fullText === text) {
+      span.innerText = text;
+      textNode.before(span);
+      textNode.remove();
+      // return fragmented(FALSE, span);
+      return [FRAGMENT.FALSE, span];
+    }
     if (start) {
       textNode.nodeValue = fullText.substring(0, index);
       span.innerText = text;
@@ -184,7 +191,6 @@ function splitText(textNode, index, textLength, start, same = false) {
     }
   }
   return start ? [FRAGMENT.TAIL, span] : [FRAGMENT.HEAD, span];
-  return span;
 }
 
 function fragmented(value, element) {
@@ -227,6 +233,11 @@ function splitSpan(span, index, textLength, start, same = false) {
       return [FRAGMENT.CENTER, span2];
     }
   } else {
+    if (fullText === text) {
+      // split 하지 않는 경우
+      //return fragmented(FALSE, span);
+      return [FRAGMENT.FALSE, span];
+    }
     span.after(span2);
     if (start) {
       //const span2 = span.cloneNode("span");
@@ -300,12 +311,27 @@ function merge(newSpan) {
           el.remove();
           break;
         case FRAGMENT.TAIL:
+          const el2 = lastChild(el);
           el.previousSibling.innerText += el.innerText;
           el.remove();
           break;
       }
     }
   });
+}
+
+function lastChild(element) {
+  while (element.lastChild) {
+    element = element.lastChild;
+  }
+  return element;
+}
+
+function firstChild(element) {
+  while (element.firstChild) {
+    element = element.firstChild;
+  }
+  return element;
 }
 
 function mergeSpan(a, b) {
@@ -320,34 +346,19 @@ function getLeafNodes(element) {
 }
 function bindTags(startNode, endNode) {
   const newSpan = document.createElement("span");
-  // newSpan.classList.add("hidden");
-
-  const key = startNode.getAttribute("key");
   let node = startNode;
-  let nextNode = startNode.nextSibling;
-
+  let prev_node;
   startNode.before(newSpan);
   if (endNode) {
     while (endNode.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_PRECEDING) {
-      newSpan.appendChild(node);
+      prev_node = node;
+      node = node.nextSibling;
+      newSpan.appendChild(prev_node);
     }
     newSpan.appendChild(endNode);
   } else {
     newSpan.appendChild(startNode);
   }
-  // newSpan.appendChild(node);
-  // if (endNode) {
-  //   while (1) {
-  //     node = nextNode;
-  //     // console.log(node);
-  //     if (node.nodeType === 1 && node.getAttribute("key") === key) {
-  //       newSpan.appendChild(node);
-  //       break;
-  //     }
-  //     nextNode = node.nextSibling;
-  //     newSpan.appendChild(node);
-  //   }
-  // }
 
   return newSpan;
 }
@@ -370,20 +381,23 @@ function randomId() {
 }
 
 function indexAmongChildren(parent, child) {
-  // var nodes = Array.prototype.slice.call(parent.childNodes);
-  // console.log(nodes);
-  // console.log(nodes.indexOf(child));
-  // return nodes.indexOf(child);
   console.log(...parent.childNodes);
   const index = [...parent.childNodes].indexOf(child);
   console.log(index);
   return index;
-  // console.log("children> ", parent.childNodes);
-  // if (child.parentElement.tagName == "SPAN") child = child.parentElement;
-  // const children = parent.childNodes;
-  // for (let i = 0; i < children.length; i++) {
-  //   if (children[i].isEqualNode(child)) return i;
-  // }
+}
+
+function nodeType(element) {
+  if (element.parentElement.tagName == "TD") {
+    return NODE.TEXT;
+  } else if (element.parentElement.tagName == "SPAN") {
+    if (element.parentElement.childNodes.length >= 2) {
+      // span 안에 있는 text 노드 (innerText가 아닌)
+      return NODE.TEXT;
+    } else {
+      return NODE.SPAN;
+    }
+  }
 }
 
 function createNewSpan(selectionText) {
@@ -414,16 +428,19 @@ function createNewSpan(selectionText) {
     [firstOffset, lastOffset] = [lastOffset, firstOffset];
     [anchorTagType, focusTagType] = [focusTagType, anchorTagType];
   } else if (selectedFirst === selectedLast) {
+    // 아예 같은 노드
     const textLength = selectedFirst.nodeValue.substring(firstOffset, lastOffset).length;
+    console.log(textLength);
     if (lastOffset < firstOffset) [firstOffset, lastOffset] = [lastOffset, firstOffset];
-    if (anchorTagType === "TD") {
+    //if (anchorTagType === "TD") {
+    if (nodeType(selectedFirst) == NODE.TEXT) {
       [fragmented, startNode] = splitText(selectedFirst, firstOffset, textLength, true, true);
     } else {
       [fragmented, startNode] = splitSpan(selectedFirst.parentElement, firstOffset, textLength, true, true);
       if (fragmented === FRAGMENT.HEAD) startNode.parentElement.insertBefore(cutSpan, startNode.nextSibling);
       else startNode.parentElement.insertBefore(cutSpan, startNode);
       splitTree(parent, cutSpan);
-      startNode = startNode.closest("td>span");
+      // startNode = startNode.closest("td>span");
     }
     startNode.setAttribute("fragmented", fragmented);
     const newSpan = bindTags(startNode, null);
@@ -432,9 +449,9 @@ function createNewSpan(selectionText) {
   }
 
   const textLength = selectedFirst.nodeValue.substring(firstOffset, selectedFirst.nodeValue.length).length;
-  if (anchorTagType === "TD") {
+  if (nodeType(selectedFirst) == NODE.TEXT) {
     [fragmented, startNode] = splitText(selectedFirst, firstOffset, textLength, true);
-  } else if (anchorTagType === "SPAN") {
+  } else if (nodeType(selectedFirst) == NODE.SPAN) {
     [fragmented, startNode] = splitSpan(selectedFirst.parentElement, firstOffset, textLength, true);
   }
   startNode.parentElement.insertBefore(cutSpan, startNode);
@@ -444,14 +461,15 @@ function createNewSpan(selectionText) {
   //console.log("startNode >>", startNode);
 
   const textLength2 = selectedLast.nodeValue.substring(lastOffset, selectedLast.nodeValue.length).length;
-  if (focusTagType === "TD") {
+  // if (focusTagType === "TD") {
+  if (nodeType(selectedLast) == NODE.TEXT) {
     [fragmented, endNode] = splitText(selectedLast, lastOffset, textLength2, false);
-  } else if (focusTagType === "SPAN") {
+  } else if (nodeType(selectedLast) == NODE.SPAN) {
     [fragmented, endNode] = splitSpan(selectedLast.parentElement, lastOffset, textLength2, false);
   }
   endNode.parentElement.insertBefore(cutSpan, endNode.nextSibling);
   splitTree(parent, cutSpan);
-  endNode = endNode.closest("td>span");
+  // endNode = endNode.closest("td>span");
   endNode.setAttribute("fragmented", fragmented);
   //console.log("endNode >>", endNode);
 
