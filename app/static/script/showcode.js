@@ -108,12 +108,13 @@ function show_file(element, file_name, username) {
   // });
 }
 
-function show_dir(tree, username, parent_node) {
+function show_dir(tree, username, parent_node, location = null) {
   console.log(username);
   const tree_len = tree.length;
   if (tree_len > 0) {
     var ul_tag = document.createElement("ul");
     ul_tag.id = "group";
+    if (location != null) parent_node = document.getElementById(location);
     parent_node.append(ul_tag);
 
     for (var i = 0; i < tree_len; i++) {
@@ -179,4 +180,10 @@ function show_dir(tree, username, parent_node) {
     }
   }
   return parent_node;
+}
+
+function browse_dir(event, tree, username, parent_node, location = null) {
+  event.preventDefault();
+  show_dir(tree, username, parent_node, location);
+  console.log("browser");
 }

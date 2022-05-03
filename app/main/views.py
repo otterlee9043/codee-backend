@@ -125,7 +125,7 @@ def showfile(filepath):
         
         # ref하고있는 파일 읽고 data에 저장하기
         # cd_data에는 cd파일의 데이터 저장하기
-        return render_template('main/index.html', dir_tree = dir_tree, username = username, data = None, filename = filename )
+        return render_template('main/index.html', dir_tree = dir_tree, username = username, data = None, ref_data = data, filename = filename )
     
     data = read_file( os.path.join(root, username, filepath) )
     return render_template('main/index.html', dir_tree = dir_tree, username = username, data = data, filename = filename )
@@ -146,7 +146,7 @@ def show_ref_file():
             ref_data = read_file( os.path.join(root, username, cd_data[0]['filepath']) )
             if ref_data is not None:
                 data_dict = {
-                    "ref_data": ref_data,
+                    # "ref_data": ref_data,
                     "cd_data": cd_data
                 }
                 return make_response( jsonify(data_dict), 200 )
@@ -236,12 +236,7 @@ def create_codee():
     jsonData = request.get_json(force = True)
     path = jsonData['path']
     fileName = jsonData['fileName']
-    # if exists(f"{path}/{fileName}.cd") is None:
-    #     print("ALREADY EXISTS!")
-    #     f = open(f"{path}/{fileName}.cd", "w")
-    #     f.write("[]")
-    #     f.close()
-    print("ALREADY EXISTS!")
+
     f = open(f"{path}/{fileName}.cd", "w")
     content = [{ 'filepath': 'OSSLab_0420_test/main.c' }]
     json_content = json.dumps(content)

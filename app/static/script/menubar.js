@@ -1,24 +1,23 @@
 const menu = document.querySelector(".context-menu-one");
-const test = document.querySelector("#code") ;
+const test = document.querySelector("#code");
 
+// menu.addEventListener("click", function (e) {
+//   e.preventDefault();
 
-menu.addEventListener("click", function (e) {
-  e.preventDefault();
+//   var element = document.getSelection();
+//   var selectedText = element.toString();
+//   if (selectedText != "") {
+//     const conMenu = document.querySelector(".context-menu-list.context-menu-root");
+//     const x = window.innerWidth - 200 > e.clientX ? e.clientX : window.innerWidth - 210;
+//     const y = window.innerHeight > e.clientY ? e.clientY : window.innerHeight - 100;
 
-  var element = document.getSelection();
-  var selectedText = element.toString();
-  if (selectedText != "") {
-    const conMenu = document.querySelector(".context-menu-list.context-menu-root");
-    const x = window.innerWidth - 200 > e.clientX ? e.clientX : window.innerWidth - 210;
-    const y = window.innerHeight > e.clientY ? e.clientY : window.innerHeight - 100;
+//     // console.log(`x: ${x}, y: ${y}`) ;
+//     conMenu.style.top = `${y + 10}px`;
+//     conMenu.style.left = `${x}px`;
 
-    // console.log(`x: ${x}, y: ${y}`) ;
-    conMenu.style.top = `${y + 10}px`;
-    conMenu.style.left = `${x}px`;
-
-    $(".context-menu-one").contextMenu();
-  }
-});
+//     $(".context-menu-one").contextMenu();
+//   }
+// });
 
 var fragment = null;
 var range = null;
@@ -38,55 +37,67 @@ function saveSelection() {
 
 function restroeSelection() {
   if (range) {
-    console.log("1") ;
+    console.log("1");
     if (window.getSelection) {
-      console.log(range) ;
+      console.log(range);
 
       selected = document.getSelection();
       selected.removeAllRanges();
       selected.addRange(range);
     } else if (document.selection && range.select) {
-      console.log("3") ;
+      console.log("3");
 
       range.select();
     }
   }
 }
-function saveRangeEvent(event) {
-  range = saveSelection();
-  console.log(range) ;
-  if (range && !range.collapsed) {
-    fragment = range.cloneContents();
-  }
-  // if (document.getSelection) {
-  //   // range = document.createRange() ;
-  //   var selected = document.getSelection() ;
-  //   console.log(selected.anchorOffset) ;
-  //   console.log(selected.anchorNode.parentNode) ;
-  //   range.setStart(selected.anchorNode.parentNode.firstChild, selected.anchorOffset) ;
-  //   range.setEnd(selected.focusNode.parentNode.firstChild, selected.focusOffset) ;
-  //   console.log(range);
-  // }
-  // if (range && !range.collapsed) {
-  //   fragment = range.cloneContents() ;
-  //   console.log(fragment) ;
-  // }
-}
 
 var flag = 0;
+var new_range = null;
+
+// function findChild(node) {
+//   if (node.tagName == "SPAN") {
+//     return findChild(node.parentNode);
+//   }
+//   else if (node.tagName == "TD") {
+//     for (var i = 0; i < node.childNodes.length; i++) {
+//       // if (node.)
+//     }
+//     return;
+//   }
+//   console.log(node.parentNode);
+// }
 function createFakeSelection(event) {
   // create fake selection
+  new_range = document.createRange() ;
+  var startoffset = range.startOffset ;
+  var endoffset = range.endOffset ;
+  // new_range.setStart(range.startContainer, startoffset) ;
+  // new_range.setEnd(range.endContainer, endoffset) ;
+  console.log(range.startOffset) ;
+  console.log(range.endOffset) ;
+  console.log(range.startContainer) ;
+  console.log(range) ;
+  // console.log(range.commonAncestorContainer) ;
+  // console.log(range.startContainer.parentNode);
+  // findChild(range.startContainer.parentNode, );
   if (document.getSelection) {
     var span = createNewSpan(document.getSelection());
+    new_range.setStart(range.startContainer, 3) ;
+    new_range.setEnd(range.endContainer, 3) ;
+    console.log(new_range.startOffset) ;
+    console.log(new_range) ;
+    console.log(range.startContainer) ;
     console.log("imdone");
     span.classList.add("selected");
     flag = 1;
   }
+  // 여기서 range가 없어진다.
 }
 
 function removeFakeSelection(event) {
   // remove fake selection
-  console.log(range) ;
+  console.log(range);
   if (flag) {
     var select = document.querySelector(".selected");
     select.classList.remove("selected");
@@ -107,7 +118,7 @@ $.contextMenu({
   delay: 500,
   autoHide: false,
   position: function (opt, x, y) {
-    console.log(x);
+    // console.log(x);
   },
   callback: function (key, opt, e) {
     var m = "clicked: " + key + " " + opt;
@@ -233,8 +244,8 @@ $.contextMenu({
   events: {
     hide: function (e) {
       var input = document.getElementsByName("context-menu-input-link-1")[0];
-      var code = document.getElementById("code");
-      code.removeEventListener("mouseup", saveRangeEvent);
+      const code = document.querySelector("#code");
+
       input.removeEventListener("mousedown", createFakeSelection);
       input.removeEventListener("blur", removeFakeSelection);
       console.log("hide");
@@ -242,16 +253,19 @@ $.contextMenu({
     show: function (e) {
       // show
       var input = document.getElementsByName("context-menu-input-link-1")[0];
-      var code = document.getElementById("code");
+      const code = document.querySelector("#code");
       console.log("show");
 
-      code.addEventListener("mouseup", saveRangeEvent);
-      // code.addEventListener('keyup', saveRangeEvent) ;
+      range = saveSelection();
+      console.log(range);
+      if (range && !range.collapsed) {
+        fragment = range.cloneContents();
+      }
       input.addEventListener("mousedown", createFakeSelection);
       // // remove fake selection
       input.addEventListener("blur", removeFakeSelection, true);
     },
-  }
+  },
 });
 
 function randomId() {

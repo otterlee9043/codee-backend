@@ -374,3 +374,103 @@ code {
   background-color: black;
   opacity: 60%;
 } */
+
+section.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 998;
+}
+section.modalWindow {
+  display: none;
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  z-index: 999 !important;
+  width: 600px;
+  min-height: 200px;
+  margin-left: -300px;
+  background: #fff;
+  cursor: default;
+}
+section.modal.overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  min-height: 100%;
+  background: rgba(0, 0, 0, 0.185);
+  z-index: 997;
+  cursor: pointer;
+}
+section.modalWindow section.modalWrapper {
+  margin: 30px;
+  padding: 15px;
+  text-align: left;
+  line-height: 20px !important;
+}
+.closeBtn {
+  position: absolute;
+  right: 10px;
+  top: 6px;
+  cursor: pointer;
+}
+
+.col-15 {
+  float: left;
+  width: 15%;
+  margin-top: 6px;
+}
+
+.col-25 {
+  float: left;
+  width: 25%;
+  margin-top: 6px;
+}
+
+.col-60 {
+  float: left;
+  width: 60%;
+  margin-top: 6px;
+}
+
+.col-75 {
+  float: left;
+  width: 75%;
+  margin-top: 6px;
+}
+
+input[type="text"],
+select,
+textarea {
+  width: 100%;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+}
+
+.tree-open {
+  margin-bottom: 200px;
+}
+
+.search-icon::before {
+  font-family: "Font Awesome 5 Free";
+  content: "\f002";
+}
+
+.browse-dir {
+  height: 0;
+  width: 80%;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  overflow-x: hidden;
+  transition: 0.5s;
+}
+
+#browse-dir1 {
+}

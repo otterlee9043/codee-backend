@@ -1,4 +1,4 @@
-function fillCodeTag(data) {
+async function fillCodeTag(data, callback) {
   const code_tag = document.getElementById("code");
   console.log(code_tag);
   const refFileName = data.cd_data[0].filepath;
@@ -8,6 +8,7 @@ function fillCodeTag(data) {
   console.log("done1");
   hljs.highlightAll();
   hljs.initLineNumbersOnLoad();
+  callback();
 }
 
 async function readCodee() {
@@ -22,10 +23,14 @@ async function readCodee() {
 
   const response = await fetch(`${window.origin}/codination/ver1/show_ref_file`, opts);
   const data = await response.json();
-  fillCodeTag(data);
+  // fillCodeTag(data, hideLine);
+  // hideLine();
+  // console.log(data);
+  // console.log(JSON.stringify(data));
   return data.cd_data;
 }
 
-if (cd) {
-  let codee = readCodee();
-}
+// if (cd) {
+//   let codee = readCodee();
+//   console.log(JSON.stringify(codee)) ;
+// }

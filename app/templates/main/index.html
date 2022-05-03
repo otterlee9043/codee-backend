@@ -58,6 +58,8 @@
               var dir_tree = JSON.parse('{{dir_tree | tojson}}');
               var parent_node = document.getElementById('{{ username }}');
               show_dir(dir_tree['{{ username }}'], '{{ username }}', parent_node);
+              var parent_node2 = document.getElementById('browse1');
+              show_dir(dir_tree['{{ username }}'], '{{ username }}', parent_node2);
             });
 
           </script>
@@ -66,10 +68,51 @@
       <div id="pull-push">
         <button class="button" type="button" onclick="pull('clipboard')">pull</button>
         <button class="button" type="button" onclick="push('clipboard')">push</button>
-        <button class="button" type="button"
-          onclick="createCodeeFile('codee','/home/codination/ver1/app/static/files/user2/OSSLab_0420_test')">create
-          codee</button>
+        <button class="button modalButton" data-popup="popupOne">create codee</button>
+        <!-- <button class="button" type="button" class="modalButton" data-popup="popupOne"
+            onclick="createCodeeFile('codee','/home/codination/ver1/app/static/files/user2/OSSLab_0420_test')">
+            create codee</button> -->
       </div>
+      <section class="modal modalWindow" id="popupOne">
+        <section class="modalWrapper">
+          <form action="">
+            <div>
+              <div class="col-25">
+                <label for="name">codee name</label>
+              </div>
+              <div class="col-60">
+                <input type="text">
+              </div>
+              <div class="col-15">
+                <span>.cd</span>
+              </div>
+            </div>
+            <div>
+              <div class="col-25"><label for="codee_path">codee path</label></div>
+              <div class="col-60">
+                <input type="text" disabled="true">
+                <ul id="dir_tree" class="browse-dir" aria-labelledby="tree_label">
+                  <li id="browse1"></li>
+                </ul>
+              </div>
+              <div class="col-15"> <button type='button' onclick="open_dir()">browse</button>
+              </div>
+
+            </div>
+            <div>
+              <div class="col-25"><label for="ref_filename">reference file name</label></div>
+              <div class="col-60">
+                <input type="text" disabled="true">
+              </div>
+              <div class="col-15"> <button>browse</button></div>
+            </div>
+          </form>
+
+        </section>
+        <a class="closeBtn">×</a>
+      </section>
+      <section class="modal overlay">
+      </section>
     </div>
     {% if data is none %}
     <div class="box" id='export'>
@@ -77,7 +120,7 @@
       <div class="border-box">
         <div class="filename" id="filename"></div>
         <pre id="pre" class="context-menu-one">
-          <code id="code"></code>
+          <code id="code">{{ref_data}}</code>
         </pre>
       </div>
     </div>
@@ -99,6 +142,27 @@
 </body>
 <script>
 
+
+  settings = {
+    //Model Popup
+    objModalPopupBtn: ".modalButton",
+    objModalCloseBtn: ".overlay, .closeBtn",
+    objModalDataAttr: "data-popup"
+  }
+  $(settings.objModalPopupBtn).bind("click", function () {
+    if ($(this).attr(settings.objModalDataAttr)) {
+      var strDataPopupName = $(this).attr(settings.objModalDataAttr);
+      //Fade In Modal Pop Up
+      $(".overlay, #" + strDataPopupName).fadeIn();
+
+    }
+  });
+
+  //On clicking the modal background
+  $(settings.objModalCloseBtn).bind("click", function () {
+    $(".modal").fadeOut();
+  });
+
 </script>
 <script src="{{ url_for('static', filename = 'script/html-to-rtf-browser.min.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/index.js') }}"></script>
@@ -111,5 +175,6 @@
 <script src="{{ url_for('static', filename = 'script/projectbar.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/codeedit.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/getIndices.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/createcodee.js') }}"></script>
 
 </html>
