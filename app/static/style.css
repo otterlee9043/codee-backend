@@ -96,6 +96,7 @@ ul#treeitem {
 
 #treeitem,
 #treeitem span::before {
+  font-size: 14px;
   width: 9em;
   margin: 0;
   padding: 0.125em;
@@ -291,16 +292,16 @@ code {
   /* justify-content: space-around; */
 }
 
-.filelist::-webkit-scrollbar {
+.scroll::-webkit-scrollbar {
   width: 4px;
 }
-.filelist::-webkit-scrollbar-thumb {
+.scroll::-webkit-scrollbar-thumb {
   height: 4px;
-  background-color: rgba(33, 133, 133, 1);
+  background-color: rgb(138, 138, 138);
   border-radius: 10px;
 }
-.filelist::-webkit-scrollbar-track {
-  background-color: rgba(33, 133, 133, 0.33);
+.scroll::-webkit-scrollbar-track {
+  background-color: rgba(122, 122, 122, 0.33);
 }
 
 .filelist ul {
@@ -393,6 +394,7 @@ section.modalWindow {
   margin-left: -300px;
   background: #fff;
   cursor: default;
+  padding: 30px;
 }
 section.modal.overlay {
   display: none;
@@ -406,8 +408,6 @@ section.modal.overlay {
   cursor: pointer;
 }
 section.modalWindow section.modalWrapper {
-  margin: 30px;
-  padding: 15px;
   text-align: left;
   line-height: 20px !important;
 }
@@ -462,15 +462,18 @@ textarea {
 }
 
 .browse-dir {
+  margin: 2px;
   height: 0;
-  width: 80%;
-  position: fixed;
   z-index: 1;
-  top: 0;
-  left: 0;
   overflow-x: hidden;
   transition: 0.5s;
 }
 
-#browse-dir1 {
+.browse-btn {
+  margin-left: 20px;
+}
+
+.create-btn {
+  display: inline-block;
+  text-align: center;
 }

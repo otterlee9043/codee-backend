@@ -234,11 +234,12 @@ def push():
 @main.route('/create_codee', methods=['POST'])
 def create_codee():
     jsonData = request.get_json(force = True)
-    path = jsonData['path']
-    fileName = jsonData['fileName']
-
-    f = open(f"{path}/{fileName}.cd", "w")
-    content = [{ 'filepath': 'OSSLab_0420_test/main.c' }]
+    print(jsonData)
+    codee_path = jsonData['codee_path']
+    codee_name = jsonData['codee_name']
+    ref_path = jsonData['ref_path']
+    f = open(f"{root}{username}/{codee_path}/{codee_name}.cd", "w")
+    content = [{ 'filepath': ref_path }]
     json_content = json.dumps(content)
     f.write(json_content)
     f.close()

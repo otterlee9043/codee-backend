@@ -59,7 +59,9 @@
               var parent_node = document.getElementById('{{ username }}');
               show_dir(dir_tree['{{ username }}'], '{{ username }}', parent_node);
               var parent_node2 = document.getElementById('browse1');
-              show_dir(dir_tree['{{ username }}'], '{{ username }}', parent_node2);
+              show_dir(dir_tree['{{ username }}'], 'browse1', parent_node2, true, 'browse1_path', false);
+              var parent_node3 = document.getElementById('browse2');
+              show_dir(dir_tree['{{ username }}'], 'browse2', parent_node3, true, 'browse2_path', true);
             });
 
           </script>
@@ -75,38 +77,53 @@
       </div>
       <section class="modal modalWindow" id="popupOne">
         <section class="modalWrapper">
-          <form action="">
-            <div>
-              <div class="col-25">
-                <label for="name">codee name</label>
+          <div>
+            <form action="http://siskin21.cafe24.com/codination/ver1/create_codee" method="post">
+              <div>
+                <div class="col-25">
+                  <label for="name">codee name</label>
+                </div>
+                <div class="col-60">
+                  <input id="codee_name" type="text" name="codee_name">
+                </div>
+                <div class="col-15">
+                  <span>.cd</span>
+                </div>
               </div>
-              <div class="col-60">
-                <input type="text">
-              </div>
-              <div class="col-15">
-                <span>.cd</span>
-              </div>
-            </div>
-            <div>
-              <div class="col-25"><label for="codee_path">codee path</label></div>
-              <div class="col-60">
-                <input type="text" disabled="true">
-                <ul id="dir_tree" class="browse-dir" aria-labelledby="tree_label">
-                  <li id="browse1"></li>
-                </ul>
-              </div>
-              <div class="col-15"> <button type='button' onclick="open_dir()">browse</button>
-              </div>
+              <div>
+                <div class="col-25"><label for="codee_path">codee path</label></div>
+                <div class="col-60">
+                  <input id='browse1_path' type="text" name='browse1_path' disabled="true">
+                  <div id="drawer1" class="browse-dir scroll">
+                    <ul id="dir_tree" aria-labelledby="tree_label">
+                      <li id="browse1" class="dir"></li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="col-15"> <button class='browse-btn' type='button'
+                    onclick="open_dir('drawer1')">browse</button>
+                </div>
 
-            </div>
-            <div>
-              <div class="col-25"><label for="ref_filename">reference file name</label></div>
-              <div class="col-60">
-                <input type="text" disabled="true">
               </div>
-              <div class="col-15"> <button>browse</button></div>
-            </div>
-          </form>
+              <div>
+                <div class="col-25"><label for="ref_filename">reference file name</label></div>
+                <div class="col-60">
+                  <input id='browse2_path' name='browse2_path' type="text" disabled="true">
+                  <div id="drawer2" class="browse-dir scroll">
+                    <ul id="dir_tree" aria-labelledby="tree_label">
+                      <li id="browse2" class="dir"></li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="col-15"><button class='browse-btn' type='button'
+                    onclick="open_dir('drawer2')">browse</button></div>
+              </div>
+              <div class="create-btn"><button onclick="createCodee()">Create</button>
+              </div>
+            </form>
+
+          </div>
+
 
         </section>
         <a class="closeBtn">×</a>

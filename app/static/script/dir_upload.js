@@ -21,7 +21,7 @@
 
 window.addEventListener("load", function () {
   var trees = document.querySelectorAll("#dir_tree");
-  //console.log(trees) ;
+  console.log(trees);
   for (var i = 0; i < trees.length; i++) {
     var t = new Tree(trees[i]);
     t.init();
@@ -44,7 +44,6 @@ var Tree = function (node) {
   if (typeof node !== "object") {
     return;
   }
-  //console.log(node) ;
   this.domNode = node;
 
   this.treeitems = [];
@@ -445,6 +444,7 @@ Treeitem.prototype.handleKeydown = function (event) {
 };
 
 Treeitem.prototype.handleClick = function (event) {
+  console.log("handle click");
   if (this.isExpandable) {
     if (this.isExpanded()) {
       this.tree.collapseTreeitem(this);

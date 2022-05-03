@@ -81,7 +81,7 @@ function createEllipsisNode(line) {
     const ID = info.id ;
     // console.log(ref_data[0]) ;
     for( let i = 0 ; i < ref_data[0]['data'].length ; i++ ) {
-      if (ref_data[0]['data'][i].id == ID) {
+      if (ref_data[0]['data'][i].id == ID && ref_data[0]['data'][i].type == "line_hide") {
         ref_data[0]['data'].splice(ref_data[0]['data'].indexOf(i), 1) ;
       }
     }

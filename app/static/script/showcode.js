@@ -56,6 +56,23 @@ function find_path(element, username) {
   return path;
 }
 
+function find_dir_path(element, username) {
+  // console.log(element.parentElement.parentElement);
+  // console.log(element);
+  console.log(username);
+  var dir_node = element.parentElement.parentElement;
+  // var path = dir_node.querySelector("span").textContent + "/" + element.textContent ;
+
+  var path = element.firstChild.textContent;
+  while (dir_node.id != username) {
+    console.log(path);
+    path = dir_node.querySelector("span").textContent + "/" + path;
+
+    dir_node = dir_node.parentElement.parentElement;
+  }
+  return path;
+}
+
 function show_file(element, file_name, username) {
   // file root 찾기
   path = find_path(element, username);
@@ -108,22 +125,32 @@ function show_file(element, file_name, username) {
   // });
 }
 
-function show_dir(tree, username, parent_node, location = null) {
+function show_dir(tree, username, parent_node, browse = false, inputId, file = false) {
   console.log(username);
   const tree_len = tree.length;
   if (tree_len > 0) {
     var ul_tag = document.createElement("ul");
     ul_tag.id = "group";
-    if (location != null) parent_node = document.getElementById(location);
+
     parent_node.append(ul_tag);
 
     for (var i = 0; i < tree_len; i++) {
       // 여기서 tree[i]가 string이면 파일이니까 li 파일을 ul에 추
       if (typeof tree[i] == "string") {
         var li_file = document.createElement("li");
-        li_file.addEventListener("click", function (event) {
-          show_file(this, this.textContent, username);
-        });
+
+        if (browse) {
+          if (file) {
+            li_file.addEventListener("click", function (event) {
+              setPath(inputId, find_path(this, username));
+            });
+          }
+        } else {
+          li_file.addEventListener("click", function (event) {
+            show_file(this, this.textContent, username);
+          });
+        }
+
         li_file.id = "treeitem";
         li_file.classList.add("file");
         li_file.innerText = tree[i];
@@ -141,7 +168,11 @@ function show_dir(tree, username, parent_node, location = null) {
         var span = document.createElement("span");
         span.textContent = key;
         li_dir.append(span);
-
+        if (browse && !file) {
+          li_dir.addEventListener("click", function (event) {
+            setPath(inputId, find_dir_path(this, username));
+          });
+        }
         // ul에 추가
         ul_tag.append(li_dir);
 
@@ -155,9 +186,18 @@ function show_dir(tree, username, parent_node, location = null) {
         for (var j = 0; j < values.length; j++) {
           if (Array.isArray(values[j]) || typeof values[j] == "string") {
             var li_file = document.createElement("li");
-            li_file.addEventListener("click", function (event) {
-              show_file(this, this.textContent, username);
-            });
+
+            if (browse) {
+              if (file) {
+                li_file.addEventListener("click", function (event) {
+                  setPath(inputId, find_path(this, username));
+                });
+              }
+            } else {
+              li_file.addEventListener("click", function (event) {
+                show_file(this, this.textContent, username);
+              });
+            }
             li_file.id = "treeitem";
             li_file.classList.add("file");
             li_file.innerText = values[j];
@@ -172,6 +212,11 @@ function show_dir(tree, username, parent_node, location = null) {
             new_span.textContent = new_key;
             li_new_dir.setAttribute("name", new_key);
             li_new_dir.append(new_span);
+            if (browse && !file) {
+              li_new_dir.addEventListener("click", function (event) {
+                setPath(inputId, find_dir_path(this, username));
+              });
+            }
             result = show_dir(values[j][new_key], new_key, li_new_dir);
             ul_new_tag.append(li_new_dir);
           }
@@ -180,6 +225,12 @@ function show_dir(tree, username, parent_node, location = null) {
     }
   }
   return parent_node;
+}
+
+function setPath(inputId, path) {
+  const element = document.getElementById(inputId);
+  element.value = "";
+  element.value = path;
 }
 
 function browse_dir(event, tree, username, parent_node, location = null) {
