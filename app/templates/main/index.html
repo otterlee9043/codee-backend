@@ -133,9 +133,10 @@
     </div>
     {% if data is none %}
     <div class="box" id='export'>
-      <h3 id="cd">{{filename}}</h3>
+      <h3 id="cd">{{filename}}&nbsp;&nbsp;<button class="button" type="button" onclick="saveCodee('{{ path }}', '{{ username }}')">save</button></h3>
+      
       <div class="border-box">
-        <div class="filename" id="filename"></div>
+        <div class="filename" id="filename">{{ref_filename}}</div>
         <pre id="pre" class="context-menu-one">
           <code id="code">{{ref_data}}</code>
         </pre>

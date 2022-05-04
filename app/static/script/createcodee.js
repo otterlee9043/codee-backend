@@ -10,7 +10,7 @@ function open_dir(id) {
   console.log(dir);
 }
 
-function createCodee() {
+async function createCodee() {
   const codee_name = document.getElementById("codee_name").value;
   const codee_path = document.getElementById("browse1_path").value;
   const ref_path = document.getElementById("browse2_path").value;
@@ -23,5 +23,7 @@ function createCodee() {
     }),
   };
 
-  fetch(`${window.origin}/codination/ver1/create_codee`, opts);
+  const response = await fetch(`${window.origin}/codination/ver1/create_codee`, opts);
+  location.href = `/codination/ver1/${codee_path}/${codee_name}.cd`;
+  // console.log("here");
 }

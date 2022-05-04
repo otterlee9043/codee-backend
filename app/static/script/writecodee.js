@@ -21,3 +21,9 @@ const map = new Map();
 function write(filepath, task, type) {
   map.set();
 }
+
+function writeHideDeco(start, end, id) {
+  // ref_data[0]["data"].push({ type: "line_hide", start: start, end: end, id: ID });
+  ref_data[0]["data"].push({ type: "line_hide", start: start, end: end, id: id });
+  const codee_data = JSON.stringify(ref_data);
+}

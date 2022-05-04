@@ -10,7 +10,6 @@ async function fillCodeTag(data, callback) {
   hljs.initLineNumbersOnLoad();
   callback();
 }
-
 async function readCodee() {
   const cd = document.getElementById("cd");
   const cdpath = filepath;
@@ -20,7 +19,7 @@ async function readCodee() {
       cd_filepath: cdpath,
     }),
   };
-
+  console.log("check");
   const response = await fetch(`${window.origin}/codination/ver1/show_ref_file`, opts);
   const data = await response.json();
   // fillCodeTag(data, hideLine);
@@ -29,8 +28,40 @@ async function readCodee() {
   // console.log(JSON.stringify(data));
   return data.cd_data;
 }
+function addLineHide(start, end, ID) {
+  ref_data[0]['data'].push({"type" : "line_hide", "start" : start, "end" : end, "id" : ID}) ;
 
-// if (cd) {
-//   let codee = readCodee();
-//   console.log(JSON.stringify(codee)) ;
-// }
+}
+
+function deleteLineHide(ID) {
+  for (let i = 0; i < ref_data[0]["data"].length; i++) {
+    if (ref_data[0]["data"][i].id == ID && ref_data[0]["data"][i].type == "line_hide") {
+      ref_data[0]["data"].splice(ref_data[0]["data"].indexOf(i), 1);
+    }
+  }
+}
+
+function saveCodee(path, username) {
+  // path를 읽고
+  // fetch로 보내기
+  console.log(filepath)
+  const opts = {
+    method: "POST",
+    body: JSON.stringify({
+      codee_path: filepath,
+      codee_data: JSON.stringify(ref_data)
+    }),
+    headers: new Headers({
+      "content-type": "application/json"
+    })
+  } ;
+  fetch(`${window.origin}/codination/ver1/saveCodee`, opts)
+  .then(function (response) {
+    if (response.status != 200) {
+      console.log(`Looks like there was a problem. Status code: ${response.status}`);
+      return;    }
+  })
+  .catch(function(error) {
+    console.log("Fetch error: " + error);
+  }) ;
+}

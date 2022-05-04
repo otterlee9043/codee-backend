@@ -444,7 +444,6 @@ Treeitem.prototype.handleKeydown = function (event) {
 };
 
 Treeitem.prototype.handleClick = function (event) {
-  console.log("handle click");
   if (this.isExpandable) {
     if (this.isExpanded()) {
       this.tree.collapseTreeitem(this);

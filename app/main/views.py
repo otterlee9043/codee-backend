@@ -78,7 +78,7 @@ def path_to_dict(path):
 def index():
     # data = read_file('/home/codination/ver1/app/main/forms.py')
     # data = read_file(os.path.join(root, username, '/clipboard/script.js' ))
-    data = read_file(root + username +'/clipboard/script.js')
+    # data = read_file(root + username +'/clipboard/script.js')
     # data = None
     
     dir_tree = dir_list(root, username)
@@ -107,7 +107,7 @@ def index():
             make_dir(repo_path, url)
             dir_tree = dir_list(root, username)
         
-    return render_template('main/index.html', dir_tree = dir_tree, username = username, data = data)
+    return render_template('main/index.html', dir_tree = dir_tree, username = username)
 
 @main.route('/<path:filepath>', methods = ['GET']) 
 #log in required 하기
@@ -120,12 +120,13 @@ def showfile(filepath):
     if ext == ".cd":
         # cd 파일 읽어서  
         cd_data = read_json_file( os.path.join(root, username, filepath) )
-        
         data = read_file( os.path.join(root, username, cd_data[0]['filepath']) )
         
         # ref하고있는 파일 읽고 data에 저장하기
         # cd_data에는 cd파일의 데이터 저장하기
-        return render_template('main/index.html', dir_tree = dir_tree, username = username, data = None, ref_data = data, filename = filename )
+        print(cd_data)
+        print(data)
+        return render_template('main/index.html', dir_tree = dir_tree, username = username, data = None, ref_data = data, filename = filename, path = cd_data[0]['filepath'], ref_filename = cd_data[0]['filepath'])
     
     data = read_file( os.path.join(root, username, filepath) )
     return render_template('main/index.html', dir_tree = dir_tree, username = username, data = data, filename = filename )
@@ -135,12 +136,13 @@ def show_ref_file():
     if request.method == 'POST':
         error = None
         jsonData = request.get_json(force = True)
+        print(show_ref_file)
+        print(jsonData)
         cd_path = jsonData['cd_filepath']        
 
         if not cd_path:
             error = f'there is no such a file: {cd_path}'
-        if error is not None:
-            flash(error)
+            return make_response( jsonify({"msg": error }), 200 )
         else:
             cd_data = read_json_file( os.path.join(root, username, cd_path) )
             ref_data = read_file( os.path.join(root, username, cd_data[0]['filepath']) )
@@ -150,6 +152,8 @@ def show_ref_file():
                     "cd_data": cd_data
                 }
                 return make_response( jsonify(data_dict), 200 )
+            else:
+                return make_response( jsonify({"msg": "no ref_data" }), 200 )
 
 
 @main.route('/showcode', methods=['GET', 'POST'])
@@ -239,11 +243,12 @@ def create_codee():
     codee_name = jsonData['codee_name']
     ref_path = jsonData['ref_path']
     f = open(f"{root}{username}/{codee_path}/{codee_name}.cd", "w")
-    content = [{ 'filepath': ref_path }]
+    content = [{ 'filepath': ref_path, 'data': [] }]
     json_content = json.dumps(content)
     f.write(json_content)
     f.close()
     return make_response("codee file created", 200)
+    # return redirect(url_for('main.showfile', filepath=f"{codee_path}/{codee_name}.cd"))
 
 @main.route('/get_codee/<path:filepath>', methods=['GET'])
 def get_codee(filepath):
@@ -257,7 +262,16 @@ def get_codee(filepath):
         print(data)
     return make_response(data, 200)
 
-
+@main.route('/saveCodee', methods=['POST'])
+def saveCodee():
+    jsonData = request.get_json(force = True)
+    codee_path = jsonData['codee_path']
+    codee_data = jsonData['codee_data']
+    print(codee_data)
+    f = open(os.path.join(root, username, codee_path), "w")
+    f.write(codee_data)
+    f.close()
+    return make_response("codee file updated", 200) 
 
 # @main.route('/upload', methods = ['GET', 'POST'])
 # def upload():

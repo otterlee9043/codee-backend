@@ -78,13 +78,9 @@ function createEllipsisNode(line) {
     const info = selectedInfo.find((item) => `L${item.start}` === ellipsisLine.id);
     const lineId = `L${info.start}`;
     const number = info.number;
-    const ID = info.id ;
+    const ID = info.id;
     // console.log(ref_data[0]) ;
-    for( let i = 0 ; i < ref_data[0]['data'].length ; i++ ) {
-      if (ref_data[0]['data'][i].id == ID && ref_data[0]['data'][i].type == "line_hide") {
-        ref_data[0]['data'].splice(ref_data[0]['data'].indexOf(i), 1) ;
-      }
-    }
+    deleteLineHide(ID);
     // console.log(ref_data[0]) ;
     expand(lineId, number);
     const lineNumber = parseInt(lineId.replace(/[^0-9]/g, ""));
@@ -119,8 +115,8 @@ function hideLine() {
           }
           return !contained;
         });
-        const ID = randomId() ;
-        selectedInfo.push({ start: start, number: numberLinesSelected, id: ID});
+        const ID = randomId();
+        selectedInfo.push({ start: start, number: numberLinesSelected, id: ID });
         console.log(selectedInfo);
         let line = document.querySelector(`#L${start}`);
         console.log(line);
@@ -133,9 +129,11 @@ function hideLine() {
         Array.from(numbers).map((number) => {
           number.classList.remove("selecting");
         });
+        console.log(JSON.stringify(ref_data));
         if (ref_data != null) {
-          ref_data[0]['data'].push({"type" : "line_hide", "start" : start, "end" : end, "id" : ID}) ;
-          console.log(JSON.stringify(ref_data));
+          // ref_data[0]['data'].push({"type" : "line_hide", "start" : start, "end" : end, "id" : ID}) ;
+          addLineHide(start, end, ID);
+          console.log(JSON.stringify(ref_data[0]));
         }
       }
       lineSelected = !lineSelected;
@@ -147,11 +145,30 @@ window.addEventListener("load", async function () {
   // addMenuClass() ;
   const pre = document.querySelector("pre");
   const classes = pre.classList;
-  ref_data = await readCodee();
-  console.log(JSON.stringify(ref_data));
   if (classes.contains("context-menu-one")) {
+    ref_data = await readCodee();
+    console.log(JSON.stringify(ref_data));
     hideLine();
   }
+  ref_data[0].data.map((deco) => {
+    console.log(deco);
+    const s = deco.start;
+    const e = deco.end;
+    const n = Math.abs(s - e) + 1;
+    const i = deco.id;
+    selectedInfo.push({ start: s, number: n, id: i });
+    console.log(selectedInfo);
+    let line = document.querySelector(`#L${s}`);
+    console.log(line);
+    createEllipsisNode(line);
+    for (let i = 0; i < n; i++) {
+      line.classList.add("hidden");
+      line = line.nextElementSibling;
+    }
+    // Array.from(numbers).map((number) => {
+    //   number.classList.remove("selecting");
+    // });
+  });
   openDirectoryTree();
 });
 
