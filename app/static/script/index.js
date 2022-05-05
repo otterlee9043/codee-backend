@@ -1,3 +1,31 @@
+window.addEventListener("load", async function () {
+  // addMenuClass() ;
+  const pre = document.querySelector("pre");
+  const classes = pre.classList;
+  if (classes.contains("context-menu-one")) {
+    ref_data = await readCodee();
+    console.log(JSON.stringify(ref_data));
+    hideLine();
+    ref_data[0].data.map((deco) => {
+      console.log(deco);
+      const s = deco.start;
+      const e = deco.end;
+      const n = Math.abs(s - e) + 1;
+      const i = deco.id;
+      selectedInfo.push({ start: s, number: n, id: i });
+      console.log(selectedInfo);
+      let line = document.querySelector(`#L${s}`);
+      console.log(line);
+      createEllipsisNode(line);
+      for (let i = 0; i < n; i++) {
+        line.classList.add("hidden");
+        line = line.nextElementSibling;
+      }
+    });
+  }
+  openDirectoryTree();
+});
+
 const code = document.querySelector("code");
 let lineSelected = false;
 let start = -1;
@@ -140,37 +168,6 @@ function hideLine() {
     });
   });
 }
-
-window.addEventListener("load", async function () {
-  // addMenuClass() ;
-  const pre = document.querySelector("pre");
-  const classes = pre.classList;
-  if (classes.contains("context-menu-one")) {
-    ref_data = await readCodee();
-    console.log(JSON.stringify(ref_data));
-    hideLine();
-  }
-  ref_data[0].data.map((deco) => {
-    console.log(deco);
-    const s = deco.start;
-    const e = deco.end;
-    const n = Math.abs(s - e) + 1;
-    const i = deco.id;
-    selectedInfo.push({ start: s, number: n, id: i });
-    console.log(selectedInfo);
-    let line = document.querySelector(`#L${s}`);
-    console.log(line);
-    createEllipsisNode(line);
-    for (let i = 0; i < n; i++) {
-      line.classList.add("hidden");
-      line = line.nextElementSibling;
-    }
-    // Array.from(numbers).map((number) => {
-    //   number.classList.remove("selecting");
-    // });
-  });
-  openDirectoryTree();
-});
 
 // code.addEventListener("mouseup", selectText, false);
 

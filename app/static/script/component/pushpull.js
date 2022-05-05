@@ -76,30 +76,4 @@ function createCodeeFile(fileName, path) {
     .catch(function (error) {
       console.log("Fetch error: " + error);
     });
-  // readCodeeFile();
 }
-
-// async function readCodeeFile() {
-//   const codee_path = "home/codination/ver1/app/static/files/user2/OSSLab_0420_test/codee.cd";
-//   const url2 = new URL(`${window.origin}/codination/ver1/get_codee/${codee_path}`);
-//   let refFile, refFileName;
-//   // console.log(path, fileName);
-//   const opts2 = {
-//     method: "GET",
-//   };
-//   fetch(url2, opts2)
-//     .then(function (response) {
-//       if (response.status != 200) {
-//         console.log(`Looks like there was a problem. Status code: ${response.status}`);
-//         return;
-//       }
-//       // console.log(response.json());
-//       response.json().then(function (data) {
-//         localStorage.setItem(codee_path, data[0]);
-//       });
-//       // refFile = await response.json();
-//     })
-//     .catch(function (error) {
-//       console.log("Fetch error: " + error);
-//     });
-// }

@@ -25,5 +25,4 @@ async function createCodee() {
 
   const response = await fetch(`${window.origin}/codination/ver1/create_codee`, opts);
   location.href = `/codination/ver1/${codee_path}/${codee_name}.cd`;
-  // console.log("here");
 }

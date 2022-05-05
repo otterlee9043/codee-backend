@@ -133,8 +133,9 @@
     </div>
     {% if data is none %}
     <div class="box" id='export'>
-      <h3 id="cd">{{filename}}&nbsp;&nbsp;<button class="button" type="button" onclick="saveCodee('{{ path }}', '{{ username }}')">save</button></h3>
-      
+      <h3 id="cd">{{filename}}&nbsp;&nbsp;<button class="button" type="button"
+          onclick="saveCodee('{{ path }}', '{{ username }}')">save</button></h3>
+
       <div class="border-box">
         <div class="filename" id="filename">{{ref_filename}}</div>
         <pre id="pre" class="context-menu-one">
@@ -182,16 +183,16 @@
   });
 
 </script>
-<script src="{{ url_for('static', filename = 'script/html-to-rtf-browser.min.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/import/html-to-rtf-browser.min.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/index.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/dir_upload.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/import/dir_upload.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/showcode.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/copy.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/push_pull.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/menubar.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/component/copy.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/component/pushpull.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/component/menubar.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/writecodee.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/projectbar.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/codeedit.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/component/projectbar.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/editcodee.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/getIndices.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/createcodee.js') }}"></script>
 

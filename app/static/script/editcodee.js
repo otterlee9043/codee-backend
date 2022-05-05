@@ -1,4 +1,4 @@
-async function fillCodeTag(data, callback) {
+async function fillCodeTag(data) {
   const code_tag = document.getElementById("code");
   console.log(code_tag);
   const refFileName = data.cd_data[0].filepath;
@@ -8,8 +8,8 @@ async function fillCodeTag(data, callback) {
   console.log("done1");
   hljs.highlightAll();
   hljs.initLineNumbersOnLoad();
-  callback();
 }
+
 async function readCodee() {
   const cd = document.getElementById("cd");
   const cdpath = filepath;
@@ -19,7 +19,6 @@ async function readCodee() {
       cd_filepath: cdpath,
     }),
   };
-  console.log("check");
   const response = await fetch(`${window.origin}/codination/ver1/show_ref_file`, opts);
   const data = await response.json();
   // fillCodeTag(data, hideLine);
@@ -28,9 +27,9 @@ async function readCodee() {
   // console.log(JSON.stringify(data));
   return data.cd_data;
 }
-function addLineHide(start, end, ID) {
-  ref_data[0]['data'].push({"type" : "line_hide", "start" : start, "end" : end, "id" : ID}) ;
 
+function addLineHide(start, end, ID) {
+  ref_data[0]["data"].push({ type: "line_hide", start: start, end: end, id: ID });
 }
 
 function deleteLineHide(ID) {
@@ -44,24 +43,25 @@ function deleteLineHide(ID) {
 function saveCodee(path, username) {
   // path를 읽고
   // fetch로 보내기
-  console.log(filepath)
+  console.log(filepath);
   const opts = {
     method: "POST",
     body: JSON.stringify({
       codee_path: filepath,
-      codee_data: JSON.stringify(ref_data)
+      codee_data: JSON.stringify(ref_data),
     }),
     headers: new Headers({
-      "content-type": "application/json"
-    })
-  } ;
+      "content-type": "application/json",
+    }),
+  };
   fetch(`${window.origin}/codination/ver1/saveCodee`, opts)
-  .then(function (response) {
-    if (response.status != 200) {
-      console.log(`Looks like there was a problem. Status code: ${response.status}`);
-      return;    }
-  })
-  .catch(function(error) {
-    console.log("Fetch error: " + error);
-  }) ;
+    .then(function (response) {
+      if (response.status != 200) {
+        console.log(`Looks like there was a problem. Status code: ${response.status}`);
+        return;
+      }
+    })
+    .catch(function (error) {
+      console.log("Fetch error: " + error);
+    });
 }
