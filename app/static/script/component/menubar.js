@@ -1,23 +1,23 @@
 const menu = document.querySelector(".context-menu-one");
 const test = document.querySelector("#code");
 
-// menu.addEventListener("click", function (e) {
-//   e.preventDefault();
+menu.addEventListener("click", function (e) {
+  e.preventDefault();
 
-//   var element = document.getSelection();
-//   var selectedText = element.toString();
-//   if (selectedText != "") {
-//     const conMenu = document.querySelector(".context-menu-list.context-menu-root");
-//     const x = window.innerWidth - 200 > e.clientX ? e.clientX : window.innerWidth - 210;
-//     const y = window.innerHeight > e.clientY ? e.clientY : window.innerHeight - 100;
+  var element = document.getSelection();
+  var selectedText = element.toString();
+  if (selectedText != "") {
+    const conMenu = document.querySelector(".context-menu-list.context-menu-root");
+    const x = window.innerWidth - 200 > e.clientX ? e.clientX : window.innerWidth - 210;
+    const y = window.innerHeight > e.clientY ? e.clientY : window.innerHeight - 100;
 
-//     // console.log(`x: ${x}, y: ${y}`) ;
-//     conMenu.style.top = `${y + 10}px`;
-//     conMenu.style.left = `${x}px`;
+    // console.log(`x: ${x}, y: ${y}`) ;
+    conMenu.style.top = `${y + 10}px`;
+    conMenu.style.left = `${x}px`;
 
-//     $(".context-menu-one").contextMenu();
-//   }
-// });
+    $(".context-menu-one").contextMenu();
+  }
+});
 
 var fragment = null;
 var range = null;
@@ -69,25 +69,25 @@ var new_range = null;
 // }
 function createFakeSelection(event) {
   // create fake selection
-  new_range = document.createRange() ;
-  var startoffset = range.startOffset ;
-  var endoffset = range.endOffset ;
+  new_range = document.createRange();
+  var startoffset = range.startOffset;
+  var endoffset = range.endOffset;
   // new_range.setStart(range.startContainer, startoffset) ;
   // new_range.setEnd(range.endContainer, endoffset) ;
-  console.log(range.startOffset) ;
-  console.log(range.endOffset) ;
-  console.log(range.startContainer) ;
-  console.log(range) ;
+  console.log(range.startOffset);
+  console.log(range.endOffset);
+  console.log(range.startContainer);
+  console.log(range);
   // console.log(range.commonAncestorContainer) ;
   // console.log(range.startContainer.parentNode);
   // findChild(range.startContainer.parentNode, );
   if (document.getSelection) {
     var span = createNewSpan(document.getSelection());
-    new_range.setStart(range.startContainer, 3) ;
-    new_range.setEnd(range.endContainer, 3) ;
-    console.log(new_range.startOffset) ;
-    console.log(new_range) ;
-    console.log(range.startContainer) ;
+    new_range.setStart(range.startContainer, 3);
+    new_range.setEnd(range.endContainer, 3);
+    console.log(new_range.startOffset);
+    console.log(new_range);
+    console.log(range.startContainer);
     console.log("imdone");
     span.classList.add("selected");
     flag = 1;

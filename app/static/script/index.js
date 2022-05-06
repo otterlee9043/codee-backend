@@ -293,68 +293,77 @@ function splitSpan(span, index, textLength, start, same = false) {
   return start ? [FRAGMENT.TAIL, span2] : [FRAGMENT.HEAD, span];
 }
 
+function getLeafNodes(master) {
+  // console.log(master.getElementsByTagName("*"));
+  const nodeIterator = document.createNodeIterator(master, NodeFilter.SHOW_ALL);
+
+  // console.log(nodeIterator);
+  var nodes = Array.prototype.slice.call(master.getElementsByTagName("*"), 0);
+  var leafNodes = nodes.filter(function (elem) {
+    return !elem.hasChildNodes();
+  });
+  return leafNodes;
+}
+
+function getDescendants(node) {
+  // var i;
+  // accum = accum || [];
+  // for (i = 0; i < node.childNodes.length; i++) {
+  //   accum.push(node.childNodes[i]);
+  //   getDescendants(node.childNodes[i], accum);
+  // }
+  // return accum;
+  Array.from(node.childNodes).filter(function (index) {
+    var isLeaf = index.childNodes.length === 0;
+    return isLeaf;
+  });
+}
+
 function merge(newSpan) {
   const listToMerge = [];
   while (newSpan.firstChild) {
     const child = newSpan.firstChild;
-    console.log(child);
+    // console.log(child);
     newSpan.parentNode.insertBefore(child, newSpan);
     if (child.nodeType == Node.TEXT_NODE) continue;
     if (child.hasAttribute("fragmented")) listToMerge.push(child);
   }
-  console.log(listToMerge);
+  // console.log(listToMerge);
   newSpan.parentNode.removeChild(newSpan);
   listToMerge.map((el) => {
+    // el이 start 혹은 end node가 되도록 수정 (최상위 노드가 아니라)
+    // el을 다시 fragment value 확인해서 el을 다시 설정하도록
     console.log(el);
     const type = parseInt(el.getAttribute("fragmented"));
-    if (el.className === "") {
-      // el -> text node
-      switch (type) {
-        case FRAGMENT.FALSE:
+    switch (type) {
+      case FRAGMENT.FALSE:
+        if (el.nodeType === Node.ELEMENT_NODE) {
+          el.removeAttribute("fragmented");
+        } else {
           const textNode = document.createTextNode(el.innerText);
           el.parent.insertBefore(textNode, el);
           el.remove();
-          console.log(el.parent);
-          break;
-        case FRAGMENT.HEAD:
-          console.log(el.nextSibling.nodeValue);
-          el.nextSibling.nodeValue = el.innerText + el.nextSibling.nodeValue;
-          el.remove();
-          break;
-        case FRAGMENT.CENTER:
-          el.previousSibling.nodeValue += el.innerText + el.nextSibling.nodeValue;
-          el.nextSibling.remove();
-          el.remove();
-          break;
-        case FRAGMENT.TAIL:
-          el.previousSibling.nodeValue = el.previousSibling.nodeValue + el.innerText;
-          el.remove();
-          break;
-      }
-    } else {
-      switch (type) {
-        case FRAGMENT.FALSE:
-          el.removeAttribute("fragmented");
-          break;
-        case FRAGMENT.HEAD:
-          console.log(el.innerText);
-          console.log(el.nextSibling.innerText);
-          //mergeSpan(el, el.nextSibling);
-          el.nextSibling.innerText = el.innerText + el.nextSibling.innerText;
-          el.remove();
-          break;
-        case FRAGMENT.CENTER:
-          el.previousSibling.innerText += el.innerText + el.nextSibling.innerText;
-          el.nextSibling.remove();
-          el.remove();
-          break;
-        case FRAGMENT.TAIL:
-          // const el2 = lastChild(el);
-          // el.previousSibling.innerText += el.innerText;
-          lastChild(el.previousSibling).nodeValue += el.innerText;
-          el.remove();
-          break;
-      }
+        }
+
+        console.log(el.parent);
+        break;
+      case FRAGMENT.HEAD:
+        // el이 어느 depth 까지 찾아야 하지?
+        console.log(getLeafNodes(el));
+        console.log(el.nextSibling.nodeValue);
+        el.nextSibling.nodeValue = el.innerText + el.nextSibling.nodeValue;
+        el.remove();
+        break;
+      case FRAGMENT.CENTER:
+        el.previousSibling.nodeValue += el.innerText + el.nextSibling.nodeValue;
+        el.nextSibling.remove();
+        el.remove();
+        break;
+      case FRAGMENT.TAIL:
+        console.log(getLeafNodes(el));
+        el.previousSibling.nodeValue = el.previousSibling.nodeValue + el.innerText;
+        el.remove();
+        break;
     }
   });
 }
