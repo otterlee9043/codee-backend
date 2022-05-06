@@ -330,39 +330,66 @@ function merge(newSpan) {
   }
   // console.log(listToMerge);
   newSpan.parentNode.removeChild(newSpan);
-  listToMerge.map((el) => {
-    // el이 start 혹은 end node가 되도록 수정 (최상위 노드가 아니라)
-    // el을 다시 fragment value 확인해서 el을 다시 설정하도록
-    console.log(el);
-    const type = parseInt(el.getAttribute("fragmented"));
+  listToMerge.map((wrapper) => {
+    // wrapper이 start 혹은 end node가 되도록 수정 (최상위 노드가 아니라)
+    // wrapper을 다시 fragment value 확인해서 wrapper을 다시 설정하도록
+    console.log(wrapper);
+    const type = parseInt(wrapper.getAttribute("fragmented"));
+    let node;
     switch (type) {
       case FRAGMENT.FALSE:
-        if (el.nodeType === Node.ELEMENT_NODE) {
-          el.removeAttribute("fragmented");
+        if (wrapper.nodeType === Node.ELEMENT_NODE) {
+          wrapper.removeAttribute("fragmented");
         } else {
-          const textNode = document.createTextNode(el.innerText);
-          el.parent.insertBefore(textNode, el);
-          el.remove();
+          const textNode = document.createTextNode(wrapper.innerText);
+          wrapper.parent.insertBefore(textNode, wrapper);
+          wrapper.remove();
         }
-
-        console.log(el.parent);
         break;
-      case FRAGMENT.HEAD:
-        // el이 어느 depth 까지 찾아야 하지?
-        console.log(getLeafNodes(el));
-        console.log(el.nextSibling.nodeValue);
-        el.nextSibling.nodeValue = el.innerText + el.nextSibling.nodeValue;
-        el.remove();
+      case FRAGMENT.HEAD: //endNode, nextSibling과 이어야
+        node = lastChild(wrapper);
+        let nextNode = firstChild(wrapper.nextSibling);
+        // 쪼개진 element를 합치고
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          node.innerText = node.innerText + nextNode.innerText;
+        } else {
+          node.nodeValue = node.nodeValue + firstChild(wrapper.nextSibling).nodeValue;
+        }
+        // 그 다음 element들을 이동시킨다.
+        while (nextNode) {
+          let next = nextNode.nextSibling;
+          node.parentElement.appendChild(nextNode);
+          nextNode = next;
+        }
+        wrapper.nextSibling.remove();
         break;
       case FRAGMENT.CENTER:
-        el.previousSibling.nodeValue += el.innerText + el.nextSibling.nodeValue;
-        el.nextSibling.remove();
-        el.remove();
+        prevSibling = wrapper.previousSibling;
+        nextSibling = wrapper.nextSibling;
+        wrapper = firstChild(wrapper);
+        // nextSibling에 firstChild 뒤에 다른 node들이 있는 경우는 처리가 안됨.
+        if (wrapper.nodeType === Node.ELEMENT_NODE) {
+          lastChild(prevSibling).innerText += wrapper.innerText + firstChild(nextSibling).innerText;
+        } else {
+          lastChild(prevSibling).nodeValue += wrapper.nodeValue + firstChild(nextSibling).nodeValue;
+        }
+        wrapper.nextSibling.remove();
+        wrapper.remove();
         break;
-      case FRAGMENT.TAIL:
-        console.log(getLeafNodes(el));
-        el.previousSibling.nodeValue = el.previousSibling.nodeValue + el.innerText;
-        el.remove();
+      case FRAGMENT.TAIL: //startNode, previousSibling과 이어야 함
+        node = firstChild(wrapper);
+        let prevNode = lastChild(wrapper.previousSibling);
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          node.innerText = lastChild(wrapper.previousSibling).innerText + node.innerText;
+        } else {
+          node.nodeValue = lastChild(wrapper.previousSibling).nodeValue + node.nodeValue;
+        }
+        // while (node) {
+        //   let next = node.nextSibling;
+        //   prevNode.parentElement.appendChild(node);
+        //   node = next;
+        // }
+        prevNode.remove();
         break;
     }
   });
@@ -372,14 +399,16 @@ function lastChild(element) {
   while (element.hasChildNodes() && element.lastChild) {
     element = element.lastChild;
   }
-  return element;
+  if (element.parentElement.childNodes.length > 1) return element; // text node
+  else return element.parentElement; // span
 }
 
 function firstChild(element) {
   while (element.hasChildNodes() && element.firstChild) {
     element = element.firstChild;
   }
-  return element;
+  if (element.parentElement.childNodes.length > 1) return element; // text node
+  else return element.parentElement; // span
 }
 
 function bindTags(startNode, endNode) {
@@ -393,7 +422,8 @@ function bindTags(startNode, endNode) {
       node = node.nextSibling;
       newSpan.appendChild(prev_node);
     }
-    newSpan.appendChild(endNode);
+    // endNode의 상위노드가 존재한다면 while문에서 이동해버림
+    if (endNode.parentElement.tagName !== "SPAN") newSpan.appendChild(endNode);
   } else {
     newSpan.appendChild(startNode);
   }
