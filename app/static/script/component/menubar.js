@@ -1,5 +1,28 @@
 const menu = document.querySelector(".context-menu-one");
-const test = document.querySelector("#code");
+let line ;
+let start_index ; 
+let end_index ;
+let url ;
+
+
+function getTD(elem) {
+  while(elem.tagName != "TD") {
+    elem = elem.parentElement ;
+  }
+}
+function findLine(elem) {
+  while(elem.tagName != "TD") {
+    elem = elem.parentElement ;
+  }
+
+  return elem ;
+}
+
+function findOffset(tdNode, node) {
+  let childNodes = tdNode.childNodes ;
+  while ()
+}
+
 
 menu.addEventListener("click", function (e) {
   e.preventDefault();
@@ -19,13 +42,12 @@ menu.addEventListener("click", function (e) {
   }
 });
 
-var fragment = null;
 var range = null;
 var selected = null;
 
 function saveSelection() {
   if (window.getSelection) {
-    selected = window.getSelection();
+    selected = document.getSelection();
     if (selected.getRangeAt && selected.rangeCount) {
       return selected.getRangeAt(0);
     } else if (document.selection && document.selection.createRange) {
@@ -40,20 +62,18 @@ function restroeSelection() {
     console.log("1");
     if (window.getSelection) {
       console.log(range);
-
       selected = document.getSelection();
       selected.removeAllRanges();
       selected.addRange(range);
     } else if (document.selection && range.select) {
       console.log("3");
-
       range.select();
     }
+    range = null ;
   }
 }
 
 var flag = 0;
-var new_range = null;
 
 // function findChild(node) {
 //   if (node.tagName == "SPAN") {
@@ -68,30 +88,14 @@ var new_range = null;
 //   console.log(node.parentNode);
 // }
 function createFakeSelection(event) {
-  // create fake selection
-  new_range = document.createRange();
-  var startoffset = range.startOffset;
-  var endoffset = range.endOffset;
-  // new_range.setStart(range.startContainer, startoffset) ;
-  // new_range.setEnd(range.endContainer, endoffset) ;
-  console.log(range.startOffset);
-  console.log(range.endOffset);
-  console.log(range.startContainer);
   console.log(range);
-  // console.log(range.commonAncestorContainer) ;
-  // console.log(range.startContainer.parentNode);
-  // findChild(range.startContainer.parentNode, );
   if (document.getSelection) {
     var span = createNewSpan(document.getSelection());
-    new_range.setStart(range.startContainer, 3);
-    new_range.setEnd(range.endContainer, 3);
-    console.log(new_range.startOffset);
-    console.log(new_range);
-    console.log(range.startContainer);
     console.log("imdone");
     span.classList.add("selected");
     flag = 1;
   }
+  console.log(new_range) ;
   // 여기서 range가 없어진다.
 }
 
@@ -102,13 +106,9 @@ function removeFakeSelection(event) {
     var select = document.querySelector(".selected");
     select.classList.remove("selected");
     merge(select);
-    restroeSelection();
+    // restroeSelection();
   }
-
-  // var temp = document.createRange();
-  // temp.setStart(childs[0], 1);
-  // temp.setEnd(childs[0], 1);
-  // window.getSelection().addRange(temp);
+  console.log(range);
   flag = 0;
 }
 
@@ -146,8 +146,15 @@ $.contextMenu({
     } else if (key == "record") {
       console.log("record");
     } else if (key == "hide") {
+      // let docfrag = document.createDocumentFragment();
+      const td = selection.anchorNode.parentElement.closest("td");
+      const cloneNode = td.cloneNode(true);
+      // docfrag.appendChild(cloneNode);
       span = createNewSpan(selection);
-      console.log(span);
+      const newId = randomId();
+      span.id = newId;
+      console.log(newId, cloneNode);
+      // console.log(span);
       ellipsisSpan(span);
     } else if (key == "link") {
       console.log("link");
@@ -157,8 +164,8 @@ $.contextMenu({
     } else {
       console.log("none");
     }
-    const [startIndex, endIndex] = getIndices(span);
-    console.log(startIndex, endIndex);
+    // const [startIndex, endIndex] = getIndices(span);
+    // console.log(startIndex, endIndex);
     selection.removeAllRanges();
     // window.console && console.log(m) || alert(m);
   },
@@ -212,8 +219,10 @@ $.contextMenu({
                 //selectedNode = JSON.parse(localStorage.getItem("selection"));
                 console.log("link enter");
                 // getting link
-                const link = document.getElementsByName("context-menu-input-link-1")[0].value;
-                console.log(link);
+                // line number 가져오기
+                let link_tag = document.getElementsByName("context-menu-input-link-1")
+                url = link_tag[0].value;
+                console.log(line_num);
 
                 // create a tag
                 // var a_tag = document.createElement("a");
@@ -254,13 +263,21 @@ $.contextMenu({
       // show
       var input = document.getElementsByName("context-menu-input-link-1")[0];
       const code = document.querySelector("#code");
-      console.log("show");
 
       range = saveSelection();
-      console.log(range);
-      if (range && !range.collapsed) {
-        fragment = range.cloneContents();
-      }
+      var tdNode = getTd(range.commonAncestorContainer) ;
+      line = tdNode.getAttribute('data-line-number') ;
+      start_index = range.startOffset + findOffset();
+      console.log(line) ;
+      console.log(range) ;
+      // range.startContainer.parentElement.innerText = "hello"
+      // console.log(range.startContainer) ;
+      new_range = document.createRange() ;
+      new_range.setStart(range.startContainer, range.startOffset) ;
+      new_range.setEnd(range.endContainer, range.endOffset) ;
+      console.log(new_range) ;
+    
+
       input.addEventListener("mousedown", createFakeSelection);
       // // remove fake selection
       input.addEventListener("blur", removeFakeSelection, true);
