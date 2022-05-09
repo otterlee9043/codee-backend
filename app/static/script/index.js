@@ -160,6 +160,7 @@ function hideLine() {
         console.log(JSON.stringify(ref_data));
         if (ref_data != null) {
           // ref_data[0]['data'].push({"type" : "line_hide", "start" : start, "end" : end, "id" : ID}) ;
+          console.log(start);
           addLineHide(start, end, ID);
           console.log(JSON.stringify(ref_data[0]));
         }
@@ -306,89 +307,6 @@ function getDescendants(node) {
   });
 }
 
-function merge(newSpan) {
-  const listToMerge = [];
-  while (newSpan.firstChild) {
-    const child = newSpan.firstChild;
-    // console.log(child);
-    newSpan.parentNode.insertBefore(child, newSpan);
-    if (child.nodeType == Node.TEXT_NODE) continue;
-    if (child.hasAttribute("fragmented")) listToMerge.push(child);
-  }
-  // console.log(listToMerge);
-  newSpan.parentNode.removeChild(newSpan);
-  listToMerge.map((wrapper) => {
-    // wrapper이 start 혹은 end node가 되도록 수정 (최상위 노드가 아니라)
-    // wrapper을 다시 fragment value 확인해서 wrapper을 다시 설정하도록
-    console.log(wrapper);
-    const type = parseInt(wrapper.getAttribute("fragmented"));
-    let node;
-    switch (type) {
-      case FRAGMENT.FALSE:
-        if (wrapper.nodeType === Node.ELEMENT_NODE) {
-          wrapper.removeAttribute("fragmented");
-        } else {
-          const textNode = document.createTextNode(wrapper.innerText);
-          wrapper.parent.insertBefore(textNode, wrapper);
-          wrapper.remove();
-        }
-        break;
-      case FRAGMENT.HEAD: //endNode, nextSibling과 이어야
-        node = lastChild(wrapper);
-        let nextNode = firstChild(wrapper.nextSibling);
-        // 쪼개진 element를 합치고
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          node.innerText = node.innerText + nextNode.innerText;
-        } else {
-          node.nodeValue = node.nodeValue + nextNode.nodeValue;
-        }
-        // node의 상위노드가 있는 경우, 뒤의 노드들도 이동시켜야 함
-        if (nextNode.parentElement.tagName === "SPAN") {
-          let lastNode = nextNode.nextSibling;
-          nextNode.remove();
-          while (lastNode) {
-            let next = lastNode.nextSibling;
-            node.parentElement.appendChild(lastNode);
-            lastNode = next;
-          }
-        }
-        wrapper.nextSibling.remove();
-        wrapper.removeAttribute("fragmented");
-        break;
-      case FRAGMENT.CENTER:
-        // @최상위 노드가 center인 경우가 들어도록 수정
-        prevSibling = wrapper.previousSibling;
-        nextSibling = wrapper.nextSibling;
-        wrapper = firstChild(wrapper);
-        // nextSibling에 firstChild 뒤에 다른 node들이 있는 경우는 처리가 안됨.
-        if (wrapper.nodeType === Node.ELEMENT_NODE) {
-          lastChild(prevSibling).innerText += wrapper.innerText + firstChild(nextSibling).innerText;
-        } else {
-          lastChild(prevSibling).nodeValue += wrapper.nodeValue + firstChild(nextSibling).nodeValue;
-        }
-        wrapper.nextSibling.remove();
-        wrapper.remove();
-        break;
-      case FRAGMENT.TAIL: //startNode, previousSibling과 이어야 함
-        node = firstChild(wrapper);
-        let prevNode = lastChild(wrapper.previousSibling);
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          node.innerText = lastChild(wrapper.previousSibling).innerText + node.innerText;
-        } else {
-          node.nodeValue = lastChild(wrapper.previousSibling).nodeValue + node.nodeValue;
-        }
-        // while (node) {
-        //   let next = node.nextSibling;
-        //   prevNode.parentElement.appendChild(node);
-        //   node = next;
-        // }
-        wrapper.removeAttribute("fragmented");
-        prevNode.remove();
-        break;
-    }
-  });
-}
-
 function lastChild(element) {
   while (element.hasChildNodes() && element.lastChild) {
     element = element.lastChild;
@@ -498,6 +416,7 @@ function createNewSpan(selectionText) {
       if (fragmented === FRAGMENT.HEAD) startNode.parentElement.insertBefore(cutSpan, startNode.nextSibling);
       else startNode.parentElement.insertBefore(cutSpan, startNode);
       splitTree(parent, cutSpan);
+      console.log(start);
       // startNode = startNode.closest("td>span");
     }
     startNode.closest("td>span").setAttribute("fragmented", fragmented);
@@ -513,7 +432,7 @@ function createNewSpan(selectionText) {
     [fragmented, startNode] = splitSpan(selectedFirst.parentElement, firstOffset, textLength, true);
   }
   startNode.parentElement.insertBefore(cutSpan, startNode);
-  splitTree(parent, cutSpan);
+  const start = splitTree(parent, cutSpan, FRAGMENT.TAIL, true);
   startNode = startNode.closest("td>span");
   startNode.setAttribute("fragmented", fragmented);
   //console.log("startNode >>", startNode);
@@ -526,9 +445,17 @@ function createNewSpan(selectionText) {
     [fragmented, endNode] = splitSpan(selectedLast.parentElement, lastOffset, textLength2, false);
   }
   endNode.parentElement.insertBefore(cutSpan, endNode.nextSibling);
-  splitTree(parent, cutSpan);
-  endNode = endNode.closest("td>span");
-  endNode.setAttribute("fragmented", fragmented);
+  if (parseInt(startNode.getAttribute("fragmented")) === FRAGMENT.TAIL) {
+    startNode.removeAttribute("fragmented");
+    splitTree(parent, cutSpan);
+    endNode = endNode.closest("td>span");
+    endNode.setAttribute("fragmented", FRAGMENT.CENTER);
+  } else {
+    splitTree(parent, cutSpan);
+    endNode = endNode.closest("td>span");
+    endNode.setAttribute("fragmented", fragmented);
+  }
+
   //console.log("endNode >>", endNode);
 
   // startNode.setAttribute("key", key);
@@ -558,12 +485,23 @@ function hideText() {
   selectionText.removeAllRanges();
 }
 
-function splitTree(bound, cutElement, left) {
-  let parent, right;
-  for (parent = cutElement.parentNode; bound != parent; parent = grandparent) {
+function splitTree(bound, cutElement, fragment, split) {
+  let parent, right, grandparent;
+  parent = cutElement.parentNode;
+  if (parent != bound) {
     right = parent.cloneNode(false); // parent node를 right로 복사
     while (cutElement.nextSibling) right.appendChild(cutElement.nextSibling); // cut 뒤에 오는 element들을 right에 append
-    var grandparent = parent.parentNode;
+    grandparent = parent.parentNode;
+    parent.setAttribute("fragmented", split ? fragment : FRAGMENT.FALSE);
+    parent = grandparent;
+  } else {
+    parent = cutElement.parentElement;
+  }
+  for (; parent != bound; parent = grandparent) {
+    right = parent.cloneNode(false); // parent node를 right로 복사
+    while (cutElement.nextSibling) right.appendChild(cutElement.nextSibling); // cut 뒤에 오는 element들을 right에 append
+    grandparent = parent.parentNode;
+    // setAttribute("FRAGMENTED", fragment);
     grandparent.insertBefore(right, parent.nextSibling); // parent 뒤에 right를 삽입
     grandparent.insertBefore(cutElement, right); // right 앞에 cutElement 삽입
   }
@@ -571,5 +509,102 @@ function splitTree(bound, cutElement, left) {
   // if (left) node = cutElement.previousSibling;
   // else node = cutElement.nextSibling;
   cutElement.remove();
-  // return node;
+  return right;
+}
+
+function merge(newSpan) {
+  const listToMerge = [];
+  while (newSpan.firstChild) {
+    const child = newSpan.firstChild;
+    // console.log(child);
+    newSpan.parentNode.insertBefore(child, newSpan);
+    if (child.nodeType == Node.TEXT_NODE) continue;
+    if (child.hasAttribute("fragmented")) listToMerge.push(child);
+  }
+  // console.log(listToMerge);
+  newSpan.parentNode.removeChild(newSpan);
+  listToMerge.map((wrapper) => {
+    // wrapper이 start 혹은 end node가 되도록 수정 (최상위 노드가 아니라)
+    // wrapper을 다시 fragment value 확인해서 wrapper을 다시 설정하도록
+    console.log(wrapper);
+    const type = parseInt(wrapper.getAttribute("fragmented"));
+    let node;
+    switch (type) {
+      case FRAGMENT.FALSE:
+        if (wrapper.nodeType === Node.ELEMENT_NODE) {
+          wrapper.removeAttribute("fragmented");
+        } else {
+          const textNode = document.createTextNode(wrapper.innerText);
+          wrapper.parent.insertBefore(textNode, wrapper);
+          wrapper.remove();
+        }
+        break;
+      case FRAGMENT.HEAD: //endNode, nextSibling과 이어야
+        node = lastChild(wrapper);
+        let nextNode = firstChild(wrapper.nextSibling);
+        // 쪼개진 element를 합치고
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          if (node.className === "") {
+            // split하느라 span에 감싸진 text node
+            node.innerText = node.innerText + nextNode.nodeValue;
+          } else {
+            node.innerText = node.innerText + nextNode.innerText;
+          }
+        } else {
+          node.nodeValue = node.nodeValue + nextNode.nodeValue;
+        }
+        // node의 상위노드가 있는 경우, 뒤의 노드들도 이동시켜야 함
+        if (nextNode.parentElement.tagName === "SPAN") {
+          let lastNode = nextNode.nextSibling;
+          nextNode.remove();
+          while (lastNode) {
+            let next = lastNode.nextSibling;
+            node.parentElement.appendChild(lastNode);
+            lastNode = next;
+          }
+        }
+        wrapper.nextSibling.remove();
+        // 다음 이어지는 노드가 text node인 경우 (그냥 text 노드 || split 되었던 text 노드)
+        if (nextNode.nodeType === Node.TEXT_NODE) {
+          const text = document.createTextNode(wrapper.innerText);
+          wrapper.replaceWith(text);
+        }
+        wrapper.removeAttribute("fragmented");
+        break;
+      case FRAGMENT.CENTER:
+        // @최상위 노드가 center인 경우가 들어도록 수정
+        prevSibling = wrapper.previousSibling;
+        nextSibling = wrapper.nextSibling;
+        node = firstChild(wrapper);
+        if (node.parentElement.childNodes.length == 1) {
+        } else {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            lastChild(prevSibling).innerText += wrapper.innerText + firstChild(nextSibling).innerText;
+          } else {
+            lastChild(prevSibling).nodeValue += wrapper.nodeValue + firstChild(nextSibling).nodeValue;
+          }
+        }
+        // nextSibling에 firstChild 뒤에 다른 node들이 있는 경우는 처리가 안됨.
+
+        wrapper.nextSibling.remove();
+        wrapper.remove();
+        break;
+      case FRAGMENT.TAIL: //startNode, previousSibling과 이어야 함
+        node = firstChild(wrapper);
+        let prevNode = lastChild(wrapper.previousSibling);
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          node.innerText = lastChild(wrapper.previousSibling).innerText + node.innerText;
+        } else {
+          node.nodeValue = lastChild(wrapper.previousSibling).nodeValue + node.nodeValue;
+        }
+        // while (node) {
+        //   let next = node.nextSibling;
+        //   prevNode.parentElement.appendChild(node);
+        //   node = next;
+        // }
+        wrapper.removeAttribute("fragmented");
+        prevNode.remove();
+        break;
+    }
+  });
 }
