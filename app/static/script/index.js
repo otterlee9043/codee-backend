@@ -415,7 +415,7 @@ function createNewSpan(selectionText) {
       [fragmented, startNode] = splitSpan(selectedFirst.parentElement, firstOffset, textLength, true, true);
       if (fragmented === FRAGMENT.HEAD) startNode.parentElement.insertBefore(cutSpan, startNode.nextSibling);
       else startNode.parentElement.insertBefore(cutSpan, startNode);
-      splitTree(parent, cutSpan);
+      splitTree(cutSpan);
       console.log(start);
       // startNode = startNode.closest("td>span");
     }
@@ -432,7 +432,7 @@ function createNewSpan(selectionText) {
     [fragmented, startNode] = splitSpan(selectedFirst.parentElement, firstOffset, textLength, true);
   }
   startNode.parentElement.insertBefore(cutSpan, startNode);
-  const start = splitTree(parent, cutSpan, FRAGMENT.TAIL, true);
+  const start = splitTree(cutSpan, Position.START, true);
   startNode = startNode.closest("td>span");
   startNode.setAttribute("fragmented", fragmented);
   //console.log("startNode >>", startNode);
@@ -447,11 +447,11 @@ function createNewSpan(selectionText) {
   endNode.parentElement.insertBefore(cutSpan, endNode.nextSibling);
   if (parseInt(startNode.getAttribute("fragmented")) === FRAGMENT.TAIL) {
     startNode.removeAttribute("fragmented");
-    splitTree(parent, cutSpan);
+    splitTree(cutSpan);
     endNode = endNode.closest("td>span");
     endNode.setAttribute("fragmented", FRAGMENT.CENTER);
   } else {
-    splitTree(parent, cutSpan);
+    splitTree(cutSpan);
     endNode = endNode.closest("td>span");
     endNode.setAttribute("fragmented", fragmented);
   }
@@ -485,31 +485,36 @@ function hideText() {
   selectionText.removeAllRanges();
 }
 
-function splitTree(bound, cutElement, fragment, split) {
+const Position = {
+  START: 0,
+  END: 1,
+};
+
+function splitTree(cutElement, position, split) {
+  const bound = cutElement.parentElement.closest("td");
   let parent, right, grandparent;
-  parent = cutElement.parentNode;
-  if (parent != bound) {
-    right = parent.cloneNode(false); // parent node를 right로 복사
-    while (cutElement.nextSibling) right.appendChild(cutElement.nextSibling); // cut 뒤에 오는 element들을 right에 append
-    grandparent = parent.parentNode;
-    parent.setAttribute("fragmented", split ? fragment : FRAGMENT.FALSE);
-    parent = grandparent;
-  } else {
-    parent = cutElement.parentElement;
-  }
-  for (; parent != bound; parent = grandparent) {
+  let node = position === Position.START ? cutElement.nextSibling : cutElement.previousSibling;
+  if (split) node.setAttribute("fragmented", position === Position.START ? FRAGMENT.TAIL : FRAGMENT.HEAD);
+  else node.setAttribute("fragmented", FRAGMENT.FALSE);
+
+  for (parent = cutElement.parentNode; parent != bound; parent = grandparent) {
     right = parent.cloneNode(false); // parent node를 right로 복사
     while (cutElement.nextSibling) right.appendChild(cutElement.nextSibling); // cut 뒤에 오는 element들을 right에 append
     grandparent = parent.parentNode;
     // setAttribute("FRAGMENTED", fragment);
     grandparent.insertBefore(right, parent.nextSibling); // parent 뒤에 right를 삽입
     grandparent.insertBefore(cutElement, right); // right 앞에 cutElement 삽입
+    node = position === Position.START ? right : parent;
+    node.setAttribute("fragmented", position === Position.START ? FRAGMENT.TAIL : FRAGMENT.HEAD);
+    // else node.setAttribute("fragmented", FRAGMENT.FALSE);
+    // if (split) node.setAttribute("fragmented", position === Position.START ? FRAGMENT.TAIL : FRAGMENT.HEAD);
+    // else node.setAttribute("fragmented", FRAGMENT.FALSE);
   }
   // let node;
   // if (left) node = cutElement.previousSibling;
   // else node = cutElement.nextSibling;
   cutElement.remove();
-  return right;
+  return position === Position.START ? right : parent;
 }
 
 function merge(newSpan) {
