@@ -20,6 +20,7 @@ pre {
 div#export {
   /* padding-top: 30px;
   padding-left: 30px; */
+  /* position: absolute; */
 }
 div.filelist {
   padding-top: 10px;
@@ -476,4 +477,23 @@ textarea {
 .create-btn {
   display: inline-block;
   text-align: center;
+}
+
+.comment-underline {
+  text-decoration: solid underline rgb(255, 215, 82) 3px;
+}
+
+.comment-underline:hover {
+  text-decoration: solid underline rgb(230, 194, 76) 3px;
+}
+
+.comment {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 1px grey solid;
+  border-radius: 3px;
+  padding: 5px;
+  font-size: 11px;
+  z-index: 1;
 }

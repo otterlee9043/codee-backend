@@ -1,7 +1,7 @@
 const menu = document.querySelector(".context-menu-one");
-let line ;
-let start_index ;
-let end_index ;
+let line;
+let start_index;
+let end_index;
 
 function getTD(elem) {
   while (elem.tagName != "TD") {
@@ -18,51 +18,48 @@ function findLine(elem) {
 }
 
 function findOffsetTag(node, offset) {
-  let childs = node.childNodes ;
-  let i = 0 ;
-  let length = 0 ;
-  let prev ;
-  let prevOffset ;
+  let childs = node.childNodes;
+  let i = 0;
+  let length = 0;
+  let prev;
+  let prevOffset;
   while (length < offset) {
-    prevOffset = length ;
-    prev = childs[i] ;
+    prevOffset = length;
+    prev = childs[i];
     if (childs[i].tagName == null) {
-      length += childs[i].nodeValue.length ;
+      length += childs[i].nodeValue.length;
+    } else {
+      length += childs[i].innerText.length;
     }
-    else {
-      length += childs[i].innerText.length ;
-    }
-    i++ ;
+    i++;
   }
 
   if (prev.tagName == null) {
-    return {tag: prev, startOffset: offset - prevOffset} ;
-  }
-  else {
-    return findOffsetTag(prev, offset - prevOffset) ;
+    return { tag: prev, startOffset: offset - prevOffset };
+  } else {
+    return findOffsetTag(prev, offset - prevOffset);
   }
 }
 
 // console.log(range.startContainer.hasChildNodes() ) ;
 // console.log(range.startContainer.parentElement.innerText.length ) ;
 function findOffset(node, offset) {
-  let prev = node ;
+  let prev = node;
   while (node.tagName != "TD") {
-    node = node.previousSibling ;
+    node = node.previousSibling;
     while (node != null) {
       if (node.tagName == null) {
-        offset += node.nodeValue.length ;
+        offset += node.nodeValue.length;
+      } else {
+        offset += node.innerText.length;
       }
-      else {
-        offset += node.innerText.length ;
-      }
-      prev = node ;
-      node = node.previousSibling ;
+      prev = node;
+      node = node.previousSibling;
     }
-    node = prev.parentElement ;
-    prev = node ;
+    node = prev.parentElement;
+    prev = node;
   }
-  return offset ;
+  return offset;
 }
 
 menu.addEventListener("click", function (e) {
@@ -92,29 +89,29 @@ function saveSelection() {
     if (selected.getRangeAt && selected.rangeCount) {
       return selected.getRangeAt(0);
     } else if (document.selection && document.selection.createRange) {
-      return document.selection.createRange();
+      return document.createRange();
     }
     return null;
   }
 }
 
 function restroeSelection() {
-
   if (flag) {
-    console.log("restoreSelection") ;
-    let tdTag = document.querySelector(`#L${line} > .hljs-ln-code`) ;
-    let startTag = findOffsetTag(tdTag, start_index) ;
-    let endTag = findOffsetTag(tdTag, end_index) ;
-    let new_range = document.createRange() ;
-    new_range.setStart(startTag.tag, startTag.startOffset) ;
-    new_range.setEnd(endTag.tag, endTag.startOffset) ;
-    document.getSelection().removeAllRanges() ;
-    document.getSelection().addRange(new_range) ;
+    console.log("restoreSelection");
+    let tdTag = document.querySelector(`#L${line} > .hljs-ln-code`);
+    let startTag = findOffsetTag(tdTag, start_index);
+    let endTag = findOffsetTag(tdTag, end_index);
+    let new_range = document.createRange();
+    new_range.setStart(startTag.tag, startTag.startOffset);
+    new_range.setEnd(endTag.tag, endTag.startOffset);
+    document.getSelection().removeAllRanges();
+    document.getSelection().addRange(new_range);
   }
 }
 // let url_flag = 0 ;
 var flag = 0;
 function createFakeSelection(event) {
+  console.log(flag);
   if (!flag) {
     var span = createNewSpan(document.getSelection());
     span.classList.add("selected");
@@ -134,8 +131,8 @@ function removeFakeSelection(event) {
   //   var select = document.querySelector(".selected");
   //   select.classList.remove("selected");
   // }
-  // else flag 일땐 
-  console.log(flag) ;
+  // else flag 일땐
+  console.log(flag);
   if (flag) {
     var select = document.querySelector(".selected");
     select.classList.remove("selected");
@@ -146,8 +143,11 @@ function removeFakeSelection(event) {
   flag = 0;
 }
 
-function openLink() {
-  console.log("hello") ;
+function openLink(self) {
+  console.log("click link");
+  console.log(self);
+  url = self.getAttribute("url");
+  window.open(url, "_blank").focus();
 }
 
 $.contextMenu({
@@ -165,21 +165,20 @@ $.contextMenu({
     let span;
     if (key == "comment") {
       console.log("comment");
+      span = createNewSpan(selection);
+      span.classList.add("comment");
     } //else if (key == "highlight") {
     else if (key == "red") {
       console.log("red");
       span = createNewSpan(selection);
-      span.classList.add("decoration");
       span.classList.add("red");
     } else if (key == "yellow") {
       console.log("yellow");
       span = createNewSpan(selection);
-      span.classList.add("decoration");
       span.classList.add("yellow");
     } else if (key == "green") {
       console.log("green");
       span = createNewSpan(selection);
-      span.classList.add("decoration");
       span.classList.add("green");
     } else if (key == "record") {
       console.log("record");
@@ -211,6 +210,18 @@ $.contextMenu({
     comment: {
       // name: "Comment",
       icon: "fa-light fa-comment-dots",
+      items: {
+        "link-1": {
+          type: "text",
+          events: {
+            keyup: function (e) {
+              const conMenu = document.querySelector(".context-menu-list.context-menu-root");
+
+              addComment(e, conMenu.style.top, conMenu.style.left);
+            },
+          },
+        },
+      },
     },
     highlight: {
       // name: "Highlight",
@@ -254,53 +265,39 @@ $.contextMenu({
             keyup: function (e) {
               // add some fancy key handling here?
               let link_tag = document.getElementsByName("context-menu-input-link-1");
-              if (e.keyCode == 13 && link_tag[0].value) {
-                console.log(range) ;
+              if (e.keyCode == 13 && link_tag[1].value) {
+                console.log(range);
                 //selectedNode = JSON.parse(localStorage.getItem("selection"));
                 console.log("link enter");
                 // getting link
                 // line number 가져오기
-                let url = link_tag[0].value;
-                let id = randomId() ;
+                let url = link_tag[1].value;
+                let id = randomId();
                 console.log(url);
 
-                // create a tag
-                // var a_tag = document.createElement("a");
-                // a_tag.classList.add("link");
-                // a_tag.href = url;
-                // a_tag.setAttribute("id", randomId());
-                // a_tag.setAttribute("target", "_blank");
-
                 // add to a tag
-                // merge하고
-                var select = document.querySelector(".selected") ;
-                select.classList.remove("selected") ;
-                merge(select) ; 
-                // tag추가하기(find offset node)
-                let tdTag = document.querySelector(`#L${line} > .hljs-ln-code`) ;
-                let startTag = findOffsetTag(tdTag, start_index) ;
-                let endTag = findOffsetTag(tdTag, end_index) ;
-                let new_range = document.selection.createRange() ;
-                new_range.setStart(startTag.tag, startTag.startOffset) ;
-                new_range.setEnd(endTag.tag, endTag.startOffset) ;
-                document.getSelection().removeAllRanges() ;
-                document.getSelection().addRange(new_range) ;
-                let span = createNewSpan(document.getSelection()) ;
+                var select = document.querySelector(".selected");
+                $(".selected").wrap(
+                  `<a id="${id}" url = "${url}" class="link" href="javascript:void(0);" onclick="openLink(this)"></a>`
+                );
+                select.classList.remove("selected");
+                // select.addEventListener("hover", removeLinkTag) ;
 
+                // cache에 store하기
+                if (ref_data != null) {
+                  console.log("addLink");
+                  addLink(start_index, end_index, url, id);
+                  console.log(ref_data);
+                }
 
-
-
-                // let tdTag = document.querySelector(`#L${line} > .hljs-ln-code`) ;
-                // console.log(tdTag) ;
-                // let startTag = findOffsetTag(tdTag, start_index) ;
-                // console.log(startTag) ;
-                // $(".selected").wrap(`<a id="${id}" class="link" href="javascript:void(0) onclick=openLink()"></a>`) ;
-                // $(".selected").wrap(`<a id="${randomId()}" class="link" href="${url}"></a>`);
                 // removeEventListener하기
-                var input = document.getElementsByName("context-menu-input-link-1")[0] ;
-                input.removeEventListener("blur", removeFakeSelection) ;
-                console.log("fisrtst") ;
-                // $('.context-menu-list').trigger('contextmenu:hide')
+                var inputs = document.getElementsByName("context-menu-input-link-1");
+                Array.from(inputs).map((input) => {
+                  input.addEventListener("mousedown", createFakeSelection);
+                  input.addEventListener("blur", removeFakeSelection);
+                });
+                console.log("fisrtst");
+                $(".context-menu-list").trigger("contextmenu:hide");
               }
             },
           },
@@ -310,30 +307,34 @@ $.contextMenu({
   },
   events: {
     hide: function (e) {
-      var input = document.getElementsByName("context-menu-input-link-1")[0] ;
-      const code = document.querySelector("#code") ;
+      var inputs = document.getElementsByName("context-menu-input-link-1");
+      Array.from(inputs).map((input) => {
+        input.removeEventListener("mousedown", createFakeSelection);
+        input.removeEventListener("blur", removeFakeSelection);
+      });
 
-      input.removeEventListener("mousedown", createFakeSelection) ;
-      input.removeEventListener("blur", removeFakeSelection) ;
-      console.log("hide") ;
+      // const code = document.querySelector("#code");
+      document.getSelection().removeAllRanges();
+      console.log("hide");
     },
     show: function (e) {
       // show
-      var input = document.getElementsByName("context-menu-input-link-1")[0] ;
-      const code = document.querySelector("#code") ;
-      range = saveSelection() ;
+      var inputs = document.getElementsByName("context-menu-input-link-1");
+      Array.from(inputs).map((input) => {
+        input.addEventListener("mousedown", createFakeSelection);
+        input.addEventListener("blur", removeFakeSelection);
+      });
+      // const code = document.querySelector("#code");
+      range = saveSelection();
 
       // line, start index, end index를 구함
-      var tdNode = getTD(range.commonAncestorContainer) ;
-      console.log(tdNode) ;
-      line = tdNode.getAttribute("data-line-number") ;
-      start_index = findOffset(range.startContainer, range.startOffset) ;
-      end_index = findOffset(range.endContainer, range.endOffset) ;
-      console.log(start_index) ;
-      console.log(end_index) ;
-      input.addEventListener("mousedown", createFakeSelection) ;
-      // // remove fake selection
-      input.addEventListener("blur", removeFakeSelection) ;
+      var tdNode = getTD(range.commonAncestorContainer);
+      console.log(tdNode);
+      line = tdNode.getAttribute("data-line-number");
+      start_index = findOffset(range.startContainer, range.startOffset);
+      end_index = findOffset(range.endContainer, range.endOffset);
+      console.log(start_index);
+      console.log(end_index);
     },
   },
 });

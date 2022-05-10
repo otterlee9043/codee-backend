@@ -32,6 +32,12 @@ function addLineHide(start, end, ID) {
   ref_data[0]["data"].push({ type: "line_hide", start: start, end: end, id: ID });
 }
 
+function addLink(start, end, url, ID) {
+  ref_data[0]["data"].push({ type: "link", start: start, end: end, url: url, id: ID });
+}
+
+function addWordComment(start, end) {}
+
 function deleteLineHide(ID) {
   for (let i = 0; i < ref_data[0]["data"].length; i++) {
     if (ref_data[0]["data"][i].id == ID && ref_data[0]["data"][i].type == "line_hide") {
