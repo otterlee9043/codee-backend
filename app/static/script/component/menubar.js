@@ -98,20 +98,18 @@ function saveSelection() {
   }
 }
 
-function restroeSelection(new_range) {
+function restroeSelection() {
 
-  if (range) {
-    console.log("1");
-    if (window.getSelection) {
-      console.log(range);
-      selected = document.getSelection();
-      selected.removeAllRanges();
-      selected.addRange(range);
-    } else if (document.selection && range.select) {
-      console.log("3");
-      range.select();
-    }
-    range = null;
+  if (flag) {
+    console.log("restoreSelection") ;
+    let tdTag = document.querySelector(`#L${line} > .hljs-ln-code`) ;
+    let startTag = findOffsetTag(tdTag, start_index) ;
+    let endTag = findOffsetTag(tdTag, end_index) ;
+    let new_range = document.createRange() ;
+    new_range.setStart(startTag.tag, startTag.startOffset) ;
+    new_range.setEnd(endTag.tag, endTag.startOffset) ;
+    document.getSelection().removeAllRanges() ;
+    document.getSelection().addRange(new_range) ;
   }
 }
 // let url_flag = 0 ;
@@ -130,18 +128,19 @@ function createFakeSelection(event) {
 
 function removeFakeSelection(event) {
   // remove fake selection
-  console.log("seconde");
+  console.log("second");
   // 만약 tag적용이 됐으면? removeSeleted만 하기
   // if (url_flag) {
   //   var select = document.querySelector(".selected");
   //   select.classList.remove("selected");
   // }
   // else flag 일땐 
+  console.log(flag) ;
   if (flag) {
     var select = document.querySelector(".selected");
     select.classList.remove("selected");
     merge(select);
-    // restroeSelection();
+    restroeSelection();
   }
   console.log(range);
   flag = 0;
@@ -279,9 +278,22 @@ $.contextMenu({
                 merge(select) ; 
                 // tag추가하기(find offset node)
                 let tdTag = document.querySelector(`#L${line} > .hljs-ln-code`) ;
-                console.log(tdTag) ;
                 let startTag = findOffsetTag(tdTag, start_index) ;
-                console.log(startTag) ;
+                let endTag = findOffsetTag(tdTag, end_index) ;
+                let new_range = document.selection.createRange() ;
+                new_range.setStart(startTag.tag, startTag.startOffset) ;
+                new_range.setEnd(endTag.tag, endTag.startOffset) ;
+                document.getSelection().removeAllRanges() ;
+                document.getSelection().addRange(new_range) ;
+                let span = createNewSpan(document.getSelection()) ;
+
+
+
+
+                // let tdTag = document.querySelector(`#L${line} > .hljs-ln-code`) ;
+                // console.log(tdTag) ;
+                // let startTag = findOffsetTag(tdTag, start_index) ;
+                // console.log(startTag) ;
                 // $(".selected").wrap(`<a id="${id}" class="link" href="javascript:void(0) onclick=openLink()"></a>`) ;
                 // $(".selected").wrap(`<a id="${randomId()}" class="link" href="${url}"></a>`);
                 // removeEventListener하기
