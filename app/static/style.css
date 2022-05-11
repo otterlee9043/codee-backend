@@ -480,11 +480,12 @@ textarea {
 }
 
 .comment-underline {
-  text-decoration: solid underline rgb(255, 215, 82) 3px;
+  /* text-decoration: solid underline rgb(255, 215, 82) 3px; */
+  border-bottom: solid rgb(255, 215, 82) 3px;
 }
 
 .comment-underline:hover {
-  text-decoration: solid underline rgb(230, 194, 76) 3px;
+  border-bottom: solid rgb(230, 194, 76) 3px;
 }
 
 .comment {
@@ -496,4 +497,5 @@ textarea {
   padding: 5px;
   font-size: 11px;
   z-index: 1;
+  background-color: white;
 }

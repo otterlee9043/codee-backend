@@ -8,13 +8,21 @@ window.addEventListener("load", async function () {
     hideLine();
     ref_data[0].data.map((deco) => {
       const type = deco.type;
+      let s = null;
+      let e = null;
+      let n = null;
+      let i = null;
+      let l = null;
+      let url = null;
+      let color = null;
+      let tdTag, startTag, endTag, new_range, span;
       switch (type) {
-        case "hide":
+        case "line_hide":
           console.log(deco);
-          const s = deco.start;
-          const e = deco.end;
-          const n = Math.abs(s - e) + 1;
-          const i = deco.id;
+          s = deco.start;
+          e = deco.end;
+          n = Math.abs(s - e) + 1;
+          i = deco.id;
           selectedInfo.push({ start: s, number: n, id: i });
           console.log(selectedInfo);
           let line = document.querySelector(`#L${s}`);
@@ -25,11 +33,127 @@ window.addEventListener("load", async function () {
             line = line.nextElementSibling;
           }
           break;
+        case "link":
+          console.log(deco);
+          s = deco.start;
+          e = deco.end;
+          l = deco.line;
+          url = deco.url;
+          i = deco.id;
+
+          // tdTag찾기
+
+          tdTag = document.querySelector(`#L${l} .hljs-ln-code`);
+          console.log(tdTag);
+          // range정하고 그것만큼 createNewspan하기
+          startTag = findOffsetTag(tdTag, s);
+          endTag = findOffsetTag(tdTag, e);
+          new_range = document.createRange();
+          new_range.setStart(startTag.tag, startTag.startOffset);
+          new_range.setEnd(endTag.tag, endTag.startOffset);
+          document.getSelection().removeAllRanges();
+          document.getSelection().addRange(new_range);
+          span = createNewSpan(document.getSelection());
+          document.getSelection().removeAllRanges();
+          // add class rendering
+          span.classList.add("rendering");
+          // $(.rendering).wrap하기
+          $(".rendering").wrap(
+            `<a id="${i}" url = "${url}" class="link" href="javascript:void(0);" onclick="openLink(this)"></a>`
+          );
+          // remove class rendering
+          span.classList.remove("rendering");
+          break;
+        case "comment":
+          // start, end, line, comment, ID
+          s = deco.start;
+          e = deco.end;
+          l = deco.line;
+          c = deco.comment;
+          i = deco.id;
+          tdTag = document.querySelector(`#L${l} .hljs-ln-code`);
+          console.log(tdTag);
+          // range정하고 그것만큼 createNewspan하기
+          startTag = findOffsetTag(tdTag, s);
+          endTag = findOffsetTag(tdTag, e);
+          new_range = document.createRange();
+          new_range.setStart(startTag.tag, startTag.startOffset);
+          new_range.setEnd(endTag.tag, endTag.startOffset);
+          document.getSelection().removeAllRanges();
+          document.getSelection().addRange(new_range);
+          span = createNewSpan(document.getSelection());
+          document.getSelection().removeAllRanges();
+          span.classList.add("comment-underline");
+          console.log(span);
+          var rect = span.getBoundingClientRect();
+
+          registerCommentEvents(c, span, `${rect.top - 10}px`, `${rect.left}px`, i);
+          break;
+        case "highlight":
+          color = deco.color;
+          s = deco.start;
+          e = deco.end;
+          l = deco.line;
+          i = deco.id;
+          tdTag = document.querySelector(`#L${l} .hljs-ln-code`);
+          startTag = findOffsetTag(tdTag, s);
+          endTag = findOffsetTag(tdTag, e);
+          new_range = document.createRange();
+          new_range.setStart(startTag.tag, startTag.startOffset);
+          new_range.setEnd(endTag.tag, endTag.startOffset);
+          document.getSelection().removeAllRanges();
+          document.getSelection().addRange(new_range);
+          span = createNewSpan(document.getSelection());
+          document.getSelection().removeAllRanges();
+          span.classList.add(color);
+
+          break;
+        case "word_hide":
+          s = deco.start;
+          e = deco.end;
+          l = deco.line;
+          i = deco.id;
+          tdTag = document.querySelector(`#L${l} .hljs-ln-code`);
+          startTag = findOffsetTag(tdTag, s);
+          endTag = findOffsetTag(tdTag, e);
+          new_range = document.createRange();
+          new_range.setStart(startTag.tag, startTag.startOffset);
+          new_range.setEnd(endTag.tag, endTag.startOffset);
+          document.getSelection().removeAllRanges();
+          document.getSelection().addRange(new_range);
+          span = createNewSpan(document.getSelection());
+          document.getSelection().removeAllRanges();
+          span.classList.add("hidden");
+
+          const ellipsisBtn = document.createElement("span");
+          ellipsisBtn.classList.add("ellipsis");
+          ellipsisBtn.innerText = "⋯";
+          span.parentElement.insertBefore(ellipsisBtn, span);
+
+          ellipsisBtn.addEventListener("click", () => {
+            span.classList.remove("hidden");
+            ellipsisButton.remove();
+            const children = [];
+            while (span.firstChild) {
+              const child = span.firstChild;
+              children.push(child);
+              // console.log(child);
+              span.parentNode.insertBefore(child, span);
+            }
+            console.log();
+            span.remove();
+            Array.from(children).map((node) => {
+              merge(node);
+            });
+            // merge(newSpan);
+          });
       }
     });
   }
   openDirectoryTree();
 });
+
+function findNodesByOffset(start, end) {}
 
 const code = document.querySelector("code");
 let lineSelected = false;
@@ -175,9 +299,6 @@ function hideLine() {
   });
 }
 
-// code.addEventListener("mouseup", selectText, false);
-
-// function splitText(textNode, text, start, same = false) {
 function splitText(textNode, index, textLength, start, same = false) {
   const fullText = textNode.nodeValue;
   text = start ? fullText.substring(index, index + textLength) : fullText.substring(0, index);
@@ -194,53 +315,39 @@ function splitSpan(span, index, textLength, start, same = false) {
   const text = start ? fullText.substring(index, index + textLength) : fullText.substring(0, index);
   if (same) {
     if (fullText === text) {
-      // split 하지 않는 경우
-      //return fragmented(FALSE, span);
       return [FRAGMENT.FALSE, span];
     }
     span.after(span2);
     if (index === 0) {
-      // text가 마지막 부분
       span.innerText = text;
       span2.innerText = fullText.substring(text.length, fullText.length);
       return [FRAGMENT.HEAD, span];
     } else if (index === fullText.length - text.length) {
-      // text가 첫번째 부분
       span.innerText = fullText.substring(0, index);
       span2.innerText = text;
       return [FRAGMENT.TAIL, span2];
     } else {
-      // text가 가운데 부분
       span3 = span.cloneNode(false);
       span.innerText = fullText.substring(0, index);
       span2.innerText = text;
       span3.innerText = fullText.substring(index + text.length, fullText.length);
       span2.after(span3);
-      //return fragmented(CENTER, span2);
       return [FRAGMENT.CENTER, span2];
     }
   } else {
     if (fullText === text) {
-      // split 하지 않는 경우
-      //return fragmented(FALSE, span);
       return [FRAGMENT.FALSE, span];
     }
     span.after(span2);
     if (start) {
-      //const span2 = span.cloneNode("span");
       span.innerText = fullText.substring(0, index);
       span2.innerText = text;
-      console.log(span.innerText);
-      console.log(span2.innerText);
     } else {
       span.innerText = text;
       span2.innerText = fullText.substring(text.length, fullText.length);
     }
   }
 
-  console.log("span >", span);
-  console.log("span2 >", span2);
-  //return start ? fragmented(TAIL, span2) : fragmented(HEAD, span);
   return start ? [FRAGMENT.TAIL, span2] : [FRAGMENT.HEAD, span];
 }
 
@@ -303,7 +410,7 @@ function nodeType(element) {
 }
 
 function createNewSpan(selectionText) {
-  console.log(selectionText);
+  // console.log(selectionText);
   // console.log(selectionText.toString());
   if (selectionText.toString() === "") {
     return;
@@ -403,7 +510,6 @@ function splitTree(cutElement, position, split) {
   const bound = cutElement.parentElement.closest("td");
   let parent, right, grandparent;
   let node = position === Position.START ? cutElement.nextSibling : cutElement.previousSibling;
-  console.log(node.getAttribute("fragmented"));
   if (parseInt(node.getAttribute("fragmented")) === FRAGMENT.TAIL) {
     // TAIL이었으면 CENTER
     node.setAttribute("fragmented", FRAGMENT.CENTER);
@@ -446,7 +552,6 @@ function merge(wrapper) {
   // console.log(listToMerge);
   const type = parseInt(wrapper.getAttribute("fragmented"));
 
-  console.log(wrapper.childNodes);
   if (wrapper.childNodes.length == 1 && !wrapper.firstChild.firstChild) {
     let node, prevNode, nextNode;
     switch (type) {
@@ -576,7 +681,6 @@ function merge(wrapper) {
 function addComment(e, x, y) {
   let link_tag = document.getElementsByName("context-menu-input-link-1");
   if (e.keyCode == 13 && link_tag[0].value) {
-    console.log(range);
     console.log("comment enter");
     let comment = link_tag[0].value;
     let id = randomId();
@@ -585,25 +689,37 @@ function addComment(e, x, y) {
     var select = document.querySelector(".selected");
     select.classList.remove("selected");
     select.classList.add("comment-underline");
-    const commentSpan = document.createElement("span");
-    commentSpan.innerText = comment;
-    commentSpan.classList.add("comment");
-    commentSpan.classList.add("hidden");
-    document.querySelector("#export").appendChild(commentSpan);
+    registerCommentEvents(comment, select, x, y);
 
     // const x = window.innerWidth - 200 > e.clientX ? e.clientX : window.innerWidth - 210;
     // const y = window.innerHeight > e.clientY ? e.clientY : window.innerHeight - 100;
-    const c = document.querySelector(".comment");
-    c.style.top = x;
-    c.style.left = y;
-    select.addEventListener("mouseover", () => {
-      console.log(comment);
-      commentSpan.classList.remove("hidden");
-    });
-    select.addEventListener("mouseleave", () => {
-      commentSpan.classList.add("hidden");
-    });
+
     const input = document.getElementsByName("context-menu-input-link-1")[0];
     input.removeEventListener("blur", removeFakeSelection);
+
+    var tdNode = getTD(select);
+    const line = tdNode.getAttribute("data-line-number");
+    const [start, end] = getIndices(select);
+    addWordComment(start, end, line, comment, randomId());
   }
+}
+
+function registerCommentEvents(comment, node, x, y, id) {
+  const commentSpan = document.createElement("span");
+  commentSpan.innerText = comment;
+  commentSpan.classList.add("comment");
+  commentSpan.classList.add("hidden");
+  commentSpan.id = id;
+  document.querySelector("#export").appendChild(commentSpan);
+  const c = document.getElementById(id);
+  c.style.top = x;
+  c.style.left = y;
+
+  node.addEventListener("mouseover", () => {
+    // console.log(comment);
+    commentSpan.classList.remove("hidden");
+  });
+  node.addEventListener("mouseleave", () => {
+    commentSpan.classList.add("hidden");
+  });
 }

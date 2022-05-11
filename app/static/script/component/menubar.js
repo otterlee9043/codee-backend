@@ -62,23 +62,25 @@ function findOffset(node, offset) {
   return offset;
 }
 
-menu.addEventListener("click", function (e) {
-  e.preventDefault();
+if (menu != null) {
+  menu.addEventListener("click", function (e) {
+    e.preventDefault();
 
-  var element = document.getSelection();
-  var selectedText = element.toString();
-  if (selectedText != "") {
-    const conMenu = document.querySelector(".context-menu-list.context-menu-root");
-    const x = window.innerWidth - 200 > e.clientX ? e.clientX : window.innerWidth - 210;
-    const y = window.innerHeight > e.clientY ? e.clientY : window.innerHeight - 100;
+    var element = document.getSelection();
+    var selectedText = element.toString();
+    if (selectedText != "") {
+      const conMenu = document.querySelector(".context-menu-list.context-menu-root");
+      const x = window.innerWidth - 200 > e.clientX ? e.clientX : window.innerWidth - 210;
+      const y = window.innerHeight > e.clientY ? e.clientY : window.innerHeight - 100;
 
-    // console.log(`x: ${x}, y: ${y}`) ;
-    conMenu.style.top = `${y + 10}px`;
-    conMenu.style.left = `${x}px`;
+      // console.log(`x: ${x}, y: ${y}`) ;
+      conMenu.style.top = `${y + 10}px`;
+      conMenu.style.left = `${x}px`;
 
-    $(".context-menu-one").contextMenu();
-  }
-});
+      $(".context-menu-one").contextMenu();
+    }
+  });
+}
 
 var range = null;
 var selected = null;
@@ -106,12 +108,13 @@ function restroeSelection() {
     new_range.setEnd(endTag.tag, endTag.startOffset);
     document.getSelection().removeAllRanges();
     document.getSelection().addRange(new_range);
+    console.log(document.getSelection().anchorNode);
   }
 }
 // let url_flag = 0 ;
 var flag = 0;
 function createFakeSelection(event) {
-  console.log(flag);
+  console.log(`createFakeSelection : ${flag}`);
   if (!flag) {
     var span = createNewSpan(document.getSelection());
     span.classList.add("selected");
@@ -136,6 +139,17 @@ function removeFakeSelection(event) {
   if (flag) {
     var select = document.querySelector(".selected");
     select.classList.remove("selected");
+    const children = [];
+    while (select.firstChild) {
+      const child = select.firstChild;
+      children.push(child);
+      select.parentNode.insertBefore(child, select);
+    }
+    console.log();
+    select.remove();
+    Array.from(children).map((node) => {
+      merge(node);
+    });
     merge(select);
     restroeSelection();
   }
@@ -169,17 +183,32 @@ $.contextMenu({
       span.classList.add("comment");
     } //else if (key == "highlight") {
     else if (key == "red") {
-      console.log("red");
       span = createNewSpan(selection);
       span.classList.add("red");
+      const [start, end] = getIndices(span);
+      var tdNode = getTD(span);
+      line = tdNode.getAttribute("data-line-number");
+      const ID = randomId();
+      span.id = ID;
+      addWordHighlight("red", start, end, line, ID);
     } else if (key == "yellow") {
-      console.log("yellow");
       span = createNewSpan(selection);
       span.classList.add("yellow");
+      const [start, end] = getIndices(span);
+      var tdNode = getTD(span);
+      line = tdNode.getAttribute("data-line-number");
+      const ID = randomId();
+      span.id = ID;
+      addWordHighlight("yellow", start, end, line, ID);
     } else if (key == "green") {
-      console.log("green");
       span = createNewSpan(selection);
       span.classList.add("green");
+      const [start, end] = getIndices(span);
+      var tdNode = getTD(span);
+      line = tdNode.getAttribute("data-line-number");
+      const ID = randomId();
+      span.id = ID;
+      addWordHighlight("green", start, end, line, ID);
     } else if (key == "record") {
       console.log("record");
     } else if (key == "hide") {
@@ -188,10 +217,12 @@ $.contextMenu({
       const cloneNode = td.cloneNode(true);
       // docfrag.appendChild(cloneNode);
       span = createNewSpan(selection);
-      const newId = randomId();
-      span.id = newId;
-      console.log(newId, cloneNode);
-      // console.log(span);
+      const ID = randomId();
+      const [start, end] = getIndices(span);
+      var tdNode = getTD(span);
+      line = tdNode.getAttribute("data-line-number");
+      span.id = ID;
+      addWordHide(start, end, line, ID);
       ellipsisSpan(span);
     } else if (key == "link") {
       console.log("link");
@@ -215,9 +246,18 @@ $.contextMenu({
           type: "text",
           events: {
             keyup: function (e) {
-              const conMenu = document.querySelector(".context-menu-list.context-menu-root");
+              let inputs = document.getElementsByName("context-menu-input-link-1");
+              if (e.keyCode == 13 && inputs[0].value) {
+                const conMenu = document.querySelector(".context-menu-list.context-menu-root");
+                addComment(e, conMenu.style.top, conMenu.style.left);
 
-              addComment(e, conMenu.style.top, conMenu.style.left);
+                Array.from(inputs).map((input) => {
+                  input.removeEventListener("mousedown", createFakeSelection);
+                  input.removeEventListener("blur", removeFakeSelection);
+                });
+                flag = 0;
+                $(".context-menu-list").trigger("contextmenu:hide");
+              }
             },
           },
         },
@@ -277,6 +317,9 @@ $.contextMenu({
 
                 // add to a tag
                 var select = document.querySelector(".selected");
+                // select.wrap(
+                //     `<a id="${id}" url = "${url}" class="link" href="javascript:void(0);" onclick="openLink(this)"></a>`
+                //   );
                 $(".selected").wrap(
                   `<a id="${id}" url = "${url}" class="link" href="javascript:void(0);" onclick="openLink(this)"></a>`
                 );
@@ -286,16 +329,17 @@ $.contextMenu({
                 // cache에 store하기
                 if (ref_data != null) {
                   console.log("addLink");
-                  addLink(start_index, end_index, url, id);
+                  addLink(start_index, end_index, line, url, id);
                   console.log(ref_data);
                 }
 
                 // removeEventListener하기
                 var inputs = document.getElementsByName("context-menu-input-link-1");
                 Array.from(inputs).map((input) => {
-                  input.addEventListener("mousedown", createFakeSelection);
-                  input.addEventListener("blur", removeFakeSelection);
+                  input.removeEventListener("mousedown", createFakeSelection);
+                  input.removeEventListener("blur", removeFakeSelection);
                 });
+                flag = 0;
                 console.log("fisrtst");
                 $(".context-menu-list").trigger("contextmenu:hide");
               }
@@ -312,9 +356,11 @@ $.contextMenu({
         input.removeEventListener("mousedown", createFakeSelection);
         input.removeEventListener("blur", removeFakeSelection);
       });
-
+      if (flag) {
+        removeFakeSelection();
+      }
       // const code = document.querySelector("#code");
-      document.getSelection().removeAllRanges();
+      // document.getSelection().removeAllRanges();
       console.log("hide");
     },
     show: function (e) {

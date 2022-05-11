@@ -32,11 +32,21 @@ function addLineHide(start, end, ID) {
   ref_data[0]["data"].push({ type: "line_hide", start: start, end: end, id: ID });
 }
 
-function addLink(start, end, url, ID) {
-  ref_data[0]["data"].push({ type: "link", start: start, end: end, url: url, id: ID });
+function addLink(start, end, line, url, ID) {
+  ref_data[0]["data"].push({ type: "link", start: start, end: end, line: line, url: url, id: ID });
 }
 
-function addWordComment(start, end) {}
+function addWordComment(start, end, line, comment, ID) {
+  ref_data[0]["data"].push({ type: "comment", start: start, end: end, line: line, comment: comment, id: ID });
+}
+
+function addWordHighlight(color, start, end, line, ID) {
+  ref_data[0]["data"].push({ type: "highlight", color: color, start: start, end: end, line: line, id: ID });
+}
+
+function addWordHide(start, end, line, ID) {
+  ref_data[0]["data"].push({ type: "word_hide", start: start, end: end, line: line, id: ID });
+}
 
 function deleteLineHide(ID) {
   for (let i = 0; i < ref_data[0]["data"].length; i++) {
@@ -50,6 +60,7 @@ function saveCodee(path, username) {
   // path를 읽고
   // fetch로 보내기
   console.log(filepath);
+  console.log(ref_data);
   const opts = {
     method: "POST",
     body: JSON.stringify({

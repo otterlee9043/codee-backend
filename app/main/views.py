@@ -268,8 +268,8 @@ def saveCodee():
     codee_path = jsonData['codee_path']
     codee_data = jsonData['codee_data']
     print(codee_data)
-    f = open(os.path.join(root, username, codee_path), "w")
-    f.write(codee_data)
+    f = open(os.path.join(root, username, codee_path), "wb")
+    f.write(codee_data.encode('utf8'))
     f.close()
     return make_response("codee file updated", 200) 
 
