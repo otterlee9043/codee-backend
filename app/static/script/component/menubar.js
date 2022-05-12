@@ -129,12 +129,6 @@ function createFakeSelection(event) {
 function removeFakeSelection(event) {
   // remove fake selection
   console.log("second");
-  // 만약 tag적용이 됐으면? removeSeleted만 하기
-  // if (url_flag) {
-  //   var select = document.querySelector(".selected");
-  //   select.classList.remove("selected");
-  // }
-  // else flag 일땐
   console.log(flag);
   if (flag) {
     var select = document.querySelector(".selected");
