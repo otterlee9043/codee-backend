@@ -234,6 +234,12 @@ def push():
 
     return make_response("done push request", 200)
 
+def get_commit_id(path):
+    # git rev-parse HEAD
+    os.chdir(path)
+    data = subprocess.check_output(['git', 'rev-parse', 'HEAD'], encoding = 'utf-8')[0:-1]
+    return data
+    
 
 @main.route('/create_codee', methods=['POST'])
 def create_codee():
@@ -242,8 +248,12 @@ def create_codee():
     codee_path = jsonData['codee_path']
     codee_name = jsonData['codee_name']
     ref_path = jsonData['ref_path']
-    f = open(f"{root}{username}/{codee_path}/{codee_name}.cd", "w")
-    content = [{ 'filepath': ref_path, 'data': [] }]
+    print(f"codee_path: {codee_path}")
+
+    commit_id = get_commit_id( os.path.join(root, username, codee_path.split(os.path.sep)[0]) )
+    # f = open(f"{root}{username}/{codee_path}/{codee_name}.cd", "w")
+    f = open(os.path.join(root, username, codee_path, f"{codee_name}.cd"), "w")
+    content = [{ 'commid_id' : commit_id, 'filepath': ref_path, 'data': [] }]
     json_content = json.dumps(content)
     f.write(json_content)
     f.close()

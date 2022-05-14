@@ -1,3 +1,95 @@
+function createNewRange(line, start, end) {
+  const tdTag = document.querySelector(`#L${line} .hljs-ln-code`);
+  const startTag = findOffsetTag(tdTag, start);
+  const endTag = findOffsetTag(tdTag, end);
+  const new_range = document.createRange();
+  new_range.setStart(startTag.tag, startTag.startOffset);
+  new_range.setEnd(endTag.tag, endTag.startOffset);
+  document.getSelection().removeAllRanges();
+  document.getSelection().addRange(new_range);
+}
+
+function drawLineHide(deco) {
+  const { start, end, id } = deco;
+  const number = Math.abs(start - end) + 1;
+  selectedInfo.push({ start: start, number: number, id: id });
+  let line = document.querySelector(`#L${start}`);
+  createEllipsisNode(line);
+  for (let i = 0; i < number; i++) {
+    line.classList.add("hidden");
+    line = line.nextElementSibling;
+  }
+}
+
+function drawLink(deco) {
+  const { start, end, line, url, id } = deco;
+  createNewRange(line, start, end);
+  const span = createNewSpan(document.getSelection());
+  document.getSelection().removeAllRanges();
+  span.classList.add("rendering");
+  $(".rendering").wrap(
+    `<a id="${id}" url = "${url}" class="link" href="javascript:void(0);" onclick="openLink(this)"></a>`
+  );
+  span.classList.remove("rendering");
+}
+
+function drawComment(deco) {
+  const { start, end, line, comment, id } = deco;
+  createNewRange(line, start, end);
+  const span = createNewSpan(document.getSelection());
+  document.getSelection().removeAllRanges();
+  span.classList.add("comment-underline");
+  console.log(span);
+  var rect = span.getBoundingClientRect();
+  // cd 파일을 읽고 comment를 이벤트 핸들러에 등록하는 함수
+  registerCommentEvents(
+    comment,
+    span,
+    `${rect.top - 10 + window.scrollY}px`,
+    `${rect.left + window.scrollX}px`,
+    id
+  );
+}
+
+function drawHighlight(deco) {
+  const { start, end, line, color, id } = deco;
+  createNewRange(line, start, end);
+  const span = createNewSpan(document.getSelection());
+  document.getSelection().removeAllRanges();
+  span.classList.add(color);
+}
+
+function drawWordHide(deco) {
+  const { start, end, line, id } = deco;
+  createNewRange(line, start, end);
+  const span = createNewSpan(document.getSelection());
+  document.getSelection().removeAllRanges();
+  span.classList.add("hidden");
+
+  const ellipsisBtn = document.createElement("span");
+  ellipsisBtn.classList.add("ellipsis");
+  ellipsisBtn.innerText = "⋯";
+  span.parentElement.insertBefore(ellipsisBtn, span);
+
+  ellipsisBtn.addEventListener("click", () => {
+    span.classList.remove("hidden");
+    ellipsisBtn.remove();
+    const children = [];
+    while (span.firstChild) {
+      const child = span.firstChild;
+      children.push(child);
+      // console.log(child);
+      span.parentNode.insertBefore(child, span);
+    }
+    console.log();
+    span.remove();
+    Array.from(children).map((node) => {
+      merge(node);
+    });
+    // merge(newSpan);
+  });
+}
+
 window.addEventListener("load", async function () {
   // addMenuClass() ;
   const pre = document.querySelector("pre");
@@ -8,152 +100,27 @@ window.addEventListener("load", async function () {
     hideLine();
     ref_data[0].data.map((deco) => {
       const type = deco.type;
-      let s = null;
-      let e = null;
-      let n = null;
-      let i = null;
-      let l = null;
-      let url = null;
-      let color = null;
-      let tdTag, startTag, endTag, new_range, span;
       switch (type) {
         case "line_hide":
-          console.log(deco);
-          s = deco.start;
-          e = deco.end;
-          n = Math.abs(s - e) + 1;
-          i = deco.id;
-          selectedInfo.push({ start: s, number: n, id: i });
-          console.log(selectedInfo);
-          let line = document.querySelector(`#L${s}`);
-          console.log(line);
-          createEllipsisNode(line);
-          for (let i = 0; i < n; i++) {
-            line.classList.add("hidden");
-            line = line.nextElementSibling;
-          }
+          drawLineHide(deco);
           break;
         case "link":
-          console.log(deco);
-          s = deco.start;
-          e = deco.end;
-          l = deco.line;
-          url = deco.url;
-          i = deco.id;
-
-          // tdTag찾기
-
-          tdTag = document.querySelector(`#L${l} .hljs-ln-code`);
-          console.log(tdTag);
-          // range정하고 그것만큼 createNewspan하기
-          startTag = findOffsetTag(tdTag, s);
-          endTag = findOffsetTag(tdTag, e);
-          new_range = document.createRange();
-          new_range.setStart(startTag.tag, startTag.startOffset);
-          new_range.setEnd(endTag.tag, endTag.startOffset);
-          document.getSelection().removeAllRanges();
-          document.getSelection().addRange(new_range);
-          span = createNewSpan(document.getSelection());
-          document.getSelection().removeAllRanges();
-          // add class rendering
-          span.classList.add("rendering");
-          // $(.rendering).wrap하기
-          $(".rendering").wrap(
-            `<a id="${i}" url = "${url}" class="link" href="javascript:void(0);" onclick="openLink(this)"></a>`
-          );
-          // remove class rendering
-          span.classList.remove("rendering");
+          drawLink(deco);
           break;
         case "comment":
-          // start, end, line, comment, ID
-          s = deco.start;
-          e = deco.end;
-          l = deco.line;
-          c = deco.comment;
-          i = deco.id;
-          tdTag = document.querySelector(`#L${l} .hljs-ln-code`);
-          console.log(tdTag);
-          // range정하고 그것만큼 createNewspan하기
-          startTag = findOffsetTag(tdTag, s);
-          endTag = findOffsetTag(tdTag, e);
-          new_range = document.createRange();
-          new_range.setStart(startTag.tag, startTag.startOffset);
-          new_range.setEnd(endTag.tag, endTag.startOffset);
-          document.getSelection().removeAllRanges();
-          document.getSelection().addRange(new_range);
-          span = createNewSpan(document.getSelection());
-          document.getSelection().removeAllRanges();
-          span.classList.add("comment-underline");
-          console.log(span);
-          var rect = span.getBoundingClientRect();
-
-          registerCommentEvents(c, span, `${rect.top - 10}px`, `${rect.left}px`, i);
+          drawComment(deco);
           break;
         case "highlight":
-          color = deco.color;
-          s = deco.start;
-          e = deco.end;
-          l = deco.line;
-          i = deco.id;
-          tdTag = document.querySelector(`#L${l} .hljs-ln-code`);
-          startTag = findOffsetTag(tdTag, s);
-          endTag = findOffsetTag(tdTag, e);
-          new_range = document.createRange();
-          new_range.setStart(startTag.tag, startTag.startOffset);
-          new_range.setEnd(endTag.tag, endTag.startOffset);
-          document.getSelection().removeAllRanges();
-          document.getSelection().addRange(new_range);
-          span = createNewSpan(document.getSelection());
-          document.getSelection().removeAllRanges();
-          span.classList.add(color);
-
+          drawHighlight(deco);
           break;
         case "word_hide":
-          s = deco.start;
-          e = deco.end;
-          l = deco.line;
-          i = deco.id;
-          tdTag = document.querySelector(`#L${l} .hljs-ln-code`);
-          startTag = findOffsetTag(tdTag, s);
-          endTag = findOffsetTag(tdTag, e);
-          new_range = document.createRange();
-          new_range.setStart(startTag.tag, startTag.startOffset);
-          new_range.setEnd(endTag.tag, endTag.startOffset);
-          document.getSelection().removeAllRanges();
-          document.getSelection().addRange(new_range);
-          span = createNewSpan(document.getSelection());
-          document.getSelection().removeAllRanges();
-          span.classList.add("hidden");
-
-          const ellipsisBtn = document.createElement("span");
-          ellipsisBtn.classList.add("ellipsis");
-          ellipsisBtn.innerText = "⋯";
-          span.parentElement.insertBefore(ellipsisBtn, span);
-
-          ellipsisBtn.addEventListener("click", () => {
-            span.classList.remove("hidden");
-            ellipsisButton.remove();
-            const children = [];
-            while (span.firstChild) {
-              const child = span.firstChild;
-              children.push(child);
-              // console.log(child);
-              span.parentNode.insertBefore(child, span);
-            }
-            console.log();
-            span.remove();
-            Array.from(children).map((node) => {
-              merge(node);
-            });
-            // merge(newSpan);
-          });
+          drawWordHide(deco);
+          break;
       }
     });
   }
   openDirectoryTree();
 });
-
-function findNodesByOffset(start, end) {}
 
 const code = document.querySelector("code");
 let lineSelected = false;
@@ -445,10 +412,8 @@ function createNewSpan(selectionText) {
     }
     startNode.parentElement.insertBefore(cutSpan, startNode);
     start = splitTree(cutSpan, Position.START, fragmented === FRAGMENT.FALSE ? false : true);
-    console.log(start);
     startNode.parentElement.insertBefore(cutSpan, startNode.nextSibling);
     end = splitTree(cutSpan, Position.END, fragmented === FRAGMENT.FALSE ? false : true);
-    console.log(end);
     const newSpan = bindTags(end, null);
     return newSpan;
   }
@@ -678,48 +643,71 @@ function merge(wrapper) {
   }
 }
 
-function addComment(e, x, y) {
-  let link_tag = document.getElementsByName("context-menu-input-link-1");
-  if (e.keyCode == 13 && link_tag[0].value) {
-    console.log("comment enter");
-    let comment = link_tag[0].value;
-    let id = randomId();
-    console.log(comment);
-
-    var select = document.querySelector(".selected");
-    select.classList.remove("selected");
-    select.classList.add("comment-underline");
-    registerCommentEvents(comment, select, x, y);
-
-    // const x = window.innerWidth - 200 > e.clientX ? e.clientX : window.innerWidth - 210;
-    // const y = window.innerHeight > e.clientY ? e.clientY : window.innerHeight - 100;
-
-    const input = document.getElementsByName("context-menu-input-link-1")[0];
-    input.removeEventListener("blur", removeFakeSelection);
-
-    var tdNode = getTD(select);
-    const line = tdNode.getAttribute("data-line-number");
-    const [start, end] = getIndices(select);
-    addWordComment(start, end, line, comment, randomId());
-  }
-}
-
 function registerCommentEvents(comment, node, x, y, id) {
   const commentSpan = document.createElement("span");
   commentSpan.innerText = comment;
   commentSpan.classList.add("comment");
-  commentSpan.classList.add("hidden");
   commentSpan.id = id;
-  document.querySelector("#export").appendChild(commentSpan);
-  const c = document.getElementById(id);
-  c.style.top = x;
-  c.style.left = y;
 
-  node.addEventListener("mouseover", () => {
-    // console.log(comment);
-    commentSpan.classList.remove("hidden");
+  const closeBtn = document.createElement("span");
+  closeBtn.innerText = "X";
+  closeBtn.classList.add("right");
+
+  commentSpan.appendChild(closeBtn);
+
+  closeBtn.addEventListener("click", () => {
+    console.log(commentSpan.id);
+    deleteComment(commentSpan.id);
+    addContextMenu();
+
+    const nodeToMerge = node.firstChild;
+    node.before(nodeToMerge);
+    node.remove();
+    merge(nodeToMerge);
   });
-  node.addEventListener("mouseleave", () => {
-    commentSpan.classList.add("hidden");
+  // document.querySelector("#export").appendChild(commentSpan);
+  // const c = document.getElementById(id);
+  // c.style.top = x;
+  // c.style.left = y;
+
+  node.addEventListener("mouseenter", () => {
+    removeContextMenu();
+    showCommentDetail(node, commentSpan);
   });
 }
+
+function showDecoDetail(span) {
+  const type = span.classList[0];
+  console.log(type);
+  switch (type) {
+    case "comment-underline":
+  }
+}
+
+function showCommentDetail(span, commentSpan) {
+  if (span.parentElement.tagName === "TD") {
+    span.appendChild(commentSpan);
+    span.addEventListener("mouseleave", () => {
+      addContextMenu();
+      hideCommentDetail(commentSpan);
+    });
+  }
+}
+
+function hideCommentDetail(span) {
+  span.remove();
+}
+
+const diff = [
+  {
+    filepath: "/app/main/views.py",
+    changes: [
+      { start: 268, offset: 4, type: "add", col: 58, content: "b" },
+      { start: 268, offset: 5, type: "add", col: 23, content: ".encode('utf8')" },
+    ],
+  },
+  {
+    filepath: "/app/static/script/component/menubar.js",
+    changes: [{ start: 1, offset: 1, type: "delete", col: 9, content: " " }],
+  },
+];

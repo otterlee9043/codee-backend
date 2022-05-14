@@ -1,4 +1,4 @@
-const menu = document.querySelector(".context-menu-one");
+let menu = document.querySelector(".context-menu-one ");
 let line;
 let start_index;
 let end_index;
@@ -61,26 +61,60 @@ function findOffset(node, offset) {
   }
   return offset;
 }
+function removeContextMenu() {
+  menu = document.querySelector(".context-menu-one ");
+  menu.removeEventListener("click", addingContextMenu);
+}
+
+function addContextMenu() {
+  menu = document.querySelector(".context-menu-one ");
+  menu.addEventListener("click", addingContextMenu);
+}
+function addingContextMenu(e) {
+  e.preventDefault();
+  var element = document.getSelection();
+  var selectedText = element.toString();
+  if (selectedText != "") {
+    const conMenu = document.querySelector(".context-menu-list.context-menu-root");
+    const x = window.innerWidth - 200 > e.clientX ? e.clientX : window.innerWidth - 210;
+    const y = window.innerHeight > e.clientY ? e.clientY : window.innerHeight - 100;
+    console.log(e.clientX);
+    console.log(window.innerWidth - 200);
+    console.log(x);
+    console.log(x + window.scrollX);
+    // console.log(`x: ${x}, y: ${y}`) ;
+    conMenu.style.top = `${y + window.scrollY + 10}px`;
+    conMenu.style.left = `${x + window.scrollX}px`;
+
+    $(".context-menu-one").contextMenu();
+  }
+}
 
 if (menu != null) {
-  menu.addEventListener("click", function (e) {
-    e.preventDefault();
-
-    var element = document.getSelection();
-    var selectedText = element.toString();
-    if (selectedText != "") {
-      const conMenu = document.querySelector(".context-menu-list.context-menu-root");
-      const x = window.innerWidth - 200 > e.clientX ? e.clientX : window.innerWidth - 210;
-      const y = window.innerHeight > e.clientY ? e.clientY : window.innerHeight - 100;
-
-      // console.log(`x: ${x}, y: ${y}`) ;
-      conMenu.style.top = `${y + 10}px`;
-      conMenu.style.left = `${x}px`;
-
-      $(".context-menu-one").contextMenu();
-    }
-  });
+  menu.addEventListener("click", addingContextMenu);
 }
+
+// if (menu != null) {
+//   menu.addEventListener("click", function (e) {
+//     e.preventDefault();
+//     var element = document.getSelection();
+//     var selectedText = element.toString();
+//     if (selectedText != "") {
+//       const conMenu = document.querySelector(".context-menu-list.context-menu-root");
+//       const x = window.innerWidth - 200 > e.clientX ? e.clientX : window.innerWidth - 210;
+//       const y = window.innerHeight > e.clientY ? e.clientY : window.innerHeight - 100;
+//       console.log(e.clientX) ;
+//       console.log(window.innerWidth - 200) ;
+//       console.log(x) ;
+//       console.log(x + window.scrollX ) ;
+//       // console.log(`x: ${x}, y: ${y}`) ;
+//       conMenu.style.top = `${y + window.scrollY + 10}px`;
+//       conMenu.style.left = `${x + window.scrollX}px`;
+
+//       $(".context-menu-one").contextMenu();
+//     }
+//   });
+// }
 
 var range = null;
 var selected = null;
@@ -164,72 +198,43 @@ $.contextMenu({
   delay: 500,
   autoHide: false,
   position: function (opt, x, y) {
-    // console.log(x);
+    // console.log(`${x} ${y}`);
   },
   callback: function (key, opt, e) {
     var m = "clicked: " + key + " " + opt;
     console.log(m);
     const selection = document.getSelection();
-    let span;
+    let span = createNewSpan(selection);
+    const [start, end] = getIndices(span);
+    var tdNode = getTD(span);
+    line = tdNode.getAttribute("data-line-number");
+    const ID = randomId();
+    span.id = ID;
+
     if (key == "comment") {
-      console.log("comment");
-      span = createNewSpan(selection);
-      span.classList.add("comment");
     } //else if (key == "highlight") {
     else if (key == "red") {
-      span = createNewSpan(selection);
       span.classList.add("red");
-      const [start, end] = getIndices(span);
-      var tdNode = getTD(span);
-      line = tdNode.getAttribute("data-line-number");
-      const ID = randomId();
-      span.id = ID;
       addWordHighlight("red", start, end, line, ID);
     } else if (key == "yellow") {
-      span = createNewSpan(selection);
       span.classList.add("yellow");
-      const [start, end] = getIndices(span);
-      var tdNode = getTD(span);
-      line = tdNode.getAttribute("data-line-number");
-      const ID = randomId();
-      span.id = ID;
       addWordHighlight("yellow", start, end, line, ID);
     } else if (key == "green") {
-      span = createNewSpan(selection);
       span.classList.add("green");
-      const [start, end] = getIndices(span);
-      var tdNode = getTD(span);
-      line = tdNode.getAttribute("data-line-number");
-      const ID = randomId();
-      span.id = ID;
       addWordHighlight("green", start, end, line, ID);
     } else if (key == "record") {
       console.log("record");
     } else if (key == "hide") {
-      // let docfrag = document.createDocumentFragment();
-      const td = selection.anchorNode.parentElement.closest("td");
-      const cloneNode = td.cloneNode(true);
-      // docfrag.appendChild(cloneNode);
-      span = createNewSpan(selection);
-      const ID = randomId();
-      const [start, end] = getIndices(span);
-      var tdNode = getTD(span);
-      line = tdNode.getAttribute("data-line-number");
-      span.id = ID;
-      addWordHide(start, end, line, ID);
       ellipsisSpan(span);
+      addWordHide(start, end, line, ID);
     } else if (key == "link") {
       console.log("link");
       span = createNewSpan(selection);
       console.log("LINK!!!");
-      // link 가져와서 tag 만들기
     } else {
       console.log("none");
     }
-    // const [startIndex, endIndex] = getIndices(span);
-    // console.log(startIndex, endIndex);
     selection.removeAllRanges();
-    // window.console && console.log(m) || alert(m);
   },
   items: {
     comment: {
@@ -243,7 +248,8 @@ $.contextMenu({
               let inputs = document.getElementsByName("context-menu-input-link-1");
               if (e.keyCode == 13 && inputs[0].value) {
                 const conMenu = document.querySelector(".context-menu-list.context-menu-root");
-                addComment(e, conMenu.style.top, conMenu.style.left);
+
+                addComment(e, conMenu.style.top, conMenu.style.left, inputs[0].value);
 
                 Array.from(inputs).map((input) => {
                   input.removeEventListener("mousedown", createFakeSelection);
@@ -300,32 +306,9 @@ $.contextMenu({
               // add some fancy key handling here?
               let link_tag = document.getElementsByName("context-menu-input-link-1");
               if (e.keyCode == 13 && link_tag[1].value) {
-                console.log(range);
-                //selectedNode = JSON.parse(localStorage.getItem("selection"));
-                console.log("link enter");
-                // getting link
-                // line number 가져오기
                 let url = link_tag[1].value;
-                let id = randomId();
-                console.log(url);
-
-                // add to a tag
-                var select = document.querySelector(".selected");
-                // select.wrap(
-                //     `<a id="${id}" url = "${url}" class="link" href="javascript:void(0);" onclick="openLink(this)"></a>`
-                //   );
-                $(".selected").wrap(
-                  `<a id="${id}" url = "${url}" class="link" href="javascript:void(0);" onclick="openLink(this)"></a>`
-                );
-                select.classList.remove("selected");
-                // select.addEventListener("hover", removeLinkTag) ;
-
-                // cache에 store하기
-                if (ref_data != null) {
-                  console.log("addLink");
-                  addLink(start_index, end_index, line, url, id);
-                  console.log(ref_data);
-                }
+                const conMenu = document.querySelector(".context-menu-list.context-menu-root");
+                addLinkTag(e, conMenu.style.top, conMenu.style.left, url);
 
                 // removeEventListener하기
                 var inputs = document.getElementsByName("context-menu-input-link-1");
@@ -334,7 +317,6 @@ $.contextMenu({
                   input.removeEventListener("blur", removeFakeSelection);
                 });
                 flag = 0;
-                console.log("fisrtst");
                 $(".context-menu-list").trigger("contextmenu:hide");
               }
             },
@@ -381,4 +363,41 @@ $.contextMenu({
 
 function randomId() {
   return Math.random().toString(12).substring(2, 11);
+}
+
+function addComment(e, x, y, comment) {
+  let id = randomId();
+  console.log(id);
+  var select = document.querySelector(".selected");
+  select.classList.remove("selected");
+  select.classList.add("comment-underline");
+  registerCommentEvents(comment, select, x, y, id);
+
+  // const x = window.innerWidth - 200 > e.clientX ? e.clientX : window.innerWidth - 210;
+  // const y = window.innerHeight > e.clientY ? e.clientY : window.innerHeight - 100;
+
+  const input = document.getElementsByName("context-menu-input-link-1")[0];
+  input.removeEventListener("blur", removeFakeSelection);
+
+  var tdNode = getTD(select);
+  const line = tdNode.getAttribute("data-line-number");
+  const [start, end] = getIndices(select);
+  // select.id = id;
+  addWordComment(start, end, line, comment, id);
+}
+
+function addLinkTag(e, x, y, url) {
+  let id = randomId();
+  var select = document.querySelector(".selected");
+  $(".selected").wrap(
+    `<a id="${id}" url = "${url}" class="link" href="javascript:void(0);" onclick="openLink(this)"></a>`
+  );
+  select.classList.remove("selected");
+  registerCommentEvents(url, select.parentElement, x, y, id);
+
+  if (ref_data != null) {
+    console.log("addLink");
+    addLink(start_index, end_index, line, url, id);
+    console.log(ref_data);
+  }
 }

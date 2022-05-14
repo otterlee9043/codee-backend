@@ -14,6 +14,7 @@ async function createCodee() {
   const codee_name = document.getElementById("codee_name").value;
   const codee_path = document.getElementById("browse1_path").value;
   const ref_path = document.getElementById("browse2_path").value;
+  console.log(codee_path) ;
   const opts = {
     method: "POST",
     body: JSON.stringify({
@@ -24,5 +25,6 @@ async function createCodee() {
   };
 
   const response = await fetch(`${window.origin}/codination/ver1/create_codee`, opts);
+  console.log(response) ;
   location.href = `/codination/ver1/${codee_path}/${codee_name}.cd`;
 }

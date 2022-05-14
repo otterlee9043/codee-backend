@@ -56,6 +56,30 @@ function deleteLineHide(ID) {
   }
 }
 
+function deleteComment(ID) {
+  for (let i = 0; i < ref_data[0]["data"].length; i++) {
+    if (ref_data[0]["data"][i].id == ID && ref_data[0]["data"][i].type == "comment") {
+      ref_data[0]["data"].splice(ref_data[0]["data"].indexOf(i), 1);
+    }
+  }
+}
+
+function deleteLink(ID) {
+  for (let i = 0; i < ref_data[0]["data"].length; i++) {
+    if (ref_data[0]["data"][i].id == ID && ref_data[0]["data"][i].type == "link") {
+      ref_data[0]["data"].splice(ref_data[0]["data"].indexOf(i), 1);
+    }
+  }
+}
+
+function deleteHighlight(ID) {
+  for (let i = 0; i < ref_data[0]["data"].length; i++) {
+    if (ref_data[0]["data"][i].id == ID && ref_data[0]["data"][i].type == "highlight") {
+      ref_data[0]["data"].splice(ref_data[0]["data"].indexOf(i), 1);
+    }
+  }
+}
+
 function saveCodee(path, username) {
   // path를 읽고
   // fetch로 보내기
