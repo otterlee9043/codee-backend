@@ -217,6 +217,7 @@ function show_dir(tree, username, parent_node, browse = false, inputId, file = f
                 setPath(inputId, find_dir_path(this, username));
               });
             }
+            // console.log(new_key);
             result = show_dir(values[j][new_key], new_key, li_new_dir);
             ul_new_tag.append(li_new_dir);
           }

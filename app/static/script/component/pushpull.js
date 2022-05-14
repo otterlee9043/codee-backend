@@ -6,6 +6,16 @@ function pull(project) {
   var params = { proj: project };
   Object.keys(params).forEach((key) => url.searchParams.append(key, params[key]));
   console.log(url);
+  if(cacheChange) {
+    // saveCode
+    username = document.querySelector(".dir").getAttribute('id') ;
+    console.log(username) ;
+    saveCodee(username) ;
+    cacheChange = 0 ;
+  }
+  //commit & push
+  
+
   fetch(url, {
     method: "GET",
   })

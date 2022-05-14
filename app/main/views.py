@@ -253,7 +253,7 @@ def create_codee():
     commit_id = get_commit_id( os.path.join(root, username, codee_path.split(os.path.sep)[0]) )
     # f = open(f"{root}{username}/{codee_path}/{codee_name}.cd", "w")
     f = open(os.path.join(root, username, codee_path, f"{codee_name}.cd"), "w")
-    content = [{ 'commid_id' : commit_id, 'filepath': ref_path, 'data': [] }]
+    content = [{ 'commit_id' : commit_id, 'filepath': ref_path, 'data': [] }]
     json_content = json.dumps(content)
     f.write(json_content)
     f.close()
@@ -282,6 +282,22 @@ def saveCodee():
     f.write(codee_data.encode('utf8'))
     f.close()
     return make_response("codee file updated", 200) 
+
+@main.route('/diff/<cmtid1>/<cmtid2>', methods=['GET'])
+def diff(cmtid1, cmtid2):
+    print(cmtid1)
+    # data = subprocess.check_output(['sudo','git', 'diff', '--word-diff-regex=.', cmtid1, cmtid2]) 
+    # print(len(data))
+    print("DATA!!")
+    # os.system("git diff --word-diff-regex=. 131356fdb658d63815e450cea171423dc74907d0 3a7a30864bf88feb78e6e41ade5af7bc8538dd98")
+    cmd = "git diff --word-diff-regex=. 131356fdb658d63815e450cea171423dc74907d0 3a7a30864bf88feb78e6e41ade5af7bc8538dd98"
+    fd_popen = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout
+    data = fd_popen.read().strip()
+    fd_popen.close()
+    print(data)
+
+    return make_response("os.system", 200) 
+
 
 # @main.route('/upload', methods = ['GET', 'POST'])
 # def upload():

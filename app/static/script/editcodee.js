@@ -29,26 +29,41 @@ async function readCodee() {
 }
 
 function addLineHide(start, end, ID) {
+  cacheChange = 1 ;
   ref_data[0]["data"].push({ type: "line_hide", start: start, end: end, id: ID });
 }
 
 function addLink(start, end, line, url, ID) {
+  cacheChange = 1 ;
   ref_data[0]["data"].push({ type: "link", start: start, end: end, line: line, url: url, id: ID });
 }
 
 function addWordComment(start, end, line, comment, ID) {
+  cacheChange = 1 ;
   ref_data[0]["data"].push({ type: "comment", start: start, end: end, line: line, comment: comment, id: ID });
 }
 
 function addWordHighlight(color, start, end, line, ID) {
+  cacheChange = 1 ;
   ref_data[0]["data"].push({ type: "highlight", color: color, start: start, end: end, line: line, id: ID });
 }
 
 function addWordHide(start, end, line, ID) {
+  cacheChange = 1 ;
   ref_data[0]["data"].push({ type: "word_hide", start: start, end: end, line: line, id: ID });
 }
 
+function deleteWordHide(ID) {
+  cacheChange = 1 ;
+  for (let i = 0; i < ref_data[0]["data"].length; i++) {
+    if (ref_data[0]["data"][i].id == ID && ref_data[0]["data"][i].type == "word_hide") {
+      ref_data[0]["data"].splice(ref_data[0]["data"].indexOf(i), 1);
+    }
+  }
+}
+
 function deleteLineHide(ID) {
+  cacheChange = 1 ;
   for (let i = 0; i < ref_data[0]["data"].length; i++) {
     if (ref_data[0]["data"][i].id == ID && ref_data[0]["data"][i].type == "line_hide") {
       ref_data[0]["data"].splice(ref_data[0]["data"].indexOf(i), 1);
@@ -57,6 +72,7 @@ function deleteLineHide(ID) {
 }
 
 function deleteComment(ID) {
+  cacheChange = 1 ;
   for (let i = 0; i < ref_data[0]["data"].length; i++) {
     if (ref_data[0]["data"][i].id == ID && ref_data[0]["data"][i].type == "comment") {
       ref_data[0]["data"].splice(ref_data[0]["data"].indexOf(i), 1);
@@ -65,6 +81,7 @@ function deleteComment(ID) {
 }
 
 function deleteLink(ID) {
+  cacheChange = 1 ;
   for (let i = 0; i < ref_data[0]["data"].length; i++) {
     if (ref_data[0]["data"][i].id == ID && ref_data[0]["data"][i].type == "link") {
       ref_data[0]["data"].splice(ref_data[0]["data"].indexOf(i), 1);
@@ -73,6 +90,7 @@ function deleteLink(ID) {
 }
 
 function deleteHighlight(ID) {
+  cacheChange = 1 ;
   for (let i = 0; i < ref_data[0]["data"].length; i++) {
     if (ref_data[0]["data"][i].id == ID && ref_data[0]["data"][i].type == "highlight") {
       ref_data[0]["data"].splice(ref_data[0]["data"].indexOf(i), 1);
@@ -80,9 +98,10 @@ function deleteHighlight(ID) {
   }
 }
 
-function saveCodee(path, username) {
+function saveCodee(username) {
   // path를 읽고
   // fetch로 보내기
+  cacheChange = 1 ;
   console.log(filepath);
   console.log(ref_data);
   const opts = {

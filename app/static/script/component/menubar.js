@@ -225,7 +225,7 @@ $.contextMenu({
     } else if (key == "record") {
       console.log("record");
     } else if (key == "hide") {
-      ellipsisSpan(span);
+      ellipsisSpan(span) ;
       addWordHide(start, end, line, ID);
     } else if (key == "link") {
       console.log("link");

@@ -54,6 +54,8 @@
           <li id="{{username}}" class="dir">
           </li>
           <script>
+            console.log("asdfsdafasdfdsa") ;
+            console.log('{{filename}}') ;
             $(function () {
               var dir_tree = JSON.parse('{{dir_tree | tojson}}');
               var parent_node = document.getElementById('{{ username }}');
@@ -134,7 +136,7 @@
     {% if data is none %}
     <div class="box" id='export'>
       <h3 id="cd">{{filename}}&nbsp;&nbsp;<button class="button" type="button"
-          onclick="saveCodee('{{ path }}', '{{ username }}')">save</button></h3>
+          onclick="saveCodee('{{ username }}')">save</button></h3>
 
       <div class="border-box">
         <div class="filename" id="filename">{{ref_filename}}</div>

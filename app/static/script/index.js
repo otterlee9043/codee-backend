@@ -89,7 +89,7 @@ function drawWordHide(deco) {
     // merge(newSpan);
   });
 }
-
+let cacheChange = 0 ;
 window.addEventListener("load", async function () {
   // addMenuClass() ;
   const pre = document.querySelector("pre");
