@@ -12,7 +12,7 @@ import os, stat
 from git import Repo
 import shutil
 from urllib.parse import urlparse
-import sys
+import re
 import subprocess
 from os.path import exists
 
@@ -285,20 +285,75 @@ def saveCodee():
 
 @main.route('/diff/<cmtid1>/<cmtid2>', methods=['GET'])
 def diff(cmtid1, cmtid2):
-    print(cmtid1)
-    # data = subprocess.check_output(['sudo','git', 'diff', '--word-diff-regex=.', cmtid1, cmtid2]) 
-    # print(len(data))
+    print(type(cmtid1))
+    
+    # os.system("cd /home/codination/ver1")
+    # data = subprocess.check_output(['git', 'diff', '--word-diff-regex=.', cmtid1, cmtid2], encoding = 'utf_8') 
+    # # print(len(data))
+    # print(data)
+
+
     print("DATA!!")
-    # os.system("git diff --word-diff-regex=. 131356fdb658d63815e450cea171423dc74907d0 3a7a30864bf88feb78e6e41ade5af7bc8538dd98")
-    cmd = "git diff --word-diff-regex=. 131356fdb658d63815e450cea171423dc74907d0 3a7a30864bf88feb78e6e41ade5af7bc8538dd98"
-    fd_popen = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout
-    data = fd_popen.read().strip()
-    fd_popen.close()
-    print(data)
+    # os.system("cd /home/codination/ver1")
+    os.chdir("/home/codination/ver1")
+    data = subprocess.check_output(['git', 'diff', '--word-diff-regex=.', cmtid1, cmtid2], encoding = 'utf_8') 
+    data = data.split("\n")
+    print(len(data))
+    diff = parse_diff_data(data)
+
+
+
 
     return make_response("os.system", 200) 
 
+def parse_diff_data(data):
+    diff = []
+    start = -1
+    diff_data = {}
+    for i in range(len(data)):
+        line = data[i]
+        if "diff --git " in line:
+            # 굳이 is_comment필요 없을 듯!! (보문)
+            if is_comment(line) is False:
+                if not diff_data:
+                    diff.append(diff_data)
+                    diff_data = {}
+        elif "--- a" in line:
+            # 굳이 is_comment필요 없을 듯!! (보문)
+            if is_comment(line) is False:
+                diff_data['old_filepath'] = line.strip("--- a")
+        elif "+++ b" in line:
+            # 굳이 is_comment필요 없을 듯!! (보문)
+            if is_comment(line) is False:
+                diff_data['new_filepath'] = line.strip("+++ b")
+        elif "@@" in line:
+            # 굳이 is_comment필요 없을 듯!! (보문)
+            if is_comment(line) is False:
+                ranges = re.compile(r"@@ (.+) @@(.+)").match.group(1)
+                ranges = ranges.split(" ")
+                old_range = ranges[0]
+                new_range = ranges[1]
+                new_range = new_range.lstrip('+')
+                # diff_data['new_filepath'] = new_range.split(",")[0]
+                start = new_range.split(",")[0]
+                for()
 
+               
+
+    # diff_data = {}
+
+def is_comment(string):
+    # line = string.lstrip()
+    if "#" in string:
+        return True
+    elif "//" in string:
+        return True
+    elif "/*" in string:
+        return True
+    elif "*/" in string:
+        return True
+    else: return False
+    
 # @main.route('/upload', methods = ['GET', 'POST'])
 # def upload():
 #     if request.method == 'POST':

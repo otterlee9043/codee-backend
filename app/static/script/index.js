@@ -30,6 +30,8 @@ function drawLink(deco) {
   $(".rendering").wrap(
     `<a id="${id}" url = "${url}" class="link" href="javascript:void(0);" onclick="openLink(this)"></a>`
   );
+  var rect = span.parentElement.getBoundingClientRect();
+  registerCommentEvents(url, span.parentElement, id, "link");
   span.classList.remove("rendering");
 }
 
@@ -42,13 +44,7 @@ function drawComment(deco) {
   console.log(span);
   var rect = span.getBoundingClientRect();
   // cd 파일을 읽고 comment를 이벤트 핸들러에 등록하는 함수
-  registerCommentEvents(
-    comment,
-    span,
-    `${rect.top - 10 + window.scrollY}px`,
-    `${rect.left + window.scrollX}px`,
-    id
-  );
+  registerCommentEvents(comment, span, id, "comment");
 }
 
 function drawHighlight(deco) {
@@ -57,6 +53,7 @@ function drawHighlight(deco) {
   const span = createNewSpan(document.getSelection());
   document.getSelection().removeAllRanges();
   span.classList.add(color);
+  registerCommentEvents("", span, id, "highlight");
 }
 
 function drawWordHide(deco) {
@@ -73,12 +70,14 @@ function drawWordHide(deco) {
 
   ellipsisBtn.addEventListener("click", () => {
     span.classList.remove("hidden");
+    let id = deco.id;
+    console.log(`id is ${id}`);
+    deleteWordHide(id);
     ellipsisBtn.remove();
     const children = [];
     while (span.firstChild) {
       const child = span.firstChild;
       children.push(child);
-      // console.log(child);
       span.parentNode.insertBefore(child, span);
     }
     console.log();
@@ -89,7 +88,7 @@ function drawWordHide(deco) {
     // merge(newSpan);
   });
 }
-let cacheChange = 0 ;
+let cacheChange = 0;
 window.addEventListener("load", async function () {
   // addMenuClass() ;
   const pre = document.querySelector("pre");
@@ -344,6 +343,9 @@ function ellipsisSpan(newSpan) {
   ellipsisButton.classList.add("ellipsis");
   ellipsisButton.addEventListener("click", () => {
     newSpan.classList.remove("hidden");
+    let id = newSpan.getAttribute("id");
+    console.log(`id is ${id}`);
+    deleteWordHide(id);
     ellipsisButton.remove();
     const children = [];
     while (newSpan.firstChild) {
@@ -421,14 +423,11 @@ function createNewSpan(selectionText) {
   const textLength = selectedFirst.nodeValue.substring(firstOffset, selectedFirst.nodeValue.length).length;
   if (nodeType(selectedFirst) == NODE.TEXT) {
     [fragmented, startNode] = splitText(selectedFirst, firstOffset, textLength, true);
-    // startNode = splitNode(selectedFirst, firstOffset, textLength, true);
   } else if (nodeType(selectedFirst) == NODE.SPAN) {
     [fragmented, startNode] = splitSpan(selectedFirst.parentElement, firstOffset, textLength, true);
   }
   startNode.parentElement.insertBefore(cutSpan, startNode);
   const start = splitTree(cutSpan, Position.START, fragmented === FRAGMENT.FALSE ? false : true);
-  // startNode = startNode.closest("td>span");
-  // startNode.setAttribute("fragmented", fragmented);
 
   const textLength2 = selectedLast.nodeValue.substring(lastOffset, selectedLast.nodeValue.length).length;
   if (nodeType(selectedLast) == NODE.TEXT) {
@@ -438,8 +437,6 @@ function createNewSpan(selectionText) {
   }
   endNode.parentElement.insertBefore(cutSpan, endNode.nextSibling);
   const end = splitTree(cutSpan, Position.END, fragmented === FRAGMENT.FALSE ? false : true);
-  // endNode = endNode.closest("td>span");
-  // endNode.setAttribute("fragmented", fragmented);
 
   const newSpan = bindTags(start, end);
   return newSpan;
@@ -643,7 +640,7 @@ function merge(wrapper) {
   }
 }
 
-function registerCommentEvents(comment, node, x, y, id) {
+function registerCommentEvents(comment, node, id, type) {
   const commentSpan = document.createElement("span");
   commentSpan.innerText = comment;
   commentSpan.classList.add("comment");
@@ -657,19 +654,47 @@ function registerCommentEvents(comment, node, x, y, id) {
 
   closeBtn.addEventListener("click", () => {
     console.log(commentSpan.id);
-    deleteComment(commentSpan.id);
+    if (type == "comment") {
+      deleteComment(commentSpan.id);
+    } else if (type == "link") {
+      deleteLink(id);
+    } else if (type == "highlight") {
+      deleteHighlight(id);
+    }
     addContextMenu();
 
-    const nodeToMerge = node.firstChild;
-    node.before(nodeToMerge);
+    const children = [];
+    while (node.firstChild) {
+      const child = node.firstChild;
+      children.push(child);
+      node.parentNode.insertBefore(child, node);
+    }
+    console.log();
     node.remove();
-    merge(nodeToMerge);
+    commentSpan.remove();
+    Array.from(children).map((node) => {
+      merge(node);
+    });
+
+    // const nodeToMerge = node.firstChild;
+    // node.before(nodeToMerge);
+    // node.remove();
+    // merge(nodeToMerge);
   });
   // document.querySelector("#export").appendChild(commentSpan);
   // const c = document.getElementById(id);
   // c.style.top = x;
   // c.style.left = y;
-
+  console.log(type);
+  if (type == "link") {
+    commentSpan.classList.add("linkComment");
+    commentSpan.addEventListener("mouseenter", () => {
+      node.onclick = null;
+    });
+    commentSpan.addEventListener("mouseleave", () => {
+      node.onclick = "openLink(this)";
+    });
+  }
   node.addEventListener("mouseenter", () => {
     removeContextMenu();
     showCommentDetail(node, commentSpan);

@@ -185,10 +185,15 @@ function removeFakeSelection(event) {
   flag = 0;
 }
 
-function openLink(self) {
+// function openLink(self) {
+//   console.log("click link");
+//   console.log(self);
+//   url = self.getAttribute("url");
+//   window.open(url, "_blank").focus();
+// }
+function openLink(e) {
   console.log("click link");
-  console.log(self);
-  url = self.getAttribute("url");
+  url = e.getAttribute("url");
   window.open(url, "_blank").focus();
 }
 
@@ -216,14 +221,15 @@ $.contextMenu({
     else if (key == "red") {
       span.classList.add("red");
       addWordHighlight("red", start, end, line, ID);
+      registerCommentEvents("", span, ID, "highlight");
     } else if (key == "yellow") {
       span.classList.add("yellow");
       addWordHighlight("yellow", start, end, line, ID);
+      registerCommentEvents("", span, ID, "highlight");
     } else if (key == "green") {
       span.classList.add("green");
       addWordHighlight("green", start, end, line, ID);
-    } else if (key == "record") {
-      console.log("record");
+      registerCommentEvents("", span, ID, "highlight");
     } else if (key == "hide") {
       ellipsisSpan(span) ;
       addWordHide(start, end, line, ID);
@@ -240,10 +246,15 @@ $.contextMenu({
     comment: {
       // name: "Comment",
       icon: "fa-light fa-comment-dots",
+      autoHide: true,
       items: {
         "link-1": {
           type: "text",
           events: {
+            mouseleave: function(e) {
+              $("ul.context-menu-list").trigger("contextmenu:hide");
+              console.log("hello") ;
+            },
             keyup: function (e) {
               let inputs = document.getElementsByName("context-menu-input-link-1");
               if (e.keyCode == 13 && inputs[0].value) {
@@ -256,7 +267,7 @@ $.contextMenu({
                   input.removeEventListener("blur", removeFakeSelection);
                 });
                 flag = 0;
-                $(".context-menu-list").trigger("contextmenu:hide");
+                $(".context-menu-list.context-menu-root").trigger("contextmenu:hide");
               }
             },
           },
@@ -266,6 +277,7 @@ $.contextMenu({
     highlight: {
       // name: "Highlight",
       icon: "fa-light fa-highlighter",
+      autoHide: true,
       items: {
         red: {
           // name: "Red",
@@ -287,10 +299,10 @@ $.contextMenu({
         },
       },
     },
-    record: {
-      // name: "Record",
-      icon: "fa-light fa-microphone",
-    },
+    // record: {
+    //   // name: "Record",
+    //   icon: "fa-light fa-microphone",
+    // },
     hide: {
       // name: "Hide",
       icon: "fa-light fa-ellipsis",
@@ -298,6 +310,7 @@ $.contextMenu({
     link: {
       // name: "Link",
       icon: "fa-light fa-link",
+      autoHide: true,
       items: {
         "link-1": {
           type: "text",
@@ -371,7 +384,7 @@ function addComment(e, x, y, comment) {
   var select = document.querySelector(".selected");
   select.classList.remove("selected");
   select.classList.add("comment-underline");
-  registerCommentEvents(comment, select, x, y, id);
+  registerCommentEvents(comment, select, id, "comment");
 
   // const x = window.innerWidth - 200 > e.clientX ? e.clientX : window.innerWidth - 210;
   // const y = window.innerHeight > e.clientY ? e.clientY : window.innerHeight - 100;
@@ -391,9 +404,11 @@ function addLinkTag(e, x, y, url) {
   var select = document.querySelector(".selected");
   $(".selected").wrap(
     `<a id="${id}" url = "${url}" class="link" href="javascript:void(0);" onclick="openLink(this)"></a>`
+    // `<a id="${id}" url = "${url}" class="link" href="javascript:void(0);"></a>`
+
   );
   select.classList.remove("selected");
-  registerCommentEvents(url, select.parentElement, x, y, id);
+  registerCommentEvents(url, select.parentElement, id, "link");
 
   if (ref_data != null) {
     console.log("addLink");

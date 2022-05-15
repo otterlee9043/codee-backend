@@ -187,6 +187,7 @@ li.context-menu-item.context-menu-icon {
 
 ul.context-menu-list.context-menu-root {
   padding: 3px;
+  min-width: 8.5em !important;
 }
 
 .context-menu-submenu.context-menu-icon:after {
@@ -498,4 +499,8 @@ textarea {
   font-size: 11px;
   z-index: 1;
   background-color: white;
+}
+
+.linkComment {
+  color: black;
 }
