@@ -286,13 +286,6 @@ def saveCodee():
 @main.route('/diff/<cmtid1>/<cmtid2>', methods=['GET'])
 def diff(cmtid1, cmtid2):
     print(type(cmtid1))
-    
-    # os.system("cd /home/codination/ver1")
-    # data = subprocess.check_output(['git', 'diff', '--word-diff-regex=.', cmtid1, cmtid2], encoding = 'utf_8') 
-    # # print(len(data))
-    # print(data)
-
-
     print("DATA!!")
     # os.system("cd /home/codination/ver1")
     os.chdir("/home/codination/ver1")
@@ -300,45 +293,70 @@ def diff(cmtid1, cmtid2):
     data = data.split("\n")
     print(len(data))
     diff = parse_diff_data(data)
-
-
-
-
-    return make_response("os.system", 200) 
+    # print(diff)
+    return make_response(jsonify(diff), 200) 
 
 def parse_diff_data(data):
     diff = []
-    start = -1
     diff_data = {}
-    for i in range(len(data)):
+    i = 0
+    while(i < 50):
         line = data[i]
-        if "diff --git " in line:
-            # 굳이 is_comment필요 없을 듯!! (보문)
-            if is_comment(line) is False:
-                if not diff_data:
-                    diff.append(diff_data)
-                    diff_data = {}
-        elif "--- a" in line:
-            # 굳이 is_comment필요 없을 듯!! (보문)
-            if is_comment(line) is False:
-                diff_data['old_filepath'] = line.strip("--- a")
-        elif "+++ b" in line:
-            # 굳이 is_comment필요 없을 듯!! (보문)
-            if is_comment(line) is False:
-                diff_data['new_filepath'] = line.strip("+++ b")
-        elif "@@" in line:
-            # 굳이 is_comment필요 없을 듯!! (보문)
-            if is_comment(line) is False:
-                ranges = re.compile(r"@@ (.+) @@(.+)").match.group(1)
-                ranges = ranges.split(" ")
-                old_range = ranges[0]
-                new_range = ranges[1]
-                new_range = new_range.lstrip('+')
-                # diff_data['new_filepath'] = new_range.split(",")[0]
-                start = new_range.split(",")[0]
-                for()
+        if line[0:11] == "diff --git ":
+            print(" | diff --git")
+            # if not diff_data:
+            #     print("~~~NEW")
+            #     diff_data = {}
+            #     print("init, ", diff_data)
+        elif line[0:5] == "--- a":
+            diff_data['old_filepath'] = line.strip("--- a")
+            print(line.strip("--- a"))
+        elif line[0:5] == "+++ b":
+            diff_data['new_filepath'] = line.strip("+++ b")
+            
+        elif line[0:2] =="@@":
+            # 만약 @@이 또 있다면 diff_data['changes']에 append하도록
+            # diff_data 접근은 diff[마지막 인덱스]로 하도록
+            ranges = re.findall(r'@@ (.*?) @@', line)[0]
+            ranges = ranges.split(" ")
+            old_range = ranges[0]
+            new_range = ranges[1]
+            new_range = new_range.lstrip('+')
+            # diff_data['new_filepath'] = new_range.split(",")[0]
+            start = int(new_range.split(",")[0])
+            line_num = int(new_range.split(",")[1])
+            changes = []
+            for j in range(line_num):
+                line = data[i+j]
+                content = re.findall(r'\[\-(.*?)\-\]', line)
+                if content:
+                    change = {
+                        "line_num": start + j,
+                        "type": "delete",
+                        "col": re.search(r'\[\-(.*?)\-\]', line).start(),
+                        "content": content
+                        }
+                    changes.append(change)
+                content = re.findall(r'\{\+(.*?)\+\}', line)
+                if content:
+                    change = {
+                        "line_num": start + j,
+                        "type": "add",
+                        "col": re.search(r'\{\+(.*?)\+\}', line).start(),
+                        "content": content
+                        }
+                    changes.append(change)
+            diff_data['changes'] = changes
+            print("before, ", diff_data)
+            diff.append(diff_data)
+            diff_data = {}
+            print("after, ", diff_data)
+            i = i + line_num - 1  
+            # print("i: ", i)
+        i = i + 1
+        print(diff)
 
-               
+    return diff       
 
     # diff_data = {}
 
