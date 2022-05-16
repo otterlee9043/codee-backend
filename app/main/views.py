@@ -323,29 +323,32 @@ def parse_diff_data(data):
             new_range = ranges[1]
             new_range = new_range.lstrip('+')
             # diff_data['new_filepath'] = new_range.split(",")[0]
-            start = int(new_range.split(",")[0])
-            line_num = int(new_range.split(",")[1])
+            start = int(new_range.split(",")[0]) # 바뀌기 전 line nuber
+            line_num = int(new_range.split(",")[1]) # line offset
             changes = []
             for j in range(line_num):
                 line = data[i+j]
                 content = re.findall(r'\[\-(.*?)\-\]', line)
                 if content:
-                    change = {
-                        "line_num": start + j,
-                        "type": "delete",
-                        "col": re.search(r'\[\-(.*?)\-\]', line).start(),
-                        "content": content
-                        }
-                    changes.append(change)
+                    for string in content: 
+                        change = {
+                            "line_num": start + j,
+                            "type": "delete",
+                            "col": re.search(r'\[\-(.*?)\-\]', line).start(),
+                            "content": string
+                            }
+                        changes.append(change)
+                    
                 content = re.findall(r'\{\+(.*?)\+\}', line)
                 if content:
-                    change = {
-                        "line_num": start + j,
-                        "type": "add",
-                        "col": re.search(r'\{\+(.*?)\+\}', line).start(),
-                        "content": content
-                        }
-                    changes.append(change)
+                    for string in content: 
+                        change = {
+                            "line_num": start + j,
+                            "type": "add",
+                            "col": re.search(r'\{\+(.*?)\+\}', line).start(),
+                            "content": string
+                            }
+                        changes.append(change)
             diff_data['changes'] = changes
             print("before, ", diff_data)
             diff.append(diff_data)
