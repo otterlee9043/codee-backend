@@ -251,10 +251,10 @@ $.contextMenu({
         "link-1": {
           type: "text",
           events: {
-            mouseleave: function(e) {
-              $("ul.context-menu-list").trigger("contextmenu:hide");
-              console.log("hello") ;
-            },
+            // mouseleave: function(e) {
+            //   $("ul.context-menu-list").trigger("contextmenu:hide");
+            //   console.log("hello") ;
+            // },
             keyup: function (e) {
               let inputs = document.getElementsByName("context-menu-input-link-1");
               if (e.keyCode == 13 && inputs[0].value) {

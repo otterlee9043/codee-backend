@@ -1,9 +1,10 @@
-function pull(project) {
+function pull(username) {
   console.log("pull function");
-  console.log(project);
+  console.log(username);
 
   var url = new URL(`${window.origin}/codination/ver1/pull`);
-  var params = { proj: project };
+  let repoName = document.getElementById("treeitem").getAttribute("name") ;
+  var params = { username: username, repo: repoName };
   Object.keys(params).forEach((key) => url.searchParams.append(key, params[key]));
   console.log(url);
   if(cacheChange) {
@@ -14,7 +15,7 @@ function pull(project) {
     cacheChange = 0 ;
   }
   //commit & push
-  
+  push(username) ;
 
   fetch(url, {
     method: "GET",
@@ -34,16 +35,17 @@ function pull(project) {
     });
 }
 
-function push(project) {
+async function push(username) {
   console.log("push function");
 
   // var url = new URL('http://203.245.41.143:9999/push') ;
   var url = new URL(`${window.origin}/codination/ver1/push`);
-  var params = { proj: project };
+  let repoName = document.getElementById("treeitem").getAttribute("name") ;
+  var params = { username: username, repo: repoName };
   Object.keys(params).forEach((key) => url.searchParams.append(key, params[key]));
   console.log(url);
 
-  fetch(url, {
+  await fetch(url, {
     method: "GET",
   })
     .then(function (response) {

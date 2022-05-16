@@ -131,15 +131,14 @@ def showfile(filepath):
     data = read_file( os.path.join(root, username, filepath) )
     return render_template('main/index.html', dir_tree = dir_tree, username = username, data = data, filename = filename )
     
-@main.route('/show_ref_file', methods = ['POST'])
-def show_ref_file():
+@main.route('/read_codee', methods = ['POST'])
+def read_codee():
     if request.method == 'POST':
         error = None
         jsonData = request.get_json(force = True)
-        print(show_ref_file)
+        # print(show_ref_file)
         print(jsonData)
         cd_path = jsonData['cd_filepath']        
-
         if not cd_path:
             error = f'there is no such a file: {cd_path}'
             return make_response( jsonify({"msg": error }), 200 )
@@ -147,6 +146,13 @@ def show_ref_file():
             cd_data = read_json_file( os.path.join(root, username, cd_path) )
             ref_data = read_file( os.path.join(root, username, cd_data[0]['filepath']) )
             if ref_data is not None:
+                # if jsonData['header']:
+                #     return make_response(jsonify({"commit_id": cd_data[0]['commit_id']}), 200 )
+                repository = cd_data[0]['filepath'].split("/")[0]
+                filepath = cd_data[0]['filepath'].split("/", maxsplit=1)[1]
+
+                if cd_data[0]['commit_id'] != get_commit_id(os.path.join(root, username, repository), os.path.join(".", filepath[0]) ):
+                    print("need AUTO-MERGE")
                 data_dict = {
                     # "ref_data": ref_data,
                     "cd_data": cd_data
@@ -154,6 +160,7 @@ def show_ref_file():
                 return make_response( jsonify(data_dict), 200 )
             else:
                 return make_response( jsonify({"msg": "no ref_data" }), 200 )
+
 
 
 @main.route('/showcode', methods=['GET', 'POST'])
@@ -184,9 +191,11 @@ def show_code():
 # log in required 하기
 def pull():
     args = request.args
-    proj = args.get('proj')
-    print(proj)
-    proj_path = os.path.join(root, username, proj)
+    user = args.get('username')
+    repoName = args.get('repo')
+    
+    print(repoName)
+    proj_path = os.path.join(root, user, repoName)
     print(proj_path)
     repo = Repo(proj_path)
     print(repo.remotes.origin)
@@ -194,6 +203,8 @@ def pull():
     repo.config_writer().set_value("user", "email", "otterlee99@gmail.com").release()
     origin = repo.remotes.origin
     origin.pull()
+    
+    # commit_id = get_commit_id( os.path.join(root, user, repoName) )
 
     return make_response("done pull request", 200)
 
@@ -201,9 +212,11 @@ def pull():
 # log in required 하기
 def push():
     args = request.args
-    proj = args.get('proj')
-    print(proj)
-    proj_path = os.path.join(root, username, proj)
+    user = args.get('username')
+    repoName = args.get('repo')
+    
+    print(repoName)
+    proj_path = os.path.join(root, user, repoName)
     print(proj_path)
     repo = Repo(proj_path)
     repo.config_writer().set_value("user", "name", "otterlee9043").release()
@@ -225,8 +238,8 @@ def push():
     if os.path.exists(proj_path):
         print("exist")
         os.chdir(proj_path)
-        proj_name = os.path.join(username, proj)
-        os.system(f'git remote set-url {origin} https://{git_name}@github.com/{git_name}/{proj}.git') #"https://github-username@github.com/github-username/github-repository-name.git"
+        proj_name = os.path.join(username, repoName)
+        os.system(f'git remote set-url {origin} https://{git_name}@github.com/{git_name}/{repoName}.git') #"https://github-username@github.com/github-username/github-repository-name.git"
         os.system(f'/home/codination/ver1/app/static/files/push.exp {proj_name} neobomoon {token} {origin} {branch}')
         print('complete')
         
@@ -234,10 +247,11 @@ def push():
 
     return make_response("done push request", 200)
 
-def get_commit_id(path):
+def get_commit_id(path, filename):
     # git rev-parse HEAD
     os.chdir(path)
-    data = subprocess.check_output(['git', 'rev-parse', 'HEAD'], encoding = 'utf-8')[0:-1]
+    data = subprocess.check_output(['git', 'log', 'main.c'], encoding = 'utf-8').split("\n")[0]
+    data = data.split(" ")[1]
     return data
     
 
@@ -250,7 +264,7 @@ def create_codee():
     ref_path = jsonData['ref_path']
     print(f"codee_path: {codee_path}")
 
-    commit_id = get_commit_id( os.path.join(root, username, codee_path.split(os.path.sep)[0]) )
+    commit_id = get_commit_id( os.path.join(root, username, codee_path.split(os.path.sep)[0]),  ref_path.split(os.path.sep)[-1])
     # f = open(f"{root}{username}/{codee_path}/{codee_name}.cd", "w")
     f = open(os.path.join(root, username, codee_path, f"{codee_name}.cd"), "w")
     content = [{ 'commit_id' : commit_id, 'filepath': ref_path, 'data': [] }]
@@ -269,7 +283,7 @@ def get_codee(filepath):
         print(filepath)
         data = f.read()
         print("DATA")
-        print(data)
+        # print(data)
     return make_response(data, 200)
 
 @main.route('/saveCodee', methods=['POST'])
@@ -299,24 +313,22 @@ def diff(cmtid1, cmtid2):
 def parse_diff_data(data):
     diff = []
     diff_data = {}
+    changes = []
     i = 0
-    while(i < 50):
+    while(i < len(data)):
         line = data[i]
         if line[0:11] == "diff --git ":
-            print(" | diff --git")
-            # if not diff_data:
-            #     print("~~~NEW")
-            #     diff_data = {}
-            #     print("init, ", diff_data)
+            if changes:
+                diff_data['changes'] = changes
+                diff.append(diff_data)
+            diff_data = {}
+            changes = []
         elif line[0:5] == "--- a":
             diff_data['old_filepath'] = line.strip("--- a")
             print(line.strip("--- a"))
         elif line[0:5] == "+++ b":
             diff_data['new_filepath'] = line.strip("+++ b")
-            
         elif line[0:2] =="@@":
-            # 만약 @@이 또 있다면 diff_data['changes']에 append하도록
-            # diff_data 접근은 diff[마지막 인덱스]로 하도록
             ranges = re.findall(r'@@ (.*?) @@', line)[0]
             ranges = ranges.split(" ")
             old_range = ranges[0]
@@ -325,7 +337,9 @@ def parse_diff_data(data):
             # diff_data['new_filepath'] = new_range.split(",")[0]
             start = int(new_range.split(",")[0]) # 바뀌기 전 line nuber
             line_num = int(new_range.split(",")[1]) # line offset
-            changes = []
+            if len(line.split("@@")) > 2: 
+                line_num = line_num - 1
+            # @@ 뒤에 코드가 나오는 경우 한 줄 덜 읽도록
             for j in range(line_num):
                 line = data[i+j]
                 content = re.findall(r'\[\-(.*?)\-\]', line)
@@ -349,19 +363,12 @@ def parse_diff_data(data):
                             "content": string
                             }
                         changes.append(change)
-            diff_data['changes'] = changes
-            print("before, ", diff_data)
-            diff.append(diff_data)
-            diff_data = {}
-            print("after, ", diff_data)
             i = i + line_num - 1  
-            # print("i: ", i)
         i = i + 1
-        print(diff)
+        # print(diff)
 
     return diff       
 
-    # diff_data = {}
 
 def is_comment(string):
     # line = string.lstrip()

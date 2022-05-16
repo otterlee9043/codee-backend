@@ -11,7 +11,6 @@ async function fillCodeTag(data) {
 }
 
 async function readCodee() {
-  const cd = document.getElementById("cd");
   const cdpath = filepath;
   const opts = {
     method: "POST",
@@ -19,7 +18,7 @@ async function readCodee() {
       cd_filepath: cdpath,
     }),
   };
-  const response = await fetch(`${window.origin}/codination/ver1/show_ref_file`, opts);
+  const response = await fetch(`${window.origin}/codination/ver1/read_codee`, opts);
   const data = await response.json();
   // fillCodeTag(data, hideLine);
   // hideLine();
@@ -28,33 +27,46 @@ async function readCodee() {
   return data.cd_data;
 }
 
+// async function readCommitId() {
+//   const cdpath = filepath;
+//   const opts = {
+//     method: "POST",
+//     body: JSON.stringify({
+//       cd_filepath: cdpath,
+//       read: true,
+//     }),
+//   };
+//   const response = await fetch(`${window.origin}/codination/ver1/read_codee`, opts);
+//   const data = await response.json();
+//   return data.commit_id;
+// }
 function addLineHide(start, end, ID) {
-  cacheChange = 1 ;
+  cacheChange = 1;
   ref_data[0]["data"].push({ type: "line_hide", start: start, end: end, id: ID });
 }
 
 function addLink(start, end, line, url, ID) {
-  cacheChange = 1 ;
+  cacheChange = 1;
   ref_data[0]["data"].push({ type: "link", start: start, end: end, line: line, url: url, id: ID });
 }
 
 function addWordComment(start, end, line, comment, ID) {
-  cacheChange = 1 ;
+  cacheChange = 1;
   ref_data[0]["data"].push({ type: "comment", start: start, end: end, line: line, comment: comment, id: ID });
 }
 
 function addWordHighlight(color, start, end, line, ID) {
-  cacheChange = 1 ;
+  cacheChange = 1;
   ref_data[0]["data"].push({ type: "highlight", color: color, start: start, end: end, line: line, id: ID });
 }
 
 function addWordHide(start, end, line, ID) {
-  cacheChange = 1 ;
+  cacheChange = 1;
   ref_data[0]["data"].push({ type: "word_hide", start: start, end: end, line: line, id: ID });
 }
 
 function deleteWordHide(ID) {
-  cacheChange = 1 ;
+  cacheChange = 1;
   for (let i = 0; i < ref_data[0]["data"].length; i++) {
     if (ref_data[0]["data"][i].id == ID && ref_data[0]["data"][i].type == "word_hide") {
       ref_data[0]["data"].splice(ref_data[0]["data"].indexOf(i), 1);
@@ -63,7 +75,7 @@ function deleteWordHide(ID) {
 }
 
 function deleteLineHide(ID) {
-  cacheChange = 1 ;
+  cacheChange = 1;
   for (let i = 0; i < ref_data[0]["data"].length; i++) {
     if (ref_data[0]["data"][i].id == ID && ref_data[0]["data"][i].type == "line_hide") {
       ref_data[0]["data"].splice(ref_data[0]["data"].indexOf(i), 1);
@@ -72,7 +84,7 @@ function deleteLineHide(ID) {
 }
 
 function deleteComment(ID) {
-  cacheChange = 1 ;
+  cacheChange = 1;
   for (let i = 0; i < ref_data[0]["data"].length; i++) {
     if (ref_data[0]["data"][i].id == ID && ref_data[0]["data"][i].type == "comment") {
       ref_data[0]["data"].splice(ref_data[0]["data"].indexOf(i), 1);
@@ -81,7 +93,7 @@ function deleteComment(ID) {
 }
 
 function deleteLink(ID) {
-  cacheChange = 1 ;
+  cacheChange = 1;
   for (let i = 0; i < ref_data[0]["data"].length; i++) {
     if (ref_data[0]["data"][i].id == ID && ref_data[0]["data"][i].type == "link") {
       ref_data[0]["data"].splice(ref_data[0]["data"].indexOf(i), 1);
@@ -90,7 +102,7 @@ function deleteLink(ID) {
 }
 
 function deleteHighlight(ID) {
-  cacheChange = 1 ;
+  cacheChange = 1;
   for (let i = 0; i < ref_data[0]["data"].length; i++) {
     if (ref_data[0]["data"][i].id == ID && ref_data[0]["data"][i].type == "highlight") {
       ref_data[0]["data"].splice(ref_data[0]["data"].indexOf(i), 1);
@@ -101,7 +113,7 @@ function deleteHighlight(ID) {
 function saveCodee(username) {
   // path를 읽고
   // fetch로 보내기
-  cacheChange = 1 ;
+  cacheChange = 1;
   console.log(filepath);
   console.log(ref_data);
   const opts = {

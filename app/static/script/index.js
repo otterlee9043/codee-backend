@@ -94,6 +94,8 @@ window.addEventListener("load", async function () {
   const pre = document.querySelector("pre");
   const classes = pre.classList;
   if (classes.contains("context-menu-one")) {
+    // const commitId = await readCommitId();
+    // console.log(commitId);
     ref_data = await readCodee();
     console.log(JSON.stringify(ref_data));
     hideLine();
