@@ -14,17 +14,32 @@ async function createCodee() {
   const codee_name = document.getElementById("codee_name").value;
   const codee_path = document.getElementById("browse1_path").value;
   const ref_path = document.getElementById("browse2_path").value;
-  console.log(codee_path) ;
+  console.log(codee_path);
+
+  const url = new URL(`${window.origin}/codination/ver1/create_codee`) ;
   const opts = {
     method: "POST",
     body: JSON.stringify({
-      codee_name: codee_name,
-      codee_path: codee_path,
-      ref_path: ref_path,
+      "codee_name": codee_name,
+      "codee_path": codee_path,
+      "ref_path": ref_path
+    }),
+    headers: new Headers({
+      "content-type": "application/json",
     }),
   };
 
-  const response = await fetch(`${window.origin}/codination/ver1/create_codee`, opts);
-  console.log(response) ;
+  // await fetch(`${window.origin}/codination/ver1/create_codee`, opts);
+  await fetch(url, opts)
+  .then(function (response) {
+    if (response.status != 200) {
+      console.log(`Looks like there was a problem. Status code: ${response.status}`);
+      return ;
+    }
+  })
+  .catch(function (error) {
+    console.log("Fetch error: " + error);
+  });
+  
   location.href = `/codination/ver1/${codee_path}/${codee_name}.cd`;
 }

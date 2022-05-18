@@ -136,6 +136,7 @@ function restroeSelection() {
     console.log("restoreSelection");
     let tdTag = document.querySelector(`#L${line} > .hljs-ln-code`);
     let startTag = findOffsetTag(tdTag, start_index);
+    console.log(startTag) ;
     let endTag = findOffsetTag(tdTag, end_index);
     let new_range = document.createRange();
     new_range.setStart(startTag.tag, startTag.startOffset);
