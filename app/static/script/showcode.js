@@ -81,7 +81,7 @@ function show_file(element, file_name, username) {
     name: file_name,
     path: path,
   };
-  location.href = `/codination/ver1/${path}`;
+  location.href = `/codination/ver1/showfile/${path}?user=${username}`;
 
   // fetch(`${window.origin}/codination/ver1/${path}`, {
   //   method: "GET",

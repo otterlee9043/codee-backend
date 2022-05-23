@@ -8,6 +8,8 @@ from ..email import send_email
 from .forms import LoginForm, RegistrationForm
 import json, requests
 from oauthlib.oauth2 import WebApplicationClient
+import os
+root = '/home/codination/ver1/app/static/files/'
 # from googleLogin.db import init_db_command
 # from googleLogin.user import User
 
@@ -35,8 +37,8 @@ def login():
         if user is not None and user.verify_password(form.password.data):
             login_user(user, form.remember_me.data)
             next = request.args.get('next')
-            if not is_safe_url(next):
-                return flask.abort(400)
+            # if not is_safe_url(next):
+            #     return flask.abort(400)
             if next is None or not next.startswith('/'):
                 next = url_for('main.index')
             return redirect(next)
@@ -183,6 +185,9 @@ def confirm(token):
         return redirect(url_for('main.index'))
     if current_user.confirm(token):
         db.session.commit()
+        # user이름으로 dir 만들기
+        os.umask(0)
+        os.makedirs(os.path.join(root, current_user.username), exist_ok = True)
         flash('You have confirmed your account. Thanks!')
     else:
         flash('The confirmation link is invalid or has expired.')

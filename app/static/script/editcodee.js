@@ -17,11 +17,13 @@ async function readCodee() {
     method: "POST",
     body: JSON.stringify({
       cd_filepath: cdpath,
+
     }),
     headers: new Headers({
       "content-type": "application/json",
     })
   };
+  console.log(`${window.origin}`)
   const response = await fetch(`${window.origin}/codination/ver1/read_codee`, opts);
   const data = await response.json();
   // fillCodeTag(data, hideLine);

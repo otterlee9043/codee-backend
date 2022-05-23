@@ -7,14 +7,7 @@ from flask_login import UserMixin
 from app.exceptions import ValidationError
 from . import db, login_manager
 
-
-class Regist(db.Model):
-    __tablename__ = 'regist'
-    room_id = db.Column(db.Integer, db.ForeignKey('room.id'), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
     
-    
-
 class User(UserMixin, db.Model):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
@@ -116,40 +109,7 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return '<User %r>' % self.username
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
-
-class Room(db.Model):
-    __tablename__ = 'room'
-    id = db.Column(db.Integer, primary_key=True)
-    room_name = db.Column(db.String(128))
-    host_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    room_code = db.Column(db.String(64), unique=True, index=True)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-
-  
-class State(db.Model):
-    __tablename__ = 'state'
-    room_id = db.Column(db.Integer, db.ForeignKey('room.id'), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
-    color = db.Column(db.String(30))
-    emoji = db.Column(db.String(30))
-    position = db.Column(db.Integer)
-
-class Comment(db.Model):
-    __tablename__ = 'comment'
-    id = db.Column(db.Integer, primary_key=True)
-    room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    username = db.Column(db.String(64), db.ForeignKey('user.username'))
-    body = db.Column(db.Text)
-    group = db.Column(db.Integer, default = -1)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-
-
-class Likes(db.Model):
-    __tablename__ = 'likes'
-    comment_id = db.Column(db.Integer, db.ForeignKey('comment.id'), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)

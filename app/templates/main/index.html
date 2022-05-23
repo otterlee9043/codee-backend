@@ -39,12 +39,12 @@
   <h1 id="title">Codee</h1>
 
   <div class="buttonbar">
-    <!-- <div class="clonebar right">
+    <div class="clonebar right">
       <form method="post">
         <input type="text" name="repository">
         <input class="button clone-btn" type="submit" value="clone">
       </form>
-    </div> -->
+    </div>
     <button type="button" class="button right" onclick="copyToClip(document.getElementById('code'))">export</button>
   </div>
   <div class="container">
@@ -70,9 +70,11 @@
         </ul>
       </div>
       <div id="pull-push">
+        {%if username == current_user %}
         <button class="button" type="button" onclick="pull('{{ username }}')">pull</button>
         <button class="button" type="button" onclick="push('{{ username }}')">push</button>
         <button class="button modalButton" data-popup="popupOne">create codee</button>
+        {% endif %}
         <!-- <button class="button" type="button" class="modalButton" data-popup="popupOne"
             onclick="createCodeeFile('codee','/home/codination/ver1/app/static/files/user2/OSSLab_0420_test')">
             create codee</button> -->
@@ -135,8 +137,11 @@
     </div>
     {% if data is none %}
     <div class="box" id='export'>
-      <h3 id="cd">{{filename}}&nbsp;&nbsp;<button class="button" type="button"
-          onclick="saveCodee('{{ username }}')">save</button></h3>
+      <h3 id="cd">{{filename}}&nbsp;&nbsp;
+        {%if username == current_user %}
+        <button class="button" type="button" onclick="saveCodee('{{ username }}')">save</button>
+        {% endif %}
+      </h3>
 
       <div class="border-box">
         <div class="filename" id="filename">{{ref_filename}}</div>

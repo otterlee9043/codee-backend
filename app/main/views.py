@@ -4,10 +4,10 @@ from flask import render_template, redirect, url_for, abort, flash, request,\
 from flask.wrappers import Response
 from . import main
 from .. import db
-from ..models import State, Room, User, Regist, Comment
+from ..models import User
 from flask_login import current_user, login_required
 import json, time
-from .forms import CodeForm, CommentForm
+from .forms import CommentForm
 import os, stat
 from git import Repo
 import shutil
@@ -74,14 +74,14 @@ def path_to_dict(path):
 ########################
 ########################  
 @main.route('/', methods=['GET', 'POST'])
-# log in required 하기
+@login_required
 def index():
     # data = read_file('/home/codination/ver1/app/main/forms.py')
     # data = read_file(os.path.join(root, username, '/clipboard/script.js' ))
     # data = read_file(root + username +'/clipboard/script.js')
     # data = None
-    
-    dir_tree = dir_list(root, username)
+    username_ = User.query.filter_by(id = current_user.id).first()
+    dir_tree = dir_list(root, username_.username)
     
     print(dir_tree)
     
@@ -90,49 +90,54 @@ def index():
         url = request.form['repository']
         url_parsed = urlparse(url)
         dir = url_parsed.path.split('/')[-1][0:-4]
+        print(current_user.username)
         print(url)
         print(dir)        
         # os.system("cd /home/codination/ver1/app/static/files/user1")
         # os.system(f'sudo git clone {url}')
         # 있으면 삭제하고 만들기
-        repo_path = os.path.join(root, username, dir)
+        repo_path = os.path.join(root, username_.username, dir)
         if os.path.exists(repo_path):
             print(f'there is {dir}')
             # os.chmod(path, 0o777)
-            shutil.rmtree(repo_path)
-            make_dir(repo_path, url)
+            # shutil.rmtree(repo_path)
+            # make_dir(repo_path, url)
         else:
             print(f'there is no {dir}')
             os.umask(0)
             make_dir(repo_path, url)
-            dir_tree = dir_list(root, username)
+            # dir_tree = dir_list(root, username)
         
-    return render_template('main/index.html', dir_tree = dir_tree, username = username)
+    return render_template('main/index.html', dir_tree = dir_tree, username = username_.username, current_user = current_user.username)
 
-@main.route('/<path:filepath>', methods = ['GET']) 
+@main.route('/showfile/<path:filepath>', methods = ['GET']) 
 #log in required 하기
 def showfile(filepath):
+    print("filepath: " + filepath)
+    username_ = request.args.get('user')
+    print("username_: " + username_)
     print("FILEPATH!!!!: "+filepath)
-    dir_tree = dir_list(root, username)
+    dir_tree = dir_list(root, username_)
     filename = os.path.basename(os.path.normpath(filepath))
     tmp, ext = os.path.splitext(filename)
     
     if ext == ".cd":
         # cd 파일 읽어서  
-        cd_data = read_json_file( os.path.join(root, username, filepath) )
+        cd_data = read_json_file( os.path.join(root, username_, filepath) )
         print(cd_data)
-        data = read_file( os.path.join(root, username, cd_data[0]['filepath']) )
+        data = read_file( os.path.join(root, username_, cd_data[0]['filepath']) )
         
         # ref하고있는 파일 읽고 data에 저장하기
         # cd_data에는 cd파일의 데이터 저장하기
         # print(cd_data)
         # print(data)
-        return render_template('main/index.html', dir_tree = dir_tree, username = username, data = None, ref_data = data, filename = filename, path = cd_data[0]['filepath'], ref_filename = cd_data[0]['filepath'])
+        return render_template('main/index.html', dir_tree = dir_tree, username = username_, current_user = current_user.username, data = None, ref_data = data, filename = filename, path = cd_data[0]['filepath'], ref_filename = cd_data[0]['filepath'])
     
-    data = read_file( os.path.join(root, username, filepath) )
-    return render_template('main/index.html', dir_tree = dir_tree, username = username, data = data, filename = filename )
+    data = read_file( os.path.join(root, username_, filepath) )
+    return render_template('main/index.html', dir_tree = dir_tree, username = username_, current_user = current_user.username, data = data, filename = filename )
 
 
+# 안 쓰이는 것 같다
 @main.route('/showcode', methods=['GET', 'POST'])
 # log in required 하기:
 def show_code():
@@ -237,8 +242,8 @@ def read_codee():
             error = f'there is no such a file: {cd_path}'
             return make_response( jsonify({"msg": error }), 200 )
         else:
-            cd_data = read_json_file( os.path.join(root, username, cd_path) )
-            ref_data = read_file( os.path.join(root, username, cd_data[0]['filepath']) )
+            cd_data = read_json_file( os.path.join(root, username,  os.path.normpath(cd_path)) )
+            ref_data = read_file( os.path.join(root, username, os.path.normpath(cd_data[0]['filepath'])) )
             if ref_data is not None:
                 # if jsonData['header']:
                 #     return make_response(jsonify({"commit_id": cd_data[0]['commit_id']}), 200 )
@@ -250,12 +255,11 @@ def read_codee():
                 print(last_commit_id)
                 if codee_comit_id != last_commit_id:
                     print("need AUTO-MERGE")
-                    diff_data = diff(codee_comit_id, last_commit_id, username, repository, "/"+filepath)
-                    print("DIFF_DATA!!")
-                    print(diff_data)
+                    diff_data = diff(codee_comit_id, last_commit_id, username, repository, filepath)
                     print(cd_path)
                     cd_data = merge(cd_path, diff_data)
                     cd_data[0]['commit_id'] = last_commit_id
+                    save_merged_codee(cd_data, cd_path)
                 data_dict = {
                     # "ref_data": ref_data,
                     "cd_data": cd_data
@@ -309,6 +313,12 @@ def saveCodee():
     f.close()
     return make_response("codee file updated", 200) 
 
+def save_merged_codee(codee_data, codee_path):
+    print("save_merged_codee!")
+    f = open(os.path.join(root, username, codee_path), "wb")
+    f.write(json.dumps(codee_data).encode('utf8'))
+    f.close()
+
 
 
 def diff(cmtid1, cmtid2, username, repository, filepath):
@@ -316,20 +326,16 @@ def diff(cmtid1, cmtid2, username, repository, filepath):
     print("DATA!!")
     # os.system("cd /home/codination/ver1")
     os.chdir(os.path.join("/home/codination/ver1/app/static/files/", username, repository))
-    data = subprocess.check_output(['git', 'diff', '--word-diff-regex=.', cmtid1, cmtid2], encoding = 'utf_8') 
+    data = subprocess.check_output(['git', 'diff', '--word-diff-regex=.', cmtid1+":"+filepath, cmtid2+":"+filepath], encoding = 'utf_8') 
     print("unparsed data!")
     print(data)
     data = data.split("\n")
     # print(data)
-    diffs = parse_diff_data(data)
+    diff = parse_diff_data(data)
+    diff = parse_diff_line(data, diff)
     # print("DIFFS!!")
     # print(diffs)
-    for diff in diffs:
-        print(diff['old_filepath'])
-        print(filepath)
-        if diff['old_filepath'] == filepath:
-            return diff
-    return None
+    return diff
 
 
 
@@ -347,9 +353,78 @@ def diff2(cmtid1, cmtid2):
     print(diff)
     return make_response(jsonify(diff), 200)
 
+def parse_diff_line(data, diff_data):
+    i = 0
+    while(i < len(data)):
+        line = data[i]
+        if line[0:11] == "diff --git ":
+            # if changes:
+            #     diff_data['changes'] = changes
+            #     diff.append(diff_data)
+            diff_data = {}
+            # changes = []
+        # elif line[0:13] == "--- /dev/null":
+        elif line[0:5] == "--- a":
+            diff_data['old_filepath'] = line.strip("--- a")
+            print(line.strip("--- a"))
+        elif line[0:5] == "+++ b":
+            diff_data['new_filepath'] = line.strip("+++ b")
+            diff_data['changes'] = []
+        elif line[0:2] =="@@":
+            if not "old_filepath" in diff_data:
+                diff_data = {}
+                i = i + 1 
+                continue
+            if not "new_filepath" in diff_data:
+                diff_data = {}
+                i = i + 1 
+                continue
+            # if ".cd" in diff[-1]['new_filepath']:
+            #     diff.pop()
+            #     i = i + 1 
+            #     continue
+            changes = diff_data['changes']
+            ranges = re.findall(r'@@ (.*?) @@', line)[0]
+            ranges = ranges.split(" ")
+            old_range = ranges[0]
+            new_range = ranges[1]
+            print("range ", ranges)
+            print(line)
+            new_range = new_range.lstrip('+')
+            # diff_data['new_filepath'] = new_range.split(",")[0]
+            start = int(new_range.split(",")[0]) # 바뀌기 전 line nuber
+            line_num = int(new_range.split(",")[1]) if "," in new_range else 1 # line offset
+            i = i + 1
+            if re.sub(r'@@ (.*?) @@', "", line, count=1): 
+                print("THERE IS ANOTHER LINE BEHIND THIS LINE")
+                print(line.strip().split("@@"))
+                line_num = line_num - 1
+            # @@ 뒤에 코드가 나오는 경우 한 줄 덜 읽도록
+            for j in range(line_num):
+                # print("start: ", start, " j: ", j)
+                line = data[i+j]
+                if len(line) == 1:
+                    if line[0] == "+":
+                        change = {
+                                "line": True,
+                                "line_num": start + j,
+                                "type": "add",
+                            }
+                        diff_data['changes'].append(change)
+                    elif line[0] == "-":
+                        change = {
+                            "line": True,
+                            "line_num": start + j,
+                            "type": "delete",
+                        }
+                        diff_data['changes'].append(change)
+            i = i + line_num - 1  
+        i = i + 1
+    print("Print data!!")
+    return diff_data
 
 def parse_diff_data(data):
-    diff = []
+    # diff = []
     diff_data = {}
     changes = []
     i = 0
@@ -368,21 +443,21 @@ def parse_diff_data(data):
         elif line[0:5] == "+++ b":
             diff_data['new_filepath'] = line.strip("+++ b")
             diff_data['changes'] = []
-            diff.append(diff_data)
+            # diff.append(diff_data)
         elif line[0:2] =="@@":
-            if not "old_filepath" in diff[-1]:
-                diff.pop()
+            if not "old_filepath" in diff_data:
+                diff_data = {}
                 i = i + 1 
                 continue
-            if not "new_filepath" in diff[-1]:
-                diff.pop()
+            if not "new_filepath" in diff_data:
+                diff_data = {}
                 i = i + 1 
                 continue
-            if ".cd" in diff[-1]['new_filepath']:
-                diff.pop()
-                i = i + 1 
-                continue
-            changes = diff[-1]['changes']
+            # if ".cd" in diff[-1]['new_filepath']:
+            #     diff.pop()
+            #     i = i + 1 
+            #     continue
+            changes = diff_data['changes']
             ranges = re.findall(r'@@ (.*?) @@', line)[0]
             ranges = ranges.split(" ")
             old_range = ranges[0]
@@ -392,13 +467,17 @@ def parse_diff_data(data):
             new_range = new_range.lstrip('+')
             # diff_data['new_filepath'] = new_range.split(",")[0]
             start = int(new_range.split(",")[0]) # 바뀌기 전 line nuber
-            
             line_num = int(new_range.split(",")[1]) if "," in new_range else 1 # line offset
-            if len(line.split("@@")) > 2: 
+            i = i + 1
+            if re.sub(r'@@ (.*?) @@', "", line, count=1): 
+                print("THERE IS ANOTHER LINE BEHIND THIS LINE")
+                print(line.strip().split("@@"))
                 line_num = line_num - 1
             # @@ 뒤에 코드가 나오는 경우 한 줄 덜 읽도록
             for j in range(line_num):
+                # print("start: ", start, " j: ", j)
                 line = data[i+j]
+                # print(line)
                 content = re.findall(r'\[\-(.*?)\-\]', line)
                 if content:
                     for string in content: 
@@ -408,20 +487,21 @@ def parse_diff_data(data):
                                 "line_num": start + j,
                                 "type": "delete",
                             }
+                            print("line_num: ", start + j)
                             changes.append(change)
                             break
                         change = {
                             "line": False,
                             "line_num": start + j,
                             "type": "delete",
-                            "col": re.search(r'\[\-(.*?)\-\]', line).start(),
+                            "col": re.search(r'\[\-(.*?)\-\]', line).start(), # 한 줄에 여러개가 있다가는 오류 남
                             "length": len(string)
                         }
+                        print("line_num: ", start + j)
                         changes.append(change)
                     
                 content = re.findall(r'\{\+(.*?)\+\}', line)
                 if content:
-            
                     for string in content: 
                         if len(string) == len(line)-4:
                             change = {
@@ -429,6 +509,7 @@ def parse_diff_data(data):
                                 "line_num": start + j,
                                 "type": "add",
                             }
+                            print("line_num: ", start + j)
                             changes.append(change)
                             break
                         change = {
@@ -438,16 +519,15 @@ def parse_diff_data(data):
                             "col": re.search(r'\{\+(.*?)\+\}', line).start(),
                             "length": len(string)
                         }
+                        print("line_num: ", start + j)
                         changes.append(change)
-            diff[-1]['changes'] = changes
+            diff_data['changes'] = changes
             i = i + line_num - 1  
         i = i + 1
-        print(diff)
     print("Print data!!")
     # print(data)
-    return diff      
-
-    
+    return diff_data      
+   
 def merge(cd_path, diff):
     cd_data = read_json_file(os.path.join(root, username, cd_path))
     print(cd_data)
@@ -465,63 +545,89 @@ def merge(cd_path, diff):
     print("cd_path:", cd_path)
     print(cd_data[0]['filepath'])
     for change in diff['changes']:
-        for deco in decos:
-            start = int(deco['start'])
-            end = int(deco['end'])
-            if change['line']: 
-                line = int(deco["line"])
-                if change['type'] == "add":
-                    if deco["type"] == "line_hide":
+        print("    ================== change ", change)
+        if change['line']: 
+            for deco in decos:
+                print("     *********** deco, ", deco)
+                start = int(deco['start'])
+                end = int(deco['end'])
+                # line이 empty라면
+                if deco["type"] == "line_hide":
+                    if change['type'] == "add":
                         if change["line_num"] <= start :
+                            print('if change["line_num"] <= start :')
                             deco["start"] = start + 1
                             deco["end"] = end + 1
                         elif change["line_num"] > start and change["line_num"] <= end :
+                            print('elif change["line_num"] > start and change["line_num"] <= end :')
                             deco["end"] = end + 1
-                    else:	
+                    else:
+                        print('if deco["type"] == "line_hide":')
+                        if change["line_num"] <= start :
+                            print('if change["line_num"] <= start :')
+                            deco["start"] = start - 1
+                            deco["end"] = end - 1
+                        elif change["line_num"] > start and change["line_num"] <= end :
+                            print('elif change["line_num"] > start and change["line_num"] <= end :')
+                            deco["end"] = end - 1
+                else:
+                    line = int(deco["line"])	
+                    if change['type'] == "add":
                         if change["line_num"] <= line:
+                            print('if change["line_num"] <= line:')
                             deco["line"] = line + 1
-                else:
-                    for deco in decos:
-                        if deco["type"] == "line_hide":
-                            if change["line_num"] <= start :
-                                deco["start"] = start - 1
-                                deco["end"] = end - 1
-                            elif change["line_num"] > start and change["line_num"] <= end :
-                                deco["end"] = end - 1
-                        else:	
-                            if change["line_num"] <= line:
-                                deco["line"] = line - 1
-            else: #word단위로 추가된 경우
-                if change["type"] == "add":
-                    if change["col"] <= start:
-                        deco["start"] += change["length"]
-                        deco["end"] += change["length"]
-                    elif change["col"] > start and change["col"] <= end:
-                        deco["end"] += change["length"]
-
-                else:
-                    if change["col"] <= start:
-                        if change["col"] + change["length"] < start:
-                            deco["start"] -= change["length"]
-                            deco["end"] -= change["length"]
-                        elif  change["col"] + change["length"] > start and change["col"] + change["length"] <= end:
-                            deco["start"] = change["col"]
-                            deco["end"] =  end - change["length"]
-                        elif change["col"] + change["length"] >=  end:
-                            decos.remove(deco)
-                    elif change["col"] > start and change["col"] <= end:
-                        if  change["col"] + change["length"] <= end:
-                            deco["end"] =  end - change["length"]
-                        elif change["col"] + change["length"] >  end:
-                            deco["end"] =  change["col"]
+                    else: 
+                        print("else:")
+                        if change["line_num"] <= line:
+                            deco["line"] = line - 1 
+        else: #word단위로 추가된 경우
+            for deco in decos:
+                start = int(deco['start'])
+                end = int(deco['end'])
+                print("*@@@* deco", deco)
+                if deco["type"] == "line_hide":
+                    continue
+                line = int(deco["line"])	
+                if line == change['line_num']:
+                    if change["type"] == "add": # 추가
+                        print('if change["type"] == "add":')
+                        if change["col"] <= start: # deco 나오기 전에 
+                            print('if change["col"] <= start:')
+                            deco["start"] += change["length"]
+                            deco["end"] += change["length"]
+                        elif change["col"] > start and change["col"] < end:  # deco 중간에 
+                            print('elif change["col"] > start and change["col"] <= end:')
+                            deco["end"] += change["length"]
+                    else:
+                        print("else:")
+                        if change["col"] <= start:
+                            print('if change["col"] <= start:')
+                            if change["col"] + change["length"] <= start:
+                                print(' if change["col"] + change["length"] < start:')
+                                deco["start"] -= change["length"]
+                                deco["end"] -= change["length"]
+                            elif  change["col"] + change["length"] > start and change["col"] + change["length"] < end:
+                                print('elif  change["col"] + change["length"] > start and change["col"] + change["length"] <= end:')
+                                deco["start"] = change["col"]
+                                deco["end"] =  end - change["length"]
+                            elif change["col"] + change["length"] >=  end:
+                                print('elif change["col"] + change["length"] >=  end:')
+                                decos.remove(deco)
+                        elif change["col"] > start and change["col"] <= end:
+                            print('elif change["col"] > start and change["col"] <= end:')
+                            if  change["col"] + change["length"] <= end:
+                                print('if  change["col"] + change["length"] <= end:')
+                                deco["end"] =  end - change["length"]
+                            elif change["col"] + change["length"] >  end:
+                                print('elif change["col"] + change["length"] >  end:')
+                                deco["end"] =  change["col"]
+    cd_data[0]['data'] = decos
     # return cd_data
     print(" >> merge")
     print(cd_data)
     print(" >> merge")
-    # f = open(os.path.join(root, username, cd_path), "wb")
-    # f.write(json.dumps(cd_data).encode('utf8'))
-    # f.close()
     return cd_data
+
 
 
 def is_comment(string):
