@@ -12,7 +12,7 @@ var getLocation = function (href) {
 const pathname = getLocation(location.href).pathname;
 const filepath = pathname.split("/codination/ver1/").pop();
 const splitPath = filepath.split("/");
-const dirs = splitPath.slice(0, splitPath.length - 1);
+const dirs = splitPath.slice(1, splitPath.length - 1);
 const file = splitPath[splitPath.length - 1];
 console.log(dirs);
 
@@ -76,12 +76,12 @@ function find_dir_path(element, username) {
 function show_file(element, file_name, username) {
   // file root 찾기
   path = find_path(element, username);
-
   var data = {
     name: file_name,
     path: path,
   };
-  location.href = `/codination/ver1/showfile/${path}?user=${username}`;
+  // location.href = `/codination/ver1/showfile/${path}?user=${username}`;
+  location.href = `/codination/ver1/${username}/${path}`;
 
   // fetch(`${window.origin}/codination/ver1/${path}`, {
   //   method: "GET",

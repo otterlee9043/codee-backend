@@ -22,7 +22,8 @@ async function createCodee() {
     body: JSON.stringify({
       "codee_name": codee_name,
       "codee_path": codee_path,
-      "ref_path": ref_path
+      "ref_path": ref_path,
+      "username": document.querySelector("li.dir").getAttribute("id")
     }),
     headers: new Headers({
       "content-type": "application/json",
@@ -41,5 +42,5 @@ async function createCodee() {
     console.log("Fetch error: " + error);
   });
   
-  location.href = `/codination/ver1/${codee_path}/${codee_name}.cd`;
+  location.href = `/codination/ver1/showfile/${codee_path}/${codee_name}.cd?user=${username}`;
 }

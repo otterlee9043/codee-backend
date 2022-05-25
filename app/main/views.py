@@ -32,6 +32,7 @@ def read_file(path):
     return data
 
 def read_json_file(path):
+    print("IN read_json_file : " +path)
     test_file = open(path, 'r', encoding = 'utf_8')
     json_data = json.load(test_file)
     
@@ -39,7 +40,7 @@ def read_json_file(path):
 
 def dir_list(path, filename = None):
     dir_tree = { filename : [] }
-    
+    print("DIR_LIST: " + path + ", " + filename)
     files = os.listdir( os.path.join( path, filename ) )
 
     for file in files:
@@ -70,22 +71,11 @@ def path_to_dict(path):
 # @main.route('/<filepath>', methods=['GET', 'POST'])
 # def code():
 
-
-########################
-########################  
-@main.route('/', methods=['GET', 'POST'])
+@main.route('/', methods = ['GET','POST']) 
+#log in required 하기
 @login_required
 def index():
-    # data = read_file('/home/codination/ver1/app/main/forms.py')
-    # data = read_file(os.path.join(root, username, '/clipboard/script.js' ))
-    # data = read_file(root + username +'/clipboard/script.js')
-    # data = None
-    username_ = User.query.filter_by(id = current_user.id).first()
-    dir_tree = dir_list(root, username_.username)
-    
-    print(dir_tree)
-    
-    # clone 
+    print("!!!!!!!!!!!!!!", get_repositories())
     if request.method == 'POST':
         url = request.form['repository']
         url_parsed = urlparse(url)
@@ -96,7 +86,7 @@ def index():
         # os.system("cd /home/codination/ver1/app/static/files/user1")
         # os.system(f'sudo git clone {url}')
         # 있으면 삭제하고 만들기
-        repo_path = os.path.join(root, username_.username, dir)
+        repo_path = os.path.join(root, current_user.username, dir)
         if os.path.exists(repo_path):
             print(f'there is {dir}')
             # os.chmod(path, 0o777)
@@ -107,23 +97,72 @@ def index():
             os.umask(0)
             make_dir(repo_path, url)
             # dir_tree = dir_list(root, username)
-        
-    return render_template('main/index.html', dir_tree = dir_tree, username = username_.username, current_user = current_user.username)
+        return redirect(url_for('main.showfile', filepath=f"{current_user.username}/{dir}"))
+    return render_template('main/repos.html', repos = get_repositories())
 
-@main.route('/showfile/<path:filepath>', methods = ['GET']) 
+
+#######################
+#######################
+# @main.route('/', methods=['GET', 'POST'])
+# @login_required
+# def index():
+#     # data = read_file('/home/codination/ver1/app/main/forms.py')
+#     # data = read_file(os.path.join(root, username, '/clipboard/script.js' ))
+#     # data = read_file(root + username +'/clipboard/script.js')
+#     # data = None
+#     # username_ = User.query.filter_by(id = current_user.id).first()
+#     dir_tree = dir_list(root, username_.username)
+    
+#     print(dir_tree)
+    
+#     # clone 
+#     if request.method == 'POST':
+#         url = request.form['repository']
+#         url_parsed = urlparse(url)
+#         dir = url_parsed.path.split('/')[-1][0:-4]
+#         print(current_user.username)
+#         print(url)
+#         print(dir)        
+#         # os.system("cd /home/codination/ver1/app/static/files/user1")
+#         # os.system(f'sudo git clone {url}')
+#         # 있으면 삭제하고 만들기
+#         repo_path = os.path.join(root, username_.username, dir)
+#         if os.path.exists(repo_path):
+#             print(f'there is {dir}')
+#             # os.chmod(path, 0o777)
+#             # shutil.rmtree(repo_path)
+#             # make_dir(repo_path, url)
+#         else:
+#             print(f'there is no {dir}')
+#             os.umask(0)
+#             make_dir(repo_path, url)
+#             # dir_tree = dir_list(root, username)
+        
+#     return render_template('main/index.html', dir_tree = dir_tree)
+
+@main.route('/<path:filepath>', methods = ['GET']) 
 #log in required 하기
 def showfile(filepath):
     print("filepath: " + filepath)
-    username_ = request.args.get('user')
+    # username_ = request.args.get('user')
+    # paths = filepath.split("/", maxsplit=1)
+    paths = filepath.split("/", maxsplit=1)
+    username_ = paths[0]
+    reponame = paths[1].split("/")[0]
     print("username_: " + username_)
-    print("FILEPATH!!!!: "+filepath)
-    dir_tree = dir_list(root, username_)
-    filename = os.path.basename(os.path.normpath(filepath))
+    print("REPONAME!!!!: "+reponame)
+    dir_tree = dir_list(os.path.join(root, username_), reponame)
+    dir_tree = {username_: [dir_tree]}
+    print("DIR TREE IN def showfile")
+    print(dir_tree)
+    # filename = os.path.basename(os.path.normpath(filepath))
+    filename = paths[1].split("/")[-1]
+    print("FILENAME: " + filename)
     tmp, ext = os.path.splitext(filename)
-    
+    print ("equal?! ", username_, current_user.username)
     if ext == ".cd":
         # cd 파일 읽어서  
-        cd_data = read_json_file( os.path.join(root, username_, filepath) )
+        cd_data = read_json_file( os.path.join(root, username_, paths[1]) )
         print(cd_data)
         data = read_file( os.path.join(root, username_, cd_data[0]['filepath']) )
         
@@ -131,16 +170,45 @@ def showfile(filepath):
         # cd_data에는 cd파일의 데이터 저장하기
         # print(cd_data)
         # print(data)
-        return render_template('main/index.html', dir_tree = dir_tree, username = username_, current_user = current_user.username, data = None, ref_data = data, filename = filename, path = cd_data[0]['filepath'], ref_filename = cd_data[0]['filepath'])
+        return render_template('main/index.html', dir_tree = dir_tree, username = username_,  data = None, ref_data = data, filename = filename, path = cd_data[0]['filepath'], ref_filename = cd_data[0]['filepath'])
+    if os.path.isdir(os.path.join(root, username_, paths[1])):
+        return render_template('main/index.html', dir_tree = dir_tree, username = username_, filename = None)
+    data = read_file(os.path.join(root, username_, paths[1]))
+    return render_template('main/index.html', dir_tree = dir_tree, username = username_,  data = data, filename = filename )
+
+
+# @main.route('/showfile/<path:filepath>', methods = ['GET']) 
+# #log in required 하기
+# def showfile(filepath):
+#     print("filepath: " + filepath)
+#     username_ = request.args.get('user')
+#     print("username_: " + username_)
+#     print("FILEPATH!!!!: "+filepath)
+#     dir_tree = dir_list(root, username_)
+#     filename = os.path.basename(os.path.normpath(filepath))
+#     tmp, ext = os.path.splitext(filename)
     
-    data = read_file( os.path.join(root, username_, filepath) )
-    return render_template('main/index.html', dir_tree = dir_tree, username = username_, current_user = current_user.username, data = data, filename = filename )
+#     if ext == ".cd":
+#         # cd 파일 읽어서  
+#         cd_data = read_json_file( os.path.join(root, username_, filepath) )
+#         print(cd_data)
+#         data = read_file( os.path.join(root, username_, cd_data[0]['filepath']) )
+        
+#         # ref하고있는 파일 읽고 data에 저장하기
+#         # cd_data에는 cd파일의 데이터 저장하기
+#         # print(cd_data)
+#         # print(data)
+#         return render_template('main/index.html', dir_tree = dir_tree, username = username_, data = None, ref_data = data, filename = filename, path = cd_data[0]['filepath'], ref_filename = cd_data[0]['filepath'])
+    
+#     data = read_file( os.path.join(root, username_, filepath) )
+#     return render_template('main/index.html', dir_tree = dir_tree, username = username_, data = data, filename = filename )
 
 
 # 안 쓰이는 것 같다
 @main.route('/showcode', methods=['GET', 'POST'])
 # log in required 하기:
 def show_code():
+    print("I AM USED!!!!!")
     if request.method == 'POST':
         error = None
         jsonData = request.get_json(force = True)
@@ -174,14 +242,14 @@ def pull():
     print(proj_path)
     repo = Repo(proj_path)
     print(repo.remotes.origin)
-    repo.config_writer().set_value("user", "name", "otterlee9043").release()
-    repo.config_writer().set_value("user", "email", "otterlee99@gmail.com").release()
+    # repo.config_writer().set_value("user", "name", "codee").release()
+    # repo.config_writer().set_value("user", "email", "codee@gmail.com").release()
     origin = repo.remotes.origin
     origin.pull()
     
     # commit_id = get_commit_id( os.path.join(root, user, repoName) )
 
-    return make_response(jsonify({"msg":"done pull request"}), 200)
+    return make_response(jsonify({"msg":"done pull"}), 200)
 
 @main.route('/push', methods=['GET'])
 # log in required 하기
@@ -194,28 +262,34 @@ def push():
     proj_path = os.path.join(root, user, repoName) #/.../OSS_0420_test 
     print(proj_path)
     repo = Repo(proj_path)
-    repo.config_writer().set_value("user", "name", "neobomoon").release()
-    repo.config_writer().set_value("user", "email", "jbm2627@gmail.com").release()
-    repo.index.add(["showcase.cd"])
+    repo.config_writer().set_value("user", "name", "codee").release()
+    repo.config_writer().set_value("user", "email", "codee@gmail.com").release()
+    repo.index.add(["*.cd"])
     repo.index.commit("Updated codee")
     
     origin = repo.remotes.origin
     branch = repo.active_branch
     # token = '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' # otterlee9043
-    token = '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' # neobomoon
-    git_name = 'neobomoon'
+    token = User.query.filter_by(id = current_user.id).first().git_token
+    # token = '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' # neobomoon
+    git_name = User.query.filter_by(id = current_user.id).first().git_name
+    # git_name = 'neobomoon'
     
     print(origin)
     print(repo.active_branch)
     
-    
-    
     if os.path.exists(proj_path):
+        print(proj_path)
         print("exist")
         os.chdir(proj_path)
         proj_name = os.path.join(user, repoName)
+        print("GIT PUSH INFO")
+        print(git_name)
+        print(proj_name)
+        print(token)
         os.system(f'git remote set-url {origin} https://{git_name}@github.com/{git_name}/{repoName}.git') #"https://github-username@github.com/github-username/github-repository-name.git"
         os.system(f'/home/codination/ver1/app/static/files/push.exp {proj_name} neobomoon {token} {origin} {branch}')
+        #/home/codination/ver1/app/static/files/push.exp OSSLab_0420_test neobomoon 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 origin master
         print('complete')
         
     print("done")
@@ -237,29 +311,32 @@ def read_codee():
         jsonData = request.get_json(force = True)
         # print(show_ref_file)
         print(jsonData)
-        cd_path = jsonData['cd_filepath']        
+        cd_path = jsonData['cd_filepath'].split("/", maxsplit=1)[1]
+        username_ = jsonData['username']
+        print("USERNAME_: "+ username_)
+        print("CD_PATH: "+ cd_path)   
         if not cd_path:
             error = f'there is no such a file: {cd_path}'
             return make_response( jsonify({"msg": error }), 200 )
         else:
-            cd_data = read_json_file( os.path.join(root, username,  os.path.normpath(cd_path)) )
-            ref_data = read_file( os.path.join(root, username, os.path.normpath(cd_data[0]['filepath'])) )
+            cd_data = read_json_file( os.path.join(root, username_,  os.path.normpath(cd_path)) )
+            ref_data = read_file( os.path.join(root, username_, os.path.normpath(cd_data[0]['filepath'])) )
             if ref_data is not None:
                 # if jsonData['header']:
                 #     return make_response(jsonify({"commit_id": cd_data[0]['commit_id']}), 200 )
                 repository = cd_data[0]['filepath'].split("/")[0]
                 filepath = cd_data[0]['filepath'].split("/", maxsplit=1)[1]
                 codee_comit_id = cd_data[0]['commit_id']
-                last_commit_id = get_commit_id(os.path.join(root, username, repository), os.path.join(".", filepath[0]))
+                last_commit_id = get_commit_id(os.path.join(root, username_, repository), os.path.join(".", filepath[0]))
                 print(codee_comit_id)
                 print(last_commit_id)
                 if codee_comit_id != last_commit_id:
                     print("need AUTO-MERGE")
-                    diff_data = diff(codee_comit_id, last_commit_id, username, repository, filepath)
+                    diff_data = diff(codee_comit_id, last_commit_id, username_, repository, filepath)
                     print(cd_path)
-                    cd_data = merge(cd_path, diff_data)
+                    cd_data = merge(cd_path, diff_data, username_)
                     cd_data[0]['commit_id'] = last_commit_id
-                    save_merged_codee(cd_data, cd_path)
+                    save_merged_codee(cd_data, cd_path, username_)
                 data_dict = {
                     # "ref_data": ref_data,
                     "cd_data": cd_data
@@ -277,12 +354,15 @@ def create_codee():
     codee_path = jsonData['codee_path']
     codee_name = jsonData['codee_name']
     ref_path = jsonData['ref_path']
+    username_ = jsonData['username']
     print(f"codee_path: {codee_path}")
 
-    commit_id = get_commit_id( os.path.join(root, username, codee_path.split(os.path.sep)[0]),  ref_path.split(os.path.sep)[-1])
+    commit_id = get_commit_id( os.path.join(root, username_, codee_path.split(os.path.sep)[0]),  ref_path.split(os.path.sep)[-1])
     print(f"@@@@@commit_id: {commit_id}")
+    print("PASS1")
     # f = open(f"{root}{username}/{codee_path}/{codee_name}.cd", "w")
-    f = open(os.path.join(root, username, codee_path, f"{codee_name}.cd"), "w")
+    f = open(os.path.join(root, username_, codee_path, f"{codee_name}.cd"), "w")
+    print("PASS1")
     content = [{ 'commit_id' : commit_id, 'filepath': ref_path, 'data': [] }]
     json_content = json.dumps(content)
     f.write(json_content)
@@ -307,25 +387,27 @@ def saveCodee():
     jsonData = request.get_json(force = True)
     codee_path = jsonData['codee_path']
     codee_data = jsonData['codee_data']
-    print(codee_data)
-    f = open(os.path.join(root, username, codee_path), "wb")
+    username_ = jsonData['username']
+    print(codee_path)
+    print("SAVECODEE: " + os.path.join(root, username_, codee_path.split("/", maxsplit=1)[1]))
+    f = open(os.path.join(root, username_, codee_path.split("/", maxsplit=1)[1]), "wb")
     f.write(codee_data.encode('utf8'))
     f.close()
     return make_response("codee file updated", 200) 
 
-def save_merged_codee(codee_data, codee_path):
+def save_merged_codee(codee_data, codee_path, username_):
     print("save_merged_codee!")
-    f = open(os.path.join(root, username, codee_path), "wb")
+    f = open(os.path.join(root, username_, codee_path), "wb")
     f.write(json.dumps(codee_data).encode('utf8'))
     f.close()
 
 
 
-def diff(cmtid1, cmtid2, username, repository, filepath):
+def diff(cmtid1, cmtid2, username_, repository, filepath):
     print(type(cmtid1))
     print("DATA!!")
     # os.system("cd /home/codination/ver1")
-    os.chdir(os.path.join("/home/codination/ver1/app/static/files/", username, repository))
+    os.chdir(os.path.join("/home/codination/ver1/app/static/files/", username_, repository))
     data = subprocess.check_output(['git', 'diff', '--word-diff-regex=.', cmtid1+":"+filepath, cmtid2+":"+filepath], encoding = 'utf_8') 
     print("unparsed data!")
     print(data)
@@ -528,8 +610,8 @@ def parse_diff_data(data):
     # print(data)
     return diff_data      
    
-def merge(cd_path, diff):
-    cd_data = read_json_file(os.path.join(root, username, cd_path))
+def merge(cd_path, diff, username_):
+    cd_data = read_json_file(os.path.join(root, username_, cd_path))
     print(cd_data)
     print(diff)
     repoName = cd_data[0]['filepath'].split("/")[0]
@@ -629,19 +711,9 @@ def merge(cd_path, diff):
     return cd_data
 
 
-
-def is_comment(string):
-    # line = string.lstrip()
-    if "#" in string:
-        return True
-    elif "//" in string:
-        return True
-    elif "/*" in string:
-        return True
-    elif "*/" in string:
-        return True
-    else: return False
-    
+def get_repositories():
+    os.chdir(os.path.join(root, current_user.username))
+    return [ name for name in os.listdir(".") if os.path.isdir(os.path.join(".", name)) ]
 # @main.route('/upload', methods = ['GET', 'POST'])
 # def upload():
 #     if request.method == 'POST':

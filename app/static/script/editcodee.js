@@ -17,7 +17,7 @@ async function readCodee() {
     method: "POST",
     body: JSON.stringify({
       cd_filepath: cdpath,
-
+      username: document.querySelector("li.dir").getAttribute("id")
     }),
     headers: new Headers({
       "content-type": "application/json",
@@ -127,6 +127,7 @@ function saveCodee(username) {
     body: JSON.stringify({
       codee_path: filepath,
       codee_data: JSON.stringify(ref_data),
+      username: document.querySelector("li.dir").getAttribute("id")
     }),
     headers: new Headers({
       "content-type": "application/json",

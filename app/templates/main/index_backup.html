@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!--<link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">-->
+
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=deivce-width, initial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
+  <script src="https://kit.fontawesome.com/16fd5c8b77.js" crossorigin="anonymous"></script>
+  <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.7.1/jquery.contextMenu.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.7.1/jquery.contextMenu.min.js"></script>
+
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/go.min.js"></script>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
+  <script>hljs.highlightAll(); hljs.initLineNumbersOnLoad();</script>
+  <title>Codee</title>
+</head>
+<div id="mySidebar" class="hiddenbar">
+  <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
+  <a href="#">Project 1</a>
+  <a href="#">Project 2</a>
+  <a href="#">Project 3</a>
+  <a href="#">Project 4</a>
+</div>
+
+<body>
+  <!-- {% block navbar %}
+  <a href="{{ url_for('auth.logout') }}" class="logout">로그아웃</a>
+  <span class="logout">{{current_user}} 님,</span>
+  {% endblock %}-->
+  <a href="{{ url_for('auth.logout') }}" class="logout">logout</a>
+  <span class="logout">{{current_user.username}} 님,</span>
+
+  <button class="openbtn" onclick="openNav()">☰</button>
+  <!-- <h1 id="title">Codee</h1> -->
+  <div><img src="{{url_for('static', filename='/logo.svg')}}" class="small-logo" alt="" srcset=""></div>
+
+  <div class="buttonbar">
+    <!-- <div class="clonebar right">
+      <form method="post">
+        <input type="text" name="repository">
+        <input class="button clone-btn" type="submit" value="clone">
+      </form>
+    </div> -->
+    <button type="button" class="button right" onclick="copyToClip(document.getElementById('code'))">export</button>
+  </div>
+  <div class="container">
+    <div class="sidebar">
+      <div class="filelist border-box scroll">
+        <ul id="dir_tree" aria-labelledby="tree_label">
+          <li id="{{username}}" class="dir">
+          </li>
+          <script>
+            console.log("asdfsdafasdfdsa");
+            console.log('{{filename}}');
+            $(function () {
+              var dir_tree = JSON.parse('{{dir_tree | tojson}}');
+              var parent_node = document.getElementById('{{ username }}');
+              show_dir(dir_tree['{{ username }}'], '{{ username }}', parent_node);
+              var parent_node2 = document.getElementById('browse1');
+              show_dir(dir_tree['{{ username }}'], 'browse1', parent_node2, true, 'browse1_path', false);
+              var parent_node3 = document.getElementById('browse2');
+              show_dir(dir_tree['{{ username }}'], 'browse2', parent_node3, true, 'browse2_path', true);
+            });
+
+          </script>
+        </ul>
+      </div>
+      <div id="pull-push">
+        {%if username == current_user %}
+        <button class="button" type="button" onclick="pull('{{ username }}')">pull</button>
+        <button class="button" type="button" onclick="push('{{ username }}')">push</button>
+        <button class="button modalButton" data-popup="popupOne">create codee</button>
+        {% endif %}
+        <!-- <button class="button" type="button" class="modalButton" data-popup="popupOne"
+            onclick="createCodeeFile('codee','/home/codination/ver1/app/static/files/user2/OSSLab_0420_test')">
+            create codee</button> -->
+      </div>
+      <section class="modal modalWindow" id="popupOne">
+        <section class="modalWrapper">
+          <div>
+            <form action="http://siskin21.cafe24.com/codination/ver1/create_codee" method="post">
+              <div>
+                <div class="col-25">
+                  <label for="name">codee name</label>
+                </div>
+                <div class="col-60">
+                  <input id="codee_name" type="text" name="codee_name">
+                </div>
+                <div class="col-15">
+                  <span>.cd</span>
+                </div>
+              </div>
+              <div>
+                <div class="col-25"><label for="codee_path">codee path</label></div>
+                <div class="col-60">
+                  <input id='browse1_path' type="text" name='browse1_path' disabled="true">
+                  <div id="drawer1" class="browse-dir scroll">
+                    <ul id="dir_tree" aria-labelledby="tree_label">
+                      <li id="browse1" class="dir"></li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="col-15"> <button class='browse-btn' type='button'
+                    onclick="open_dir('drawer1')">browse</button>
+                </div>
+
+              </div>
+              <div>
+                <div class="col-25"><label for="ref_filename">reference file name</label></div>
+                <div class="col-60">
+                  <input id='browse2_path' name='browse2_path' type="text" disabled="true">
+                  <div id="drawer2" class="browse-dir scroll">
+                    <ul id="dir_tree" aria-labelledby="tree_label">
+                      <li id="browse2" class="dir"></li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="col-15"><button class='browse-btn' type='button'
+                    onclick="open_dir('drawer2')">browse</button></div>
+              </div>
+              <div class="create-btn"><button onclick="createCodee()">Create</button>
+              </div>
+            </form>
+
+          </div>
+
+
+        </section>
+        <a class="closeBtn">×</a>
+      </section>
+      <section class="modal overlay">
+      </section>
+    </div>
+    {% if data is none %}
+    <div class="box" id='export'>
+      <h3 id="cd">{{filename}}&nbsp;&nbsp;
+        {%if username == current_user %}
+        <button class="button" type="button" onclick="saveCodee('{{ username }}')">save</button>
+        {% endif %}
+      </h3>
+
+      <div class="border-box">
+        <div class="filename" id="filename">{{ref_filename}}</div>
+        <pre id="pre" class="context-menu-one">
+          <code id="code">{{ref_data}}</code>
+        </pre>
+      </div>
+    </div>
+
+    {% else %}
+    <div class="box" id='export'>
+      <div class="border-box">
+        <div class="filename" id="filename">{{filename}}</div>
+        <pre id="pre">
+              <code id="code" >{{data}}</code>
+            </pre>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+</body>
+<script>
+
+
+  settings = {
+    //Model Popup
+    objModalPopupBtn: ".modalButton",
+    objModalCloseBtn: ".overlay, .closeBtn",
+    objModalDataAttr: "data-popup"
+  }
+  $(settings.objModalPopupBtn).bind("click", function () {
+    if ($(this).attr(settings.objModalDataAttr)) {
+      var strDataPopupName = $(this).attr(settings.objModalDataAttr);
+      //Fade In Modal Pop Up
+      $(".overlay, #" + strDataPopupName).fadeIn();
+
+    }
+  });
+
+  //On clicking the modal background
+  $(settings.objModalCloseBtn).bind("click", function () {
+    $(".modal").fadeOut();
+  });
+
+</script>
+<script src="{{ url_for('static', filename = 'script/import/html-to-rtf-browser.min.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/index.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/import/dir_upload.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/showcode.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/component/copy.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/component/pushpull.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/component/menubar.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/component/projectbar.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/editcodee.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/getIndices.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/createcodee.js') }}"></script>
+
+</html>

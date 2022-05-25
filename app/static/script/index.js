@@ -1,6 +1,10 @@
 function createNewRange(line, start, end) {
+  console.log(line) ;
+  console.log(start) ;
+  console.log(end) ;
   const tdTag = document.querySelector(`#L${line} .hljs-ln-code`);
   const startTag = findOffsetTag(tdTag, start);
+  console.log(startTag) ;
   const endTag = findOffsetTag(tdTag, end);
   const new_range = document.createRange();
   new_range.setStart(startTag.tag, startTag.startOffset);
@@ -115,6 +119,7 @@ window.addEventListener("load", async function () {
           drawHighlight(deco);
           break;
         case "word_hide":
+          console.log(deco) ;
           drawWordHide(deco);
           break;
       }

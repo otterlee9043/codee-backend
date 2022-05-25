@@ -1,4 +1,4 @@
-from flask import render_template, redirect, request, url_for, flash, current_app
+from flask import render_template, redirect, request, url_for, flash, current_app, session
 from flask_login import login_user, logout_user, login_required, \
     current_user
 from . import auth
@@ -160,6 +160,8 @@ def logout():
     session.clear()
     flash('You have been logged out.')
     return redirect(url_for('auth.login'))
+
+
 
 @auth.route('/register', methods=['GET', 'POST'])
 def register():

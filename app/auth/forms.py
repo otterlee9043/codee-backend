@@ -21,6 +21,12 @@ class RegistrationForm(FlaskForm):
     password = PasswordField('Password', validators=[
         DataRequired(), EqualTo('password2', message='Passwords must match.')])
     password2 = PasswordField('Confirm password', validators=[DataRequired()])
+    git_token = StringField('Git personal access token (select repo scope) ', validators = [
+        DataRequired(), Length(1, 128), 
+        Regexp('^[A-Za-z][A-Za-z0-9_]*$', 0, 'Token must have only letters, numbers or underscores')])
+    git_name = StringField('Github name (not email)', validators=[
+        DataRequired(), Length(1, 64), 
+        Regexp('^[A-Za-z][A-Za-z0-9_.]*$', 0, 'Name must have only letters, numbers, dots or underscores')])
     email = StringField('Email', validators=[
         DataRequired(), Length(1, 64), Email()])
     submit = SubmitField('Register')

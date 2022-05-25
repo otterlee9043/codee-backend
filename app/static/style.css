@@ -1,17 +1,62 @@
 /* @import url('https://fonts.googleapis.com/css?family=Nanum+Gothic'); */
 * {
   box-sizing: border-box;
+  
 }
 
+a{
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.logout{
+
+  float: right;
+  padding: 20px 20px 0px 0px;
+}
+
+.logout2{
+  padding: 10px;
+  font-size: 12px;
+  display: inline;
+  color: rgb(189, 189, 189);
+}
+
+.logout2:hover{
+color: rgb(189, 189, 189);
+}
+
+.topbar{
+   display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.darkbg {
+  background-color: rgb(27, 27, 27);
+}
+
+.white{
+  color: rgb(189, 189, 189);
+}
+
+.black{
+  color: black;
+}
 ul {
   padding-inline-start: 10px;
   list-style: none;
 }
 div {
-  width: 100%;
+  /* width: 100%; */
 }
 body {
-  margin: 20px 30px 20px 30px;
+  /* margin: 20px 30px 20px 30px; */
+  margin: 0;
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
 }
 pre {
   margin-top: 0px;
@@ -28,12 +73,22 @@ div.filelist {
   float: left;
   overflow: auto;
   height: 60vh;
+  width: 100%;
 }
 div.box {
   float: auto;
   width: 80%;
 }
 
+.small-logo{
+  width: 150px;
+  margin: 20px;
+}
+
+.big-logo{
+  width: 300px;
+  margin-bottom: 50px;
+}
 .lineNumber {
   font-weight: bold;
 }
@@ -67,6 +122,7 @@ ul#treeitem {
   padding-right: 2px;
   padding-left: 5px;
   vertical-align: middle;
+  margin-right: 3px;
 }
 
 #treeitem[aria-expanded="false"] > ul {
@@ -206,7 +262,6 @@ ul.context-menu-list.context-menu-root {
   color: greenyellow;
 }
 a:visited {
-  color: #0000ff;
   text-decoration: none;
 }
 
@@ -231,19 +286,21 @@ a:visited {
   border: solid 1px rgb(225, 225, 225);
   border-radius: 10px;
   padding: 0;
+  width: 100%;
 }
 
 .button {
   border: solid 1px rgb(225, 225, 225);
   border-radius: 5px;
-  padding: 6px 10px;
+  padding: 5px 10px;
   background-color: #f6f8fa;
   font-size: 15px;
+  font-family: 'Readex Pro', sans-serif;
 }
 
 .button:hover {
-  background: rgb(225, 225, 225);
-  color: white;
+  background: rgb(255, 255, 255);
+  color: black;
 }
 .sidebar {
   width: 20%;
@@ -251,7 +308,8 @@ a:visited {
 }
 
 .clonebar {
-  margin-bottom: 10px;
+  width: 100%;
+  margin-bottom: 20px;
 }
 
 .buttonbar {
@@ -265,12 +323,15 @@ a:visited {
 }
 
 .clone-btn {
-  background-color: #238636;
+  background-color: #2e9637;
   color: white;
-  border-color: #238636;
+  border-color: #2e9637;
 }
 
-.filename {
+.clone-btn:hover{
+  background-color: #3ec249;
+}
+.username-bar {
   display: flex;
   border-top-left-radius: 6px;
   border-top-right-radius: 6px;
@@ -278,12 +339,14 @@ a:visited {
   border-width: 1px;
   border-color: rgb(225, 225, 225);
   background-color: rgb(245, 245, 245);
-  padding: 10px 45px 10px 45px;
-  font-weight: bold;
+  padding: 10px 30px 10px 30px;
+  font-weight: 500;
 }
 
 code {
   overflow: auto;
+  font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+  font-size: 12px;
 }
 #code {
   padding: 0;
@@ -313,7 +376,17 @@ code {
 .filelist li {
   font-size: 14px;
 }
-
+.filename-bar {
+  display: flex;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  border-bottom-style: solid;
+  border-width: 1px;
+  border-color: rgb(225, 225, 225);
+  background-color: rgb(245, 245, 245);
+  padding: 10px 30px 10px 30px;
+  font-weight: bold;
+}
 @media screen and (max-height: 450px) {
   .hiddenbar {
     padding-top: 15px;
@@ -362,7 +435,8 @@ code {
   color: rgb(117, 117, 117);
   padding: 5px;
   border: none;
-  background-color: white;
+  background-color: transparent;
+  margin: 20px;
 }
 
 .openbtn:hover {
@@ -503,4 +577,89 @@ textarea {
 
 .linkComment {
   color: black;
+}
+
+.center-col {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  width: 70%;
+  margin: auto;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+
+}
+.center-row {
+  display: flex;
+  flex-direction: row;
+}
+.input-clone {
+  flex-grow: 1;
+  margin-right: 20px;
+}
+
+.form-clone {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+.form-width{
+  width: 300px;
+}
+.full{
+  width: 100%;
+}
+
+.logo-wrapper{
+  width: 67%;
+}
+
+.align-center{
+  align-items: center;
+
+}
+
+.width48{
+  width: 48%;
+}
+
+.margin10{
+  margin-bottom: 10px;
+}
+
+.margin20{
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.image{
+  width:500px;
+}
+
+.image-src{
+  font-size: 11px;
+  color:rgb(175, 175, 175);
+  text-decoration: none;
+}
+
+.image-src:hover{
+  text-decoration: none;
+}
+
+.repo{
+  /* font-family: 'Readex Pro', sans-serif; */
+  margin-bottom: 10px;
+}
+
+ul.repos{
+  padding-left: 30px;
+  padding-right: 30px;
+}
+
+.text-center{
+  text-align: center;
 }

@@ -1,6 +1,6 @@
 Dear {{ user.username }},
 
-Welcome to Sign!
+Welcome to Codee!
 
 To confirm your account please click on the following link:
 

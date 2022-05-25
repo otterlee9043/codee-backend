@@ -1,13 +1,13 @@
 {% extends "darkbase.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-{% block title %}Sign - Register{% endblock %}
+{% block title %}Codee - Register{% endblock %}
 
 {% block content %}
-<div class="page-header">
+<div class="page-header text-center">
     <h1>Register</h1>
 </div>
-<div class="col-md-4">
+<div class="col-md-4 center-col">
     {{ wtf.quick_form(form) }}
 </div>
 {% endblock %}
