@@ -72,7 +72,6 @@ def path_to_dict(path):
 # def code():
 
 @main.route('/', methods = ['GET','POST']) 
-#log in required 하기
 @login_required
 def index():
     print("!!!!!!!!!!!!!!", get_repositories())
@@ -231,7 +230,7 @@ def show_code():
                 return make_response(jsonify( data_dict ), 200)
     
 @main.route('/pull', methods=['GET'])
-# log in required 하기
+@login_required
 def pull():
     args = request.args
     user = args.get('username')
@@ -252,7 +251,7 @@ def pull():
     return make_response(jsonify({"msg":"done pull"}), 200)
 
 @main.route('/push', methods=['GET'])
-# log in required 하기
+@login_required
 def push():
     args = request.args
     user = args.get('username')
@@ -336,6 +335,8 @@ def read_codee():
                     print(cd_path)
                     cd_data = merge(cd_path, diff_data, username_)
                     cd_data[0]['commit_id'] = last_commit_id
+                    print("THIS IS MERGED DATA")
+                    print(cd_data)
                     save_merged_codee(cd_data, cd_path, username_)
                 data_dict = {
                     # "ref_data": ref_data,
@@ -414,9 +415,10 @@ def diff(cmtid1, cmtid2, username_, repository, filepath):
     data = data.split("\n")
     # print(data)
     diff = parse_diff_data(data)
-    diff = parse_diff_line(data, diff)
-    # print("DIFFS!!")
-    # print(diffs)
+    # diff = parse_diff_line(data, diff)
+    
+    print("DIFFS!!")
+    print(diff)
     return diff
 
 
@@ -606,7 +608,8 @@ def parse_diff_data(data):
             diff_data['changes'] = changes
             i = i + line_num - 1  
         i = i + 1
-    print("Print data!!")
+    print("PRINT DIFF_DATA!!")
+    print(diff_data)
     # print(data)
     return diff_data      
    

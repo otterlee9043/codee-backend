@@ -216,21 +216,21 @@ $.contextMenu({
     line = tdNode.getAttribute("data-line-number");
     const ID = randomId();
     span.id = ID;
-
+    
     if (key == "comment") {
     } //else if (key == "highlight") {
     else if (key == "red") {
       span.classList.add("red");
       addWordHighlight("red", start, end, line, ID);
-      registerCommentEvents("", span, ID, "highlight");
+      registerCommentEvent("", span, ID, "highlight");
     } else if (key == "yellow") {
       span.classList.add("yellow");
       addWordHighlight("yellow", start, end, line, ID);
-      registerCommentEvents("", span, ID, "highlight");
+      registerCommentEvent("", span, ID, "highlight");
     } else if (key == "green") {
       span.classList.add("green");
       addWordHighlight("green", start, end, line, ID);
-      registerCommentEvents("", span, ID, "highlight");
+      registerCommentEvent("", span, ID, "highlight");
     } else if (key == "hide") {
       ellipsisSpan(span) ;
       addWordHide(start, end, line, ID);
@@ -273,6 +273,41 @@ $.contextMenu({
             },
           },
         },
+      },
+    },
+    comment2: {
+      icon: "fa-solid fa-align-justify",
+      autoHide: true,
+      items: {
+        "link-1": {
+          type: "textarea",
+          events: {
+            // mouseleave: function(e) {
+            //   $("ul.context-menu-list").trigger("contextmenu:hide");
+            //   console.log("hello") ;
+            // },
+            keyup: function (e) {
+              console.log(e.keyCode);
+              let inputs = document.getElementsByName("context-menu-input-link-1");
+              if (e.keyCode == 13 && inputs[1].value) {
+                const conMenu = document.querySelector(".context-menu-list.context-menu-root");
+
+                addComment2(e, conMenu.style.top, conMenu.style.left, inputs[1].value);
+
+                Array.from(inputs).map((input) => {
+                  input.removeEventListener("mousedown", createFakeSelection);
+                  input.removeEventListener("blur", removeFakeSelection);
+                });
+                flag = 0;
+                $(".context-menu-list.context-menu-root").trigger("contextmenu:hide");
+              }
+            },
+          },
+        },
+        "add": {
+          name: "<a class='button right'>save</a>",
+          isHtmlName: true,
+        }
       },
     },
     highlight: {
@@ -319,8 +354,8 @@ $.contextMenu({
             keyup: function (e) {
               // add some fancy key handling here?
               let link_tag = document.getElementsByName("context-menu-input-link-1");
-              if (e.keyCode == 13 && link_tag[1].value) {
-                let url = link_tag[1].value;
+              if (e.keyCode == 13 && link_tag[2].value) {
+                let url = link_tag[2].value;
                 const conMenu = document.querySelector(".context-menu-list.context-menu-root");
                 addLinkTag(e, conMenu.style.top, conMenu.style.left, url);
 
@@ -385,7 +420,7 @@ function addComment(e, x, y, comment) {
   var select = document.querySelector(".selected");
   select.classList.remove("selected");
   select.classList.add("comment-underline");
-  registerCommentEvents(comment, select, id, "comment");
+  registerCommentEvent(comment, select, id, "comment");
 
   // const x = window.innerWidth - 200 > e.clientX ? e.clientX : window.innerWidth - 210;
   // const y = window.innerHeight > e.clientY ? e.clientY : window.innerHeight - 100;
@@ -400,6 +435,67 @@ function addComment(e, x, y, comment) {
   addWordComment(start, end, line, comment, id);
 }
 
+function addComment2(e, x, y, comment) {
+  let id = randomId();
+  console.log(id);
+  var select = document.querySelector(".selected");
+  select.classList.remove("selected");
+
+
+  select.classList.add("comment-embed");
+  // registerCommentEvent(comment, select, id, "comment-embed");
+  embedComment(comment, select, id)
+
+  const input = document.getElementsByName("context-menu-input-link-1")[1];
+  input.removeEventListener("blur", removeFakeSelection);
+
+  var tdNode = getTD(select);
+  const line = tdNode.getAttribute("data-line-number");
+  const [start, end] = getIndices(select);
+  // select.id = id;
+  addWordComment2(start, end, line, comment, id);
+}
+
+function embedComment(comment, span, id){
+  const commentSpan = document.createElement("span");
+  commentSpan.innerText = comment;
+  commentSpan.id = id;
+  commentSpan.classList.add("comment-embedded");
+  span.closest("td").after(commentSpan);
+  const wrapper = wrapTdtag(span);
+  wrapper.appendChild(commentSpan);
+
+  const closeBtn = document.createElement("span");
+  closeBtn.innerText = "X";
+  closeBtn.classList.add("right");
+
+  commentSpan.appendChild(closeBtn);
+  closeBtn.addEventListener("click", () => {
+    deleteComment2(commentSpan.id);
+    // console.log(commentSpan.id);
+    // if (type == "comment") {
+    //   deleteComment(commentSpan.id);
+    // } else if (type == "link") {
+    //   deleteLink(id);
+    // } else if (type == "highlight") {
+    //   deleteHighlight(id);
+    // }
+    // addContextMenu();
+
+
+    mergeNode(node, commentSpan);
+  });
+}
+
+function wrapTdtag(span){
+  // const tds = document.querySelectorAll("td.hljs-ln-code");
+  const td = span.closest("td");
+  const div = document.createElement("div");
+  div.classList.add("col");
+  td.before(div);
+  div.appendChild(td);
+  return div;
+}
 function addLinkTag(e, x, y, url) {
   let id = randomId();
   var select = document.querySelector(".selected");
@@ -409,7 +505,7 @@ function addLinkTag(e, x, y, url) {
 
   );
   select.classList.remove("selected");
-  registerCommentEvents(url, select.parentElement, id, "link");
+  registerCommentEvent(url, select.parentElement, id, "link");
 
   if (ref_data != null) {
     console.log("addLink");

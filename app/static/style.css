@@ -563,6 +563,17 @@ textarea {
   border-bottom: solid rgb(230, 194, 76) 3px;
 }
 
+.comment-embed{
+  border-bottom: solid rgb(0, 195, 255) 3px;
+}
+
+.comment-embedded{
+  padding: 5px;
+  margin-top: 5px;
+  margin-left: 30px;
+  background: rgb(238, 238, 238);
+}
+
 .comment {
   position: absolute;
   /* top: 0;
@@ -662,4 +673,18 @@ ul.repos{
 
 .text-center{
   text-align: center;
+}
+
+td a{
+  color: blue;
+}
+
+.youtube{
+  width: 400px;
+  height: 250px;
+  border: none;
+}
+
+td {
+  vertical-align : top;
 }

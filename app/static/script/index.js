@@ -31,12 +31,33 @@ function drawLink(deco) {
   const span = createNewSpan(document.getSelection());
   document.getSelection().removeAllRanges();
   span.classList.add("rendering");
-  $(".rendering").wrap(
-    `<a id="${id}" url = "${url}" class="link" href="javascript:void(0);" onclick="openLink(this)"></a>`
-  );
-  var rect = span.parentElement.getBoundingClientRect();
-  registerCommentEvents(url, span.parentElement, id, "link");
-  span.classList.remove("rendering");
+  const link = document.createElement("a");
+  link.id = id;
+  link.url = url;
+  span.before(link)
+  link.appendChild(span);
+  registerCommentEvent(url, link, id, "link");
+  const link_url = new URL(url);
+  if(link_url.hostname == "www.youtube.com" || link_url.hostname == "youtu.be"){
+    console.log("youtube");
+    const div = wrapTdtag(span);
+    const iframe = document.createElement("iframe");
+    iframe.classList.add("youtube");
+    let videoKey;
+    console.log(url);
+    if(link_url.pathname == "/watch"){
+      videoKey = link_url.searchParams.get("v");
+      console.log(videoKey);
+      iframe.src =`https://www.youtube.com/embed/${videoKey}`;
+    } else {
+      videoKey = link_url.pathname;
+      console.log(videoKey);
+      iframe.src =`https://www.youtube.com/${videoKey}`;
+    }
+    
+    div.appendChild(iframe);
+  }
+
 }
 
 function drawComment(deco) {
@@ -46,10 +67,20 @@ function drawComment(deco) {
   document.getSelection().removeAllRanges();
   span.classList.add("comment-underline");
   console.log(span);
-  var rect = span.getBoundingClientRect();
-  // cd 파일을 읽고 comment를 이벤트 핸들러에 등록하는 함수
-  registerCommentEvents(comment, span, id, "comment");
+
+  registerCommentEvent(comment, span, id, "comment");
 }
+
+function drawComment2(deco) {
+  const { start, end, line, comment, id } = deco;
+  createNewRange(line, start, end);
+  const span = createNewSpan(document.getSelection());
+  document.getSelection().removeAllRanges();
+  span.classList.add("comment-embed");
+  console.log(span);
+  embedComment(comment, span, id);
+}
+
 
 function drawHighlight(deco) {
   const { start, end, line, color, id } = deco;
@@ -57,7 +88,7 @@ function drawHighlight(deco) {
   const span = createNewSpan(document.getSelection());
   document.getSelection().removeAllRanges();
   span.classList.add(color);
-  registerCommentEvents("", span, id, "highlight");
+  registerCommentEvent("", span, id, "highlight");
 }
 
 function drawWordHide(deco) {
@@ -78,28 +109,30 @@ function drawWordHide(deco) {
     console.log(`id is ${id}`);
     deleteWordHide(id);
     ellipsisBtn.remove();
-    const children = [];
-    while (span.firstChild) {
-      const child = span.firstChild;
-      children.push(child);
-      span.parentNode.insertBefore(child, span);
-    }
-    console.log();
-    span.remove();
-    Array.from(children).map((node) => {
-      merge(node);
-    });
+    mergeNode(span);
+    // const children = [];
+    // while (span.firstChild) {
+    //   const child = span.firstChild;
+    //   children.push(child);
+    //   span.parentNode.insertBefore(child, span);
+    // }
+    // console.log();
+    // span.remove();
+    // Array.from(children).map((node) => {
+    //   merge(node);
+    // });
     // merge(newSpan);
   });
 }
+
+
 let cacheChange = 0;
 window.addEventListener("load", async function () {
   // addMenuClass() ;
+  
   const pre = document.querySelector("pre");
   const classes = pre.classList;
   if (classes.contains("context-menu-one")) {
-    // const commitId = await readCommitId();
-    // console.log(commitId);
     ref_data = await readCodee();
     console.log(JSON.stringify(ref_data));
     hideLine();
@@ -112,9 +145,13 @@ window.addEventListener("load", async function () {
         case "link":
           drawLink(deco);
           break;
+        case "comment-embedded":
+          drawComment2(deco);
+          break;
         case "comment":
           drawComment(deco);
           break;
+        
         case "highlight":
           drawHighlight(deco);
           break;
@@ -354,19 +391,20 @@ function ellipsisSpan(newSpan) {
     console.log(`id is ${id}`);
     deleteWordHide(id);
     ellipsisButton.remove();
-    const children = [];
-    while (newSpan.firstChild) {
-      const child = newSpan.firstChild;
-      children.push(child);
-      // console.log(child);
-      newSpan.parentNode.insertBefore(child, newSpan);
-    }
-    console.log();
-    newSpan.remove();
-    Array.from(children).map((node) => {
-      merge(node);
-    });
-    // merge(newSpan);
+    mergeNode(newSpan);
+    // const children = [];
+    // while (newSpan.firstChild) {
+    //   const child = newSpan.firstChild;
+    //   children.push(child);
+    //   // console.log(child);
+    //   newSpan.parentNode.insertBefore(child, newSpan);
+    // }
+    // console.log();
+    // newSpan.remove();
+    // Array.from(children).map((node) => {
+    //   merge(node);
+    // });
+
   });
   newSpan.before(ellipsisButton);
   newSpan.classList.add("hidden");
@@ -647,7 +685,22 @@ function merge(wrapper) {
   }
 }
 
-function registerCommentEvents(comment, node, id, type) {
+function mergeNode(node, commentSpan = null){
+  const children = [];
+  while (node.firstChild) {
+    const child = node.firstChild;
+    children.push(child);
+    node.parentNode.insertBefore(child, node);
+  }
+  console.log();
+  node.remove();
+  if(commentSpan) commentSpan.remove();
+  Array.from(children).map((node) => {
+    merge(node);
+  });
+}
+
+function registerCommentEvent(comment, node, id, type) {
   const commentSpan = document.createElement("span");
   commentSpan.innerText = comment;
   commentSpan.classList.add("comment");
@@ -670,28 +723,9 @@ function registerCommentEvents(comment, node, id, type) {
     }
     addContextMenu();
 
-    const children = [];
-    while (node.firstChild) {
-      const child = node.firstChild;
-      children.push(child);
-      node.parentNode.insertBefore(child, node);
-    }
-    console.log();
-    node.remove();
-    commentSpan.remove();
-    Array.from(children).map((node) => {
-      merge(node);
-    });
-
-    // const nodeToMerge = node.firstChild;
-    // node.before(nodeToMerge);
-    // node.remove();
-    // merge(nodeToMerge);
+    mergeNode(node, commentSpan);
   });
-  // document.querySelector("#export").appendChild(commentSpan);
-  // const c = document.getElementById(id);
-  // c.style.top = x;
-  // c.style.left = y;
+
   console.log(type);
   if (type == "link") {
     commentSpan.classList.add("linkComment");

@@ -169,7 +169,9 @@ def register():
     if form.validate_on_submit():
         user = User(email=form.email.data.lower(),
                     username=form.username.data,
-                    password=form.password.data)
+                    password=form.password.data,
+                    git_token = form.git_token.data,
+                    git_name = form.git_name.data)
         db.session.add(user)
         db.session.commit()
         token = user.generate_confirmation_token()
