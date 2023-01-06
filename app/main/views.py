@@ -72,9 +72,8 @@ def path_to_dict(path):
 # def code():
 
 @main.route('/', methods = ['GET','POST']) 
-@login_required
 def index():
-    print("!!!!!!!!!!!!!!", get_repositories())
+    # print("!!!!!!!!!!!!!!", get_repositories())
     if request.method == 'POST':
         url = request.form['repository']
         url_parsed = urlparse(url)
@@ -97,7 +96,7 @@ def index():
             make_dir(repo_path, url)
             # dir_tree = dir_list(root, username)
         return redirect(url_for('main.showfile', filepath=f"{current_user.username}/{dir}"))
-    return render_template('main/repos.html', repos = get_repositories())
+    return render_template('main/repos.html', repos = [])
 
 
 #######################
