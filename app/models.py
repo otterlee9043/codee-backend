@@ -1,7 +1,7 @@
 from datetime import datetime
 import hashlib
 from werkzeug.security import generate_password_hash, check_password_hash
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from itsdangerous import URLSafeTimedSerializer as Serializer
 from flask import current_app, request, url_for
 from flask_login import UserMixin
 from app.exceptions import ValidationError

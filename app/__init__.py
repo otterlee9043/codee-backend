@@ -6,11 +6,11 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_pagedown import PageDown
 from config import config
-from flask_googlelogin import GoogleLogin
-from google.oauth2 import id_token
+# from flask_googlelogin import GoogleLogin
+# from google.oauth2 import id_token
 
 
-from oauthlib.oauth2 import WebApplicationClient
+# from oauthlib.oauth2 import WebApplicationClient
 
 
 
@@ -22,8 +22,8 @@ pagedown = PageDown()
 
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
-googlelogin = GoogleLogin()
-client = WebApplicationClient('1073055744206-ma05btrp4uq1kk321g1kt615mos2rv4d.apps.googleusercontent.com')
+# googlelogin = GoogleLogin()
+# client = WebApplicationClient('1073055744206-ma05btrp4uq1kk321g1kt615mos2rv4d.apps.googleusercontent.com')
 def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
