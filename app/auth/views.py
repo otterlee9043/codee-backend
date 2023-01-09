@@ -4,11 +4,13 @@ from flask_login import login_user, logout_user, login_required, \
 from . import auth
 from .. import db #, client
 from ..models import User
-from ..email import send_email
+from ..email import send_email, gmail_send_message
 from .forms import LoginForm, RegistrationForm
+from flask_dance.contrib.github import make_github_blueprint, github
 import json, requests
+
 import os
-root = '/home/codination/ver1/app/static/files/'
+root = './app/static/files/'
 
 
 @auth.before_app_request
@@ -66,8 +68,7 @@ def register():
         db.session.add(user)
         db.session.commit()
         token = user.generate_confirmation_token()
-        send_email(user.email, 'Confirm Your Account',
-                   'auth/email/confirm', user=user, token=token)
+        gmail_send_message(user.email, 'Confirm Your Account', 'auth/email/confirm', user=user, token=token)
         flash('A confirmation email has been sent to you by email.')
         return redirect(url_for('auth.login'))
     return render_template('auth/register.html', form=form)
@@ -76,12 +77,14 @@ def register():
 @auth.route('/confirm/<token>')
 @login_required
 def confirm(token):
+    print("current_user.confirmed: ", current_user.confirmed)
+
     if current_user.confirmed:
         return redirect(url_for('main.index'))
     if current_user.confirm(token):
         db.session.commit()
-        # user이름으로 dir 만들기
         os.umask(0)
+        print("new dir path: " + os.path.join(root, current_user.username))
         os.makedirs(os.path.join(root, current_user.username), exist_ok = True)
         flash('You have confirmed your account. Thanks!')
     else:
@@ -92,8 +95,11 @@ def confirm(token):
 @login_required
 def resend_confirmation():
     token = current_user.generate_confirmation_token()
-    send_email(current_user.email, 'Confirm Your Account',
-               'auth/email/confirm', user=current_user, token=token)
+    # send_email(current_user.email, 'Confirm Your Account',
+    #            'auth/email/confirm', user=current_user, token=token)
+    gmail_send_message(current_user.email, 'Confirm Your Account', 
+                    'auth/email/confirm', user=current_user, token=token)
+        
     flash('A new confirmation email has been sent to you by email.')
     return redirect(url_for('main.index'))
 
@@ -103,3 +109,5 @@ def unconfirmed():
     if current_user.is_anonymous or current_user.confirmed:
         return redirect(url_for('main.index'))
     return render_template('auth/unconfirmed.html')
+
+
