@@ -6,12 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_pagedown import PageDown
 from config import config
-# from flask_googlelogin import GoogleLogin
-# from google.oauth2 import id_token
-
-
-# from oauthlib.oauth2 import WebApplicationClient
-
+from flask_dance.contrib.github import make_github_blueprint, github
 
 
 bootstrap = Bootstrap()
@@ -22,8 +17,8 @@ pagedown = PageDown()
 
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
-# googlelogin = GoogleLogin()
-# client = WebApplicationClient('1073055744206-ma05btrp4uq1kk321g1kt615mos2rv4d.apps.googleusercontent.com')
+
+
 def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
@@ -36,6 +31,8 @@ def create_app(config_name):
     login_manager.init_app(app)
     pagedown.init_app(app)
     
+    
+
 
     with app.app_context():
         db.create_all()
@@ -44,7 +41,10 @@ def create_app(config_name):
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
 
-    from .auth import auth as auth_blueprint
+    from .auth import auth as auth_blueprint, github_blueprint
     app.register_blueprint(auth_blueprint, url_prefix='/auth')
+    app.register_blueprint(github_blueprint, url_prefix='/github_login')
     
+    github_blueprint.session.client_id = app.config["GITHUB_OAUTH_CLIENT_ID"]
+ 
     return app

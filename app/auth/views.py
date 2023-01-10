@@ -1,13 +1,13 @@
-from flask import render_template, redirect, request, url_for, flash, current_app, session
+from flask import render_template, redirect, request, url_for, flash, session
 from flask_login import login_user, logout_user, login_required, \
     current_user
 from . import auth
-from .. import db #, client
+from .. import db
 from ..models import User
-from ..email import send_email, gmail_send_message
+from ..email import gmail_send_message
 from .forms import LoginForm, RegistrationForm
-from flask_dance.contrib.github import make_github_blueprint, github
-import json, requests
+from flask_dance.contrib.github import github
+from flask_login import logout_user
 
 import os
 root = './app/static/files/'
@@ -42,6 +42,20 @@ def login():
             return redirect(next)
         flash('Invalid username or password.')
     return render_template('auth/login.html', form=form)
+
+
+@auth.route('/github/login')
+def github_login():
+    print(github.session)
+    if not github.authorized:
+        return redirect(url_for('github.login'))
+    else:
+        account_info = github.get('/user')
+        if account_info.ok:
+            account_info_json = account_info.json()
+            return '<h1>Your Github name is {}'.format(account_info_json['login'])
+
+    return '<h1>Request failed!</h1>'
 
 
 
@@ -95,8 +109,6 @@ def confirm(token):
 @login_required
 def resend_confirmation():
     token = current_user.generate_confirmation_token()
-    # send_email(current_user.email, 'Confirm Your Account',
-    #            'auth/email/confirm', user=current_user, token=token)
     gmail_send_message(current_user.email, 'Confirm Your Account', 
                     'auth/email/confirm', user=current_user, token=token)
         
@@ -109,5 +121,4 @@ def unconfirmed():
     if current_user.is_anonymous or current_user.confirmed:
         return redirect(url_for('main.index'))
     return render_template('auth/unconfirmed.html')
-
 
