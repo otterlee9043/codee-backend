@@ -6,8 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_pagedown import PageDown
 from config import config
-from flask_dance.contrib.github import make_github_blueprint, github
-
+from flask_dance.consumer.storage.sqla import SQLAlchemyStorage
 
 bootstrap = Bootstrap()
 mail = Mail()
@@ -30,9 +29,6 @@ def create_app(config_name):
     db.init_app(app)
     login_manager.init_app(app)
     pagedown.init_app(app)
-    
-    
-
 
     with app.app_context():
         db.create_all()
@@ -41,10 +37,9 @@ def create_app(config_name):
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
 
-    from .auth import auth as auth_blueprint, github_blueprint
+    from .auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint, url_prefix='/auth')
+
+    from .auth.oauth import github_blueprint
     app.register_blueprint(github_blueprint, url_prefix='/github_login')
-    
-    github_blueprint.session.client_id = app.config["GITHUB_OAUTH_CLIENT_ID"]
- 
     return app

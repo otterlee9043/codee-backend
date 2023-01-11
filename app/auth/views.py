@@ -9,7 +9,7 @@ from .forms import LoginForm, RegistrationForm
 from flask_dance.contrib.github import github
 from flask_login import logout_user
 
-import os
+import os, json
 root = './app/static/files/'
 
 
@@ -46,14 +46,20 @@ def login():
 
 @auth.route('/github/login')
 def github_login():
-    print(github.session)
     if not github.authorized:
+        print("not authorized")
         return redirect(url_for('github.login'))
     else:
         account_info = github.get('/user')
+        
         if account_info.ok:
             account_info_json = account_info.json()
-            return '<h1>Your Github name is {}'.format(account_info_json['login'])
+            owner = account_info_json['login']
+            repo = "codee"
+            repo_info = github.get(f'/repos/{owner}/{repo}')
+            if repo_info.ok:
+                repo_info_json = repo_info.json()
+                return json.dumps(repo_info_json)
 
     return '<h1>Request failed!</h1>'
 
