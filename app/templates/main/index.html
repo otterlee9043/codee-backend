@@ -2,8 +2,6 @@
 <html lang="en">
 
 <head>
-  <!--<link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">-->
-
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=deivce-width, initial-scale=1.0">
@@ -24,18 +22,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
+    <!-- jsTree -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
+    
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
   <script>hljs.highlightAll(); hljs.initLineNumbersOnLoad();</script>
   <title>Codee</title>
 </head>
-<div id="mySidebar" class="hiddenbar">
-  <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
-  <a href="#">Project 1</a>
-  <a href="#">Project 2</a>
-  <a href="#">Project 3</a>
-  <a href="#">Project 4</a>
-</div>
 <header>
   <div class="topbar darkbg">
     <button class="openbtn" onclick="openNav()">☰</button>
@@ -78,24 +71,7 @@
     <div class="center-row full">
       <div class="sidebar col">
         <div class="filelist border-box scroll">
-          <ul id="dir_tree" aria-labelledby="tree_label">
-            <li id="{{username}}" class="dir">
-            </li>
-            <script>
-              console.log("asdfsdafasdfdsa");
-              console.log('{{filename}}');
-              $(function () {
-                var dir_tree = JSON.parse('{{dir_tree | tojson}}');
-                var parent_node = document.getElementById('{{ username }}');
-                show_dir(dir_tree['{{ username }}'], '{{ username }}', parent_node);
-                var parent_node2 = document.getElementById('browse1');
-                show_dir(dir_tree['{{ username }}'], 'browse1', parent_node2, true, 'browse1_path', false);
-                var parent_node3 = document.getElementById('browse2');
-                show_dir(dir_tree['{{ username }}'], 'browse2', parent_node3, true, 'browse2_path', true);
-              });
-
-            </script>
-          </ul>
+          <div id="tree"></div>
         </div>
         {%if username == current_user.username %}
         <div class="topbar margin10">
@@ -204,7 +180,65 @@
 
 </body>
 <script>
+  let jsonData = null;
+  $(document).on("click", "a.jstree-anchor", function(){
+  console.log("clicked");
+  const path = $(this).attr('path')
+  
+  fetch(`/api/repo/contents/${path}`)
+    .then(function (response) {
+      if (response.status != 200) {
+        console.log(`Looks like there was a problem. Status code: ${response.status}`);
+        return;
+      }
+      response.json().then(function(data){
+        console.log(data);
+        const newJsonData = [...jsonData, ...data];
+        drawDirectoryTree(newJsonData);
+      });
+      
+    })
+    .catch(function (error) {
+      console.log("Fetch error: " + error);
+    });
 
+});
+
+  $(function () {
+    jsonData = JSON.parse({{ tree|tojson }});
+    console.log(jsonData);
+    drawDirectoryTree(jsonData);
+    
+    function drawDirectoryTree(data){
+      $("#tree").jstree({
+      plugins : [ "wholerow" ],
+      core: {
+        themes: {
+          responsive: false,
+        },
+      },
+      types: {
+        default: {
+          icon: "fa fa-folder",
+        },
+        file: {
+          icon: "fa fa-file",
+        },
+      },
+      plugins: ["types"],
+      core: {
+        data: jsonData
+      }
+    }
+    );
+    }
+
+    
+    
+  }
+  
+  
+  );
 
   settings = {
     //Model Popup
@@ -226,11 +260,10 @@
     $(".modal").fadeOut();
   });
 
-</script>
+  </script>
 <script src="{{ url_for('static', filename = 'script/import/html-to-rtf-browser.min.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/index.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/import/dir_upload.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/showcode.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/component/copy.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/component/pushpull.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/component/menubar.js') }}"></script>
