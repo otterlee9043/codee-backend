@@ -15,17 +15,13 @@ root = './app/static/files/'
 
 @auth.before_app_request
 def before_request():
-    if current_user is None:
-        pass
     if current_user.is_authenticated:
-
-        if not current_user.is_anonymous:
-            if not current_user.confirmed \
-                    and request.endpoint \
-                    and request.blueprint != 'auth' \
-                    and request.endpoint != 'static':
-                return redirect(url_for('auth.unconfirmed'))
-    # print("(in auth/views.py: before_resquest())Not authenticated!!!!!")
+        current_user.ping()
+        if not current_user.confirmed \
+                and request.endpoint \
+                and request.blueprint != 'auth' \
+                and request.endpoint != 'static':
+            return redirect(url_for('auth.unconfirmed'))
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -50,19 +46,25 @@ def github_login():
         print("not authorized")
         return redirect(url_for('github.login'))
     else:
-        account_info = github.get('/user')
-        
-        if account_info.ok:
-            account_info_json = account_info.json()
-            owner = account_info_json['login']
-            repo = "codee"
-            repo_info = github.get(f'/repos/{owner}/{repo}')
-            if repo_info.ok:
-                repo_info_json = repo_info.json()
-                return json.dumps(repo_info_json)
+        account_resp = github.get('/user')
+        if account_resp.ok:
+            account_info= account_resp.json()
+            user = save_or_update(account_info)
+            login_user(user)
+            return redirect(url_for('main.index'))
 
     return '<h1>Request failed!</h1>'
 
+def save_or_update(user_info):
+    username = user_info['login']
+    user = User.query.filter_by(username=username).first()
+    if user:
+        user.email = user_info['email']
+    else: 
+        user = User(username=username, email=user_info['email'])
+    db.session.add(user)
+    db.session.commit()
+    return user
 
 
 
@@ -81,10 +83,7 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         user = User(email=form.email.data.lower(),
-                    username=form.username.data,
-                    password=form.password.data,
-                    git_token = form.git_token.data,
-                    git_name = form.git_name.data)
+                    username=form.username.data)
         db.session.add(user)
         db.session.commit()
         token = user.generate_confirmation_token()
