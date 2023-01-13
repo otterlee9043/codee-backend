@@ -31,7 +31,6 @@
 </head>
 <header>
   <div class="topbar darkbg">
-    <button class="openbtn" onclick="openNav()">☰</button>
     <div class="logo-wrapper"><img src="{{url_for('static', filename='/logo_white.svg')}}" class="small-logo" alt=""
         srcset=""></div>
 
@@ -60,6 +59,7 @@
 
     {% else %}
     <div class="full margin20">
+      <span>{{ repo_name }}</span>
       <button type="button" class="button right" onclick="copyToClip(document.getElementById('code'))">export</button>
     </div>
     {% endif %}
@@ -180,36 +180,8 @@
 
 </body>
 <script>
-  let jsonData = null;
-  $(document).on("click", "a.jstree-anchor", function(){
-  console.log("clicked");
-  const path = $(this).attr('path')
-  
-  fetch(`/api/repo/contents/${path}`)
-    .then(function (response) {
-      if (response.status != 200) {
-        console.log(`Looks like there was a problem. Status code: ${response.status}`);
-        return;
-      }
-      response.json().then(function(data){
-        console.log(data);
-        const newJsonData = [...jsonData, ...data];
-        drawDirectoryTree(newJsonData);
-      });
-      
-    })
-    .catch(function (error) {
-      console.log("Fetch error: " + error);
-    });
 
-});
-
-  $(function () {
-    jsonData = JSON.parse({{ tree|tojson }});
-    console.log(jsonData);
-    drawDirectoryTree(jsonData);
-    
-    function drawDirectoryTree(data){
+function drawDirectoryTree(data){
       $("#tree").jstree({
       plugins : [ "wholerow" ],
       core: {
@@ -227,15 +199,73 @@
       },
       plugins: ["types"],
       core: {
-        data: jsonData
+        data: data
       }
     }
     );
     }
 
+  let jsonData = null;
+  let clicks = 0;
+  let timeout;
+
+  $('#tree').on("changed.jstree", function (e, data) {
+    clicks++;
+
+    console.log(data);
+    console.log("clicked: ", clicks);
     
-    
+    const target = data.node;
+
+    if (data.action !== "deselect_all" && target.original.type === "dir" && target.a_attr.hasBeenOpened === false ){
+      if (clicks === 1) {
+        timeout = setTimeout(function() {
+          const path = target.a_attr.path;
+      fetch(`/api/repo/contents/${path}`)
+        .then(function (response) {
+          if (response.status != 200) {
+            console.log(`Looks like there was a problem. Status code: ${response.status}`);
+            return;
+          }
+          response.json().then(function(data){
+            
+            for(let i = 0; i < jsonData.length; i++){
+              if (jsonData[i]['a_attr']['path'] === path){
+                console.log(jsonData[i]);
+                jsonData[i]['a_attr']['hasBeenOpened'] = true;
+                jsonData[i]['state'] = {'opened': true};
+              }
+            }
+            jsonData = [...jsonData, ...data];
+            console.log(jsonData);
+            // drawDirectoryTree(newJsonData);
+            $('#tree').jstree(true).settings.core.data = jsonData;
+            $('#tree').jstree(true).refresh();
+            
+          });
+          
+        })
+        .catch(function (error) {
+          console.log("Fetch error: " + error);
+        });
+          clicks = 0;
+        }, 250);
+      } else {
+        clearTimeout(timeout);
+        // double click event
+        clicks = 0;
+      }
+
+      
+      }
+  });
+
+  $(function () {
+    jsonData = JSON.parse({{ tree|tojson }});
+    console.log(jsonData);
+    drawDirectoryTree(jsonData);
   }
+  
   
   
   );
@@ -263,13 +293,5 @@
   </script>
 <script src="{{ url_for('static', filename = 'script/import/html-to-rtf-browser.min.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/index.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/import/dir_upload.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/component/copy.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/component/pushpull.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/component/menubar.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/component/projectbar.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/editcodee.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/getIndices.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/createcodee.js') }}"></script>
 
 </html>
