@@ -31,7 +31,7 @@
 </head>
 <header>
   <div class="topbar darkbg">
-    <div class="logo-wrapper"><img src="{{url_for('static', filename='/logo_white.svg')}}" class="small-logo" alt=""
+    <div class="logo-wrapper"><img src="{{url_for('static', filename='logo_white.svg')}}" class="small-logo" alt=""
         srcset=""></div>
 
     <div class="logout2 white">
@@ -155,7 +155,7 @@
       {% elif data is none %}
       <div class="box" id='export'>
         <div class="border-box">
-          <div class="filename-bar" id="filename">{{ref_filename}}</div>
+          <div class="filename-bar" id="filename">{{ content_name }}</div>
           <pre id="pre" class="context-menu-one">
                 <code id="code">{{ref_data}}</code>
               </pre>
@@ -165,7 +165,7 @@
       {% else %}
       <div class="box" id='export'>
         <div class="border-box">
-          <div class="filename-bar" id="filename">{{filename}}</div>
+          <div class="filename-bar" id="filename">{{ content_name }}</div>
           <pre id="pre" class="">
                     <code id="code" >{{data}}</code>
                   </pre>
@@ -180,9 +180,35 @@
 
 </body>
 <script>
+  const repoName = "{{ repo_name }}";
+  const ref = "{{ ref }}";
+  let jsonData = null;
 
-function drawDirectoryTree(data){
-      $("#tree").jstree({
+  $('#tree').on('select_node.jstree', function (e, data) {
+    let node = data.node;
+    console.log(node)
+    if (node.type === 'file') {
+      console.log(node['a_attr']['path']);
+      window.location.href = `/${repoName}/${ref}/${node['a_attr']['path']}`;
+    }
+  });
+
+  // $('#tree').on('ready.jstree', function (e, data) {
+  //   var node = data.node;
+  //   console.log(node)
+  //   if (node.type === 'file') {
+  //     window.location.href = node['a_attr']['path'];
+  //   }
+  // });
+
+
+
+  $(function () {
+    jsonData = JSON.parse({{ tree|tojson }});
+    console.log(jsonData);
+    const openedFile = "{{ content_name }}";
+
+    $("#tree").jstree({
       plugins : [ "wholerow" ],
       core: {
         themes: {
@@ -199,76 +225,22 @@ function drawDirectoryTree(data){
       },
       plugins: ["types"],
       core: {
-        data: data
+        data: jsonData
       }
-    }
-    );
-    }
+    });
 
-  let jsonData = null;
-  let clicks = 0;
-  let timeout;
+    // $("#tree").jstree('open_node', 'app/main_anchor');
+    // $("#tree").jstree()._open_to( 'app/main_anchor' );
+    $('#tree').on('ready.jstree', function(e, data) {
+      const parents = $('#tree').jstree(true).get_node(openedFile).parents;
+      for (let i = parents.length - 2; i >= 0; i--) {
+        $("#tree").jstree('open_node', parents[i], 0);
+      } 
+    });
 
-  $('#tree').on("changed.jstree", function (e, data) {
-    clicks++;
 
-    console.log(data);
-    console.log("clicked: ", clicks);
-    
-    const target = data.node;
 
-    if (data.action !== "deselect_all" && target.original.type === "dir" && target.a_attr.hasBeenOpened === false ){
-      if (clicks === 1) {
-        timeout = setTimeout(function() {
-          const path = target.a_attr.path;
-      fetch(`/api/repo/contents/${path}`)
-        .then(function (response) {
-          if (response.status != 200) {
-            console.log(`Looks like there was a problem. Status code: ${response.status}`);
-            return;
-          }
-          response.json().then(function(data){
-            
-            for(let i = 0; i < jsonData.length; i++){
-              if (jsonData[i]['a_attr']['path'] === path){
-                console.log(jsonData[i]);
-                jsonData[i]['a_attr']['hasBeenOpened'] = true;
-                jsonData[i]['state'] = {'opened': true};
-              }
-            }
-            jsonData = [...jsonData, ...data];
-            console.log(jsonData);
-            // drawDirectoryTree(newJsonData);
-            $('#tree').jstree(true).settings.core.data = jsonData;
-            $('#tree').jstree(true).refresh();
-            
-          });
-          
-        })
-        .catch(function (error) {
-          console.log("Fetch error: " + error);
-        });
-          clicks = 0;
-        }, 250);
-      } else {
-        clearTimeout(timeout);
-        // double click event
-        clicks = 0;
-      }
-
-      
-      }
   });
-
-  $(function () {
-    jsonData = JSON.parse({{ tree|tojson }});
-    console.log(jsonData);
-    drawDirectoryTree(jsonData);
-  }
-  
-  
-  
-  );
 
   settings = {
     //Model Popup

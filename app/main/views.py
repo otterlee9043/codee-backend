@@ -1,30 +1,75 @@
+import json, time, os, re, subprocess
 from flask import render_template, redirect, url_for, flash, request, make_response, jsonify
 from flask_login import current_user, login_required
-import json
-import time
-import os
-import re
-import subprocess
-import time
 from . import main
 from .. import db
 from ..models import User
 from git import Repo
 from os.path import exists
 from flask_dance.contrib.github import github
-import time
+import base64
 
 
-@main.route('/api/test')
-def test():
-    owner = "otterlee9043"
-    repo = "codee"
-    tree_sha = "9ff5cf37ed73114baf2b93ff6ee33c42968fd703"
-    # resp = github.get('/repos/otterlee9043/codee/commits/eee8fcaa15640b8457eb0e8e456004c38aca5bf2')
-    # info = resp.json()
-    tree_resp = github.get(f'/repos/{owner}/{repo}/git/trees/{tree_sha}?recursive=1')
-    tree_json = tree_resp.json()
-    return tree_json
+owner = "otterlee9043"
+repo = "codee"
+
+def get_content_of_file(path):
+    resp = github.get(f'/repos/{owner}/{repo}/contents/{path}')
+    if resp.ok:
+        resp_json = resp.json()
+        base64_content = resp_json['content']
+        bytes_content = base64.b64decode(base64_content)
+        content = bytes_content.decode('utf-8')
+        return content
+    return "error"
+
+
+def get_contents_of_repository():
+    ref = "master"
+
+    tree_sha = None
+    commit_resp = github.get(f'/repos/{owner}/{repo}/commits/{ref}')
+    if commit_resp.ok:
+        commit_json = commit_resp.json()
+        tree_sha = commit_json['commit']['tree']['sha']
+
+    tree_json = None
+    tree_resp = github.get(
+        f'/repos/{owner}/{repo}/git/trees/{tree_sha}?recursive=1')
+    if tree_resp.ok:
+        tree_json = tree_resp.json()
+
+    items = []
+    if tree_json and tree_sha:
+        for file in tree_json['tree']:
+            file_info = {}
+            file_info['id'] = file['path']
+            file_info['text'] = file['path'].rsplit('/', 1)[-1]
+            
+            if file['type'] == "blob":
+                file_info['type'] = "file"
+            elif file['type'] == "tree":
+                file_info['type'] = "dir"
+            
+            if file['path'].rsplit('/', 1)[0] == file_info['text']:
+                file_info['parent'] = "#"
+            else:
+                file_info['parent'] = file['path'].rsplit('/', 1)[0] 
+            
+            file_info['a_attr'] = {'path': file['path']}
+
+            if file_info["type"] == "file":
+                file_info['a_attr']['href'] = file['path']
+
+            items.append(file_info)
+
+        items = sorted(items, key=lambda x: (
+            x.get('type') != 'dir', x.get('text')))
+        
+        return json.dumps(items)
+
+    return None
+
 
 
 
@@ -50,58 +95,6 @@ def get_contents(filepath):
     return []
 
 
-def make_dir(path, url):
-    os.makedirs(path, exist_ok=True, mode=0o777)
-    Repo.clone_from(url, path)
-
-
-def read_file(path):
-    '''
-    TODO file이 없는 경우 error handler 처리하기
-    '''
-    test_file = open(path, 'r', encoding='utf_8')
-    data = test_file.read()
-    per_line = data.split('\n')
-
-    return data
-
-
-def read_json_file(path):
-    test_file = open(path, 'r', encoding='utf_8')
-    json_data = json.load(test_file)
-
-    return json_data
-
-
-def dir_list(path, filename=None):
-    dir_tree = {filename: []}
-    files = os.listdir(os.path.join(path, filename))
-
-    for file in files:
-        if file == ".git":
-            continue
-
-        if os.path.isdir(os.path.join(path, filename, file)):
-            dir_tree[filename].append(
-                dir_list(os.path.join(path, filename), file))
-
-        if os.path.isfile(os.path.join(path, filename, file)):
-            dir_tree[filename].append(file)
-
-    return dir_tree
-
-
-def path_to_dict(path):
-    d = {'name': os.path.basename(path)}
-    if os.path.isdir(path):
-        d['type'] = "directory"
-        d['children'] = [path_to_dict(os.path.join(path, x))
-                         for x in os.listdir(path)]
-    else:
-        d['type'] = "file"
-    return d
-
-
 @main.route('/', methods=['GET', 'POST'])
 def index():
     repos_name = None
@@ -114,132 +107,17 @@ def index():
 
 
 @main.route('/<path:filepath>', methods=['GET'])
-# log in required 하기
-def showfile(filepath):
+def show_file(filepath):
     owner, repo, ref, content = filepath.split("/", maxsplit=3)
-
     print(f'/repos/{owner}/{repo}/contents/')
-    start = time.time()
-    repo_resp = github.get(f'/repos/{owner}/{repo}/contents/')
-    print(repo_resp)
-    if repo_resp.ok:
-        repo_info = repo_resp.json()
-        items = []
+    print("content: " + content)
 
-        for file in repo_info:
-            file_info = {'id': file['path'], 'text': file['name'], 'type': file['type'], 'parent': '#', 'a_attr': {
-                         'path': file['path']}}
+    data = None
+    if content:
+        data = get_content_of_file(content)
+        
+    return render_template('main/index.html', tree=get_contents_of_repository(), data=data, repo_name=f'{owner}/{repo}', ref=ref, content_name=content)
 
-            if file["type"] == "dir":
-                file_info['a_attr']['dir'] = True
-                file_info['a_attr']['opened'] = False
-                file_info['a_attr']['hasBeenOpened'] = False
- 
-            items.append(file_info)
-
-        items = sorted(items, key=lambda x: (
-            x.get('type') != 'dir', x.get('text')))
-        end = time.time()
-
-        print(f"{end - start:.5f} sec")
-        return render_template('main/index.html', tree=json.dumps(items), repo_name = f'{owner}/{repo}')
-    return "error"
-
-
-def traverse(parent, repo_path, items):
-    file_resp = github.get(f'/repos/{repo_path}/contents/{parent}')
-    print("file_resp")
-    print(f'/repos/{repo_path}/contents/{parent}')
-    if file_resp.ok:
-        file_list = file_resp.json()
-        # print(file_list)
-        for file in file_list:
-            items.append(
-                {'id': file['path'], 'text': file['name'], 'type': file['type'], 'parent': parent})
-            if file["type"] == "dir":
-                items = traverse(file['path'], repo_path, items)
-        print("---------")
-    return items
-
-
-@main.route('/pull', methods=['GET'])
-@login_required
-def pull():
-    args = request.args
-    user = args.get('username')
-    repoName = args.get('repo')
-
-    print(repoName)
-    proj_path = os.path.join(root, user, repoName)
-    print(proj_path)
-    repo = Repo(proj_path)
-    print(repo.remotes.origin)
-    # repo.config_writer().set_value("user", "name", "codee").release()
-    # repo.config_writer().set_value("user", "email", "codee@gmail.com").release()
-    origin = repo.remotes.origin
-    origin.pull()
-
-    # commit_id = get_commit_id( os.path.join(root, user, repoName) )
-
-    return make_response(jsonify({"msg": "done pull"}), 200)
-
-
-@main.route('/push', methods=['GET'])
-@login_required
-def push():
-    args = request.args
-    user = args.get('username')
-    repoName = args.get('repo')
-
-    print(repoName)
-    proj_path = os.path.join(root, user, repoName)  # /.../OSS_0420_test
-    print(proj_path)
-    repo = Repo(proj_path)
-    repo.config_writer().set_value("user", "name", "codee").release()
-    repo.config_writer().set_value("user", "email", "codee@gmail.com").release()
-    repo.index.add(["*.cd"])
-    repo.index.commit("Updated codee")
-
-    origin = repo.remotes.origin
-    branch = repo.active_branch
-    # token = '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' # otterlee9043
-    token = User.query.filter_by(id=current_user.id).first().git_token
-    # token = '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' # neobomoon
-    git_name = User.query.filter_by(id=current_user.id).first().git_name
-    # git_name = 'neobomoon'
-
-    print(origin)
-    print(repo.active_branch)
-
-    if os.path.exists(proj_path):
-        print(proj_path)
-        print("exist")
-        os.chdir(proj_path)
-        proj_name = os.path.join(user, repoName)
-        print("GIT PUSH INFO")
-        print(git_name)
-        print(proj_name)
-        print(token)
-        # "https://github-username@github.com/github-username/github-repository-name.git"
-        os.system(
-            f'git remote set-url {origin} https://{git_name}@github.com/{git_name}/{repoName}.git')
-        os.system(
-            f'/home/codination/ver1/app/static/files/push.exp {proj_name} neobomoon {token} {origin} {branch}')
-        # /home/codination/ver1/app/static/files/push.exp OSSLab_0420_test neobomoon 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 origin master
-        print('complete')
-
-    print("done")
-
-    return make_response("done push request", 200)
-
-
-def get_commit_id(path, filename):
-    # git rev-parse HEAD
-    os.chdir(path)
-    data = subprocess.check_output(
-        ['git', 'log', 'main.c'], encoding='utf-8').split("\n")[0]
-    data = data.split(" ")[1]
-    return data
 
 
 @main.route('/read_codee', methods=['POST'])
@@ -247,12 +125,8 @@ def read_codee():
     if request.method == 'POST':
         error = None
         jsonData = request.get_json(force=True)
-        # print(show_ref_file)
-        print(jsonData)
         cd_path = jsonData['cd_filepath'].split("/", maxsplit=1)[1]
         username_ = jsonData['username']
-        print("USERNAME_: " + username_)
-        print("CD_PATH: " + cd_path)
         if not cd_path:
             error = f'there is no such a file: {cd_path}'
             return make_response(jsonify({"msg": error}), 200)
@@ -262,24 +136,16 @@ def read_codee():
             ref_data = read_file(os.path.join(
                 root, username_, os.path.normpath(cd_data[0]['filepath'])))
             if ref_data is not None:
-                # if jsonData['header']:
-                #     return make_response(jsonify({"commit_id": cd_data[0]['commit_id']}), 200 )
                 repository = cd_data[0]['filepath'].split("/")[0]
                 filepath = cd_data[0]['filepath'].split("/", maxsplit=1)[1]
                 codee_comit_id = cd_data[0]['commit_id']
                 last_commit_id = get_commit_id(os.path.join(
                     root, username_, repository), os.path.join(".", filepath[0]))
-                print(codee_comit_id)
-                print(last_commit_id)
                 if codee_comit_id != last_commit_id:
-                    print("need AUTO-MERGE")
                     diff_data = diff(codee_comit_id, last_commit_id,
                                      username_, repository, filepath)
-                    print(cd_path)
                     cd_data = merge(cd_path, diff_data, username_)
                     cd_data[0]['commit_id'] = last_commit_id
-                    print("THIS IS MERGED DATA")
-                    print(cd_data)
                     save_merged_codee(cd_data, cd_path, username_)
                 data_dict = {
                     # "ref_data": ref_data,
@@ -313,7 +179,6 @@ def create_codee():
     f.write(json_content)
     f.close()
     return "codee file created", 200
-    # return redirect(url_for('main.showfile', filepath=f"{codee_path}/{codee_name}.cd"))
 
 
 @main.route('/get_codee/<path:filepath>', methods=['GET'])
