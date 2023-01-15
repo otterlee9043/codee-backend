@@ -17,31 +17,33 @@ root = './app/static/files/'
 def before_request():
     if current_user.is_authenticated:
         current_user.ping()
-        if not current_user.confirmed \
-                and request.endpoint \
-                and request.blueprint != 'auth' \
-                and request.endpoint != 'static':
-            return redirect(url_for('auth.unconfirmed'))
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
-        if user is not None and user.verify_password(form.password.data):
-            login_user(user, form.remember_me.data)
-            next = request.args.get('next')
-            # if not is_safe_url(next):
-            #     return flask.abort(400)
-            if next is None or not next.startswith('/'):
-                next = url_for('main.index')
-            return redirect(next)
-        flash('Invalid username or password.')
-    return render_template('auth/login.html', form=form)
+    # form = LoginForm()
+    # if form.validate_on_submit():
+    #     user = User.query.filter_by(username=form.username.data).first()
+    #     if user is not None and user.verify_password(form.password.data):
+    #         login_user(user, form.remember_me.data)
+    #         next = request.args.get('next')
+    #         # if not is_safe_url(next):
+    #         #     return flask.abort(400)
+    #         if next is None or not next.startswith('/'):
+    #             next = url_for('main.index')
+    #         return redirect(next)
+    #     flash('Invalid username or password.')
+    # return render_template('auth/login.html', form=form)
+    account_resp = github.get('/user')
+    if account_resp.ok:
+        account_info= account_resp.json()
+        user = save_or_update(account_info)
+        login_user(user)
+    return redirect(url_for('main.index'))
 
 
 @auth.route('/github/login')
 def github_login():
+    return redirect(url_for('github.login'))
     if not github.authorized:
         print("not authorized")
         return redirect(url_for('github.login'))
@@ -74,7 +76,7 @@ def logout():
     logout_user()
     session.clear()
     flash('You have been logged out.')
-    return redirect(url_for('auth.login'))
+    return redirect(url_for('main.index'))
 
 
 
