@@ -43,29 +43,10 @@
 
 <body>
   <div class="container center-col">
-    {% if filename is not none %}
-    {% if data is none %}
-    <div class="full">
-      <div class="topbar align-center">
-        <h2 id="cd">{{filename}}</h2>
-        <div class="buttonbar">
-          <button type="button" class="button" onclick="copyToClip(document.getElementById('code'))">export</button>
-          {%if username == current_user.username %}
-          <button class="button clone-btn" type="button" onclick="saveCodee('{{ username }}')">save</button>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
-    {% else %}
     <div class="full margin20">
-      <span>{{ repo_name }}</span>
+      <span>{{ owner }} / {{ repo }}</span>
       <button type="button" class="button right" onclick="copyToClip(document.getElementById('code'))">export</button>
     </div>
-    {% endif %}
-    {% else %}
-    <br>
-    {% endif %}
 
     </h3>
     <div class="center-row full">
@@ -73,25 +54,13 @@
         <div class="filelist border-box scroll">
           <div id="tree"></div>
         </div>
-        {%if username == current_user.username %}
-        <div class="topbar margin10">
-
-          <button class="button width48" type="button" onclick="pull('{{ username }}')">pull</button>
-          <button class="button width48" type="button" onclick="push('{{ username }}')">push</button>
-
-          <!-- <button class="button" type="button" class="modalButton" data-popup="popupOne"
-                  onclick="createCodeeFile('codee','/home/codination/ver1/app/static/files/user2/OSSLab_0420_test')">
-                  create codee</button> -->
-        </div>
-
         <div class="full">
           <button class="button modalButton full" data-popup="popupOne">create codee</button>
         </div>
-        {% endif %}
         <section class="modal modalWindow" id="popupOne">
           <section class="modalWrapper">
             <div>
-              <form action="http://siskin21.cafe24.com/codination/ver1/create_codee" method="post">
+              <form>
                 <div>
                   <div class="col-25">
                     <label for="name">codee name</label>
@@ -106,10 +75,10 @@
                 <div>
                   <div class="col-25"><label for="codee_path">codee path</label></div>
                   <div class="col-60">
-                    <input id='browse1_path' type="text" name='browse1_path' disabled="true">
+                    <input id='codee_path' type="text" name='codee_path' disabled="true">
                     <div id="drawer1" class="browse-dir scroll">
                       <ul id="dir_tree" aria-labelledby="tree_label">
-                        <li id="browse1" class="dir"></li>
+                        <li id="modal_tree_1" class="dir"></li>
                       </ul>
                     </div>
                   </div>
@@ -121,10 +90,10 @@
                 <div>
                   <div class="col-25"><label for="ref_filename">reference file name</label></div>
                   <div class="col-60">
-                    <input id='browse2_path' name='browse2_path' type="text" disabled="true">
+                    <input id='ref_path' name='ref_path' type="text" disabled="true">
                     <div id="drawer2" class="browse-dir scroll">
                       <ul id="dir_tree" aria-labelledby="tree_label">
-                        <li id="browse2" class="dir"></li>
+                        <li id="modal_tree_2" class="dir"></li>
                       </ul>
                     </div>
                   </div>
@@ -145,30 +114,21 @@
         <section class="modal overlay">
         </section>
       </div>
-      {% if filename is none %}
+      {% if content == "" %}
       <div class="box" id='export'>
         <div class="center-col">
-          <img src="{{url_for('static', filename='/6579900.jpg')}}" class="image" alt="" srcset="">
+          <img src="{{url_for('static', filename='6579900.jpg')}}" class="image" alt="" srcset="">
           <a class="image-src" href="http://www.freepik.com">Designed by Freepik</a>
-        </div>
-      </div>
-      {% elif data is none %}
-      <div class="box" id='export'>
-        <div class="border-box">
-          <div class="filename-bar" id="filename">{{ content_name }}</div>
-          <pre id="pre" class="context-menu-one">
-                <code id="code">{{ref_data}}</code>
-              </pre>
         </div>
       </div>
 
       {% else %}
       <div class="box" id='export'>
         <div class="border-box">
-          <div class="filename-bar" id="filename">{{ content_name }}</div>
+          <div class="filename-bar" id="filename">{{ content }}</div>
           <pre id="pre" class="">
-                    <code id="code" >{{data}}</code>
-                  </pre>
+            <code id="code" >{{file_content}}</code>
+          </pre>
         </div>
       </div>
       {% endif %}
@@ -180,7 +140,8 @@
 
 </body>
 <script>
-  const repoName = "{{ repo_name }}";
+  const owner = "{{ owner }}";
+  const repo = "{{ repo }}";
   const ref = "{{ ref }}";
   let jsonData = null;
 
@@ -189,26 +150,16 @@
     console.log(node)
     if (node.type === 'file') {
       console.log(node['a_attr']['path']);
-      window.location.href = `/${repoName}/${ref}/${node['a_attr']['path']}`;
+      window.location.href = `/${owner}/${repo}/${ref}/${node['a_attr']['path']}`;
     }
   });
-
-  // $('#tree').on('ready.jstree', function (e, data) {
-  //   var node = data.node;
-  //   console.log(node)
-  //   if (node.type === 'file') {
-  //     window.location.href = node['a_attr']['path'];
-  //   }
-  // });
-
 
 
   $(function () {
     jsonData = JSON.parse({{ tree|tojson }});
     console.log(jsonData);
-    const openedFile = "{{ content_name }}";
-
-    $("#tree").jstree({
+    const openedFile = "{{ content }}";
+    const jstreeSetting = {
       plugins : [ "wholerow" ],
       core: {
         themes: {
@@ -227,10 +178,27 @@
       core: {
         data: jsonData
       }
+    }; 
+    $("#tree").jstree(jstreeSetting);
+    $("#modal_tree_1").jstree(jstreeSetting);
+    $("#modal_tree_2").jstree(jstreeSetting);
+
+    $('#modal_tree_1').on('changed.jstree', function (e, data) {
+    var selectedNode = data.instance.get_node(data.selected[0]);
+    if (selectedNode.original.type == "dir"){
+      $('#codee_path').val('');
+      $('#codee_path').val(selectedNode.id);
+    }
     });
 
-    // $("#tree").jstree('open_node', 'app/main_anchor');
-    // $("#tree").jstree()._open_to( 'app/main_anchor' );
+    $('#modal_tree_2').on('changed.jstree', function (e, data) {
+    var selectedNode = data.instance.get_node(data.selected[0]);
+    if (selectedNode.original.type == "file"){
+      $('#ref_path').val('');
+      $('#ref_path').val(selectedNode.id);
+    }
+    });
+
     $('#tree').on('ready.jstree', function(e, data) {
       const parents = $('#tree').jstree(true).get_node(openedFile).parents;
       for (let i = parents.length - 2; i >= 0; i--) {
@@ -243,7 +211,6 @@
   });
 
   settings = {
-    //Model Popup
     objModalPopupBtn: ".modalButton",
     objModalCloseBtn: ".overlay, .closeBtn",
     objModalDataAttr: "data-popup"
@@ -251,13 +218,10 @@
   $(settings.objModalPopupBtn).bind("click", function () {
     if ($(this).attr(settings.objModalDataAttr)) {
       var strDataPopupName = $(this).attr(settings.objModalDataAttr);
-      //Fade In Modal Pop Up
       $(".overlay, #" + strDataPopupName).fadeIn();
-
     }
   });
 
-  //On clicking the modal background
   $(settings.objModalCloseBtn).bind("click", function () {
     $(".modal").fadeOut();
   });
@@ -265,5 +229,6 @@
   </script>
 <script src="{{ url_for('static', filename = 'script/import/html-to-rtf-browser.min.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/index.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/createcodee.js') }}"></script>
 
 </html>
