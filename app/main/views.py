@@ -4,16 +4,14 @@ from flask_login import current_user, login_required
 from . import main
 from .. import db
 from ..models import User
-from git import Repo
 from os.path import exists
 from flask_dance.contrib.github import github
 import base64
+from datetime import datetime
 
 
-owner = "otterlee9043"
-repo = "codee"
 
-def get_content_of_file(path):
+def get_content_of_file(owner, repo, path):
     resp = github.get(f'/repos/{owner}/{repo}/contents/{path}')
     if resp.ok:
         resp_json = resp.json()
@@ -24,7 +22,7 @@ def get_content_of_file(path):
     return "error"
 
 
-def get_contents_of_repository():
+def get_tree_of_repository(owner, repo, ref):
     ref = "master"
 
     tree_sha = None
@@ -45,17 +43,17 @@ def get_contents_of_repository():
             file_info = {}
             file_info['id'] = file['path']
             file_info['text'] = file['path'].rsplit('/', 1)[-1]
-            
+
             if file['type'] == "blob":
                 file_info['type'] = "file"
             elif file['type'] == "tree":
                 file_info['type'] = "dir"
-            
+
             if file['path'].rsplit('/', 1)[0] == file_info['text']:
                 file_info['parent'] = "#"
             else:
-                file_info['parent'] = file['path'].rsplit('/', 1)[0] 
-            
+                file_info['parent'] = file['path'].rsplit('/', 1)[0]
+
             file_info['a_attr'] = {'path': file['path']}
 
             if file_info["type"] == "file":
@@ -65,12 +63,10 @@ def get_contents_of_repository():
 
         items = sorted(items, key=lambda x: (
             x.get('type') != 'dir', x.get('text')))
-        
+
         return json.dumps(items)
 
     return None
-
-
 
 
 @main.route('/api/repo/contents/<path:filepath>', methods=['GET'])
@@ -112,12 +108,12 @@ def show_file(filepath):
     print(f'/repos/{owner}/{repo}/contents/')
     print("content: " + content)
 
-    data = None
+    file_content = None
     if content:
-        data = get_content_of_file(content)
-        
-    return render_template('main/index.html', tree=get_contents_of_repository(), data=data, repo_name=f'{owner}/{repo}', ref=ref, content_name=content)
+        file_content = get_content_of_file(owner, repo, content)
 
+    return render_template('main/index.html', tree=get_tree_of_repository(owner, repo, ref),
+                           owner=owner, repo=repo, ref=ref, content=content, file_content=file_content, )
 
 
 @main.route('/read_codee', methods=['POST'])
@@ -159,25 +155,93 @@ def read_codee():
 @main.route('/create_codee', methods=['POST'])
 def create_codee():
     jsonData = request.get_json(force=True)
-    print(f"@@@@@: {jsonData}")
+    repo = jsonData['repo']
     codee_path = jsonData['codee_path']
     codee_name = jsonData['codee_name']
     ref_path = jsonData['ref_path']
-    username_ = jsonData['username']
+    owner = current_user.username
+
     print(f"codee_path: {codee_path}")
 
-    commit_id = get_commit_id(os.path.join(root, username_, codee_path.split(
-        os.path.sep)[0]),  ref_path.split(os.path.sep)[-1])
-    print(f"@@@@@commit_id: {commit_id}")
-    print("PASS1")
-    # f = open(f"{root}{username}/{codee_path}/{codee_name}.cd", "w")
-    f = open(os.path.join(root, username_,
-             codee_path, f"{codee_name}.cd"), "w")
-    print("PASS1")
-    content = [{'commit_id': commit_id, 'filepath': ref_path, 'data': []}]
-    json_content = json.dumps(content)
-    f.write(json_content)
-    f.close()
+    # 1. last commit id 가져오기
+    last_commit_sha = None
+    utf8_blob_sha = None
+    tree_sha = None
+    new_commit_sha = None
+
+    commits_resp = github.get(f'/repos/{owner}/{repo}/commits')
+    if commits_resp.ok:
+        commits_json = commits_resp.json()
+        last_commit_sha = commits_json[0]['sha']
+        print(f"(1) {last_commit_sha} ")
+    # 2. blob 생성
+    codee_content = {
+        'referenced_file': ref_path,
+        'last_commit_sha': last_commit_sha
+    }
+    blob_request_body = {
+        'content': json.dumps(codee_content),
+        'encoding': "utf-8"
+    } # codee_content는 json string
+
+    blob_resp = github.post(f'/repos/{owner}/{repo}/git/blobs', json=blob_request_body)
+    if blob_resp.ok:
+        blob_json = blob_resp.json()
+        utf8_blob_sha = blob_json['sha']
+        print(f"(2) {utf8_blob_sha} ")
+
+    # 3. tree 생성
+    tree_request_body = {
+        "base_tree": last_commit_sha,
+        "tree": [
+            {
+              "path": f"{codee_path}/${codee_name}.cd",
+              "mode": "100644",
+              "type": "blob",
+              "sha": utf8_blob_sha
+            }
+        ]
+    }
+    tree_resp = github.post(f'repos/{owner}/{repo}/git/trees', json=tree_request_body)
+    print(tree_resp)
+    if tree_resp.status_code == 201:
+        tree_json = tree_resp.json()
+        tree_sha = tree_json['sha']
+        print(f"(3) {tree_sha} ")
+
+    # 4. commit 생성
+    commit_request_body = { 
+        "message": "Codee 파일 생성",
+        "author": {
+            "name": current_user.username, # codee
+            "email": current_user.email,
+            "date": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+        },
+        "parents": [
+            last_commit_sha
+        ],
+        "tree": tree_sha
+    }
+    
+    print(commit_request_body)
+    commit_resp = github.post(f'/repos/{owner}/{repo}/git/commits', json = commit_request_body)
+    # print(commit_resp)
+    print(commit_resp.headers)
+    print(commit_resp.url)
+    
+    if commit_resp.ok:
+        commit_json = commits_resp.json()
+        print(commit_resp.status_code)
+        new_commit_sha = commit_json['sha']
+        print(f"(4) {new_commit_sha} ")
+
+    # 5. push
+    push_request_body = {
+        "ref": "refs/heads/master",
+        "sha": new_commit_sha
+    }
+    push_resp = github.post(f'/repos/{owner}/{repo}/git/refs/heads/master', json=push_request_body)
+
     return "codee file created", 200
 
 
@@ -544,6 +608,3 @@ def merge(cd_path, diff, username_):
     return cd_data
 
 
-def get_repositories():
-    os.chdir(os.path.join(root, current_user.username))
-    return [name for name in os.listdir(".") if os.path.isdir(os.path.join(".", name))]
