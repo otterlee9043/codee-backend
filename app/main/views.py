@@ -169,10 +169,10 @@ def create_codee():
     tree_sha = None
     new_commit_sha = None
 
-    commits_resp = github.get(f'/repos/{owner}/{repo}/commits')
-    if commits_resp.ok:
-        commits_json = commits_resp.json()
-        last_commit_sha = commits_json[0]['sha']
+    commit_list_resp = github.get(f'/repos/{owner}/{repo}/commits')
+    if commit_list_resp.ok:
+        commit_list_json = commit_list_resp.json()
+        last_commit_sha = commit_list_json[0]['sha']
         print(f"(1) {last_commit_sha} ")
     # 2. blob 생성
     codee_content = {
@@ -195,14 +195,14 @@ def create_codee():
         "base_tree": last_commit_sha,
         "tree": [
             {
-              "path": f"{codee_path}/${codee_name}.cd",
+              "path": f"{codee_path}/{codee_name}.cd",
               "mode": "100644",
               "type": "blob",
               "sha": utf8_blob_sha
             }
         ]
     }
-    tree_resp = github.post(f'repos/{owner}/{repo}/git/trees', json=tree_request_body)
+    tree_resp = github.post(f'/repos/{owner}/{repo}/git/trees', json=tree_request_body)
     print(tree_resp)
     if tree_resp.status_code == 201:
         tree_json = tree_resp.json()
@@ -226,11 +226,10 @@ def create_codee():
     print(commit_request_body)
     commit_resp = github.post(f'/repos/{owner}/{repo}/git/commits', json = commit_request_body)
     # print(commit_resp)
-    print(commit_resp.headers)
-    print(commit_resp.url)
+    print(commit_resp.status_code)
     
     if commit_resp.ok:
-        commit_json = commits_resp.json()
+        commit_json = commit_resp.json()
         print(commit_resp.status_code)
         new_commit_sha = commit_json['sha']
         print(f"(4) {new_commit_sha} ")
@@ -241,7 +240,7 @@ def create_codee():
         "sha": new_commit_sha
     }
     push_resp = github.post(f'/repos/{owner}/{repo}/git/refs/heads/master', json=push_request_body)
-
+    
     return "codee file created", 200
 
 
