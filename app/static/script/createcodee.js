@@ -1,3 +1,7 @@
+function open_dir(id) {
+  document.getElementById(id).style.height = "250px";
+}
+
 async function createCodee() {
   const codee_name = document.getElementById("codee_name").value;
   const codee_path = document.getElementById("codee_path").value;

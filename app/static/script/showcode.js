@@ -20,16 +20,6 @@ console.log(dirs);
 //   openDirectoryTree();
 // });
 
-function openDirectoryTree() {
-  let tree = document.getElementById("dir_tree");
-  dirs.map((dir) => {
-    console.log(dir);
-    const li = tree.querySelector(`[name="${dir}"]`);
-    console.log(li);
-    li.ariaExpanded = true;
-    tree = li.querySelector("ul");
-  });
-}
 
 function get_extension(filename) {
   var length = filename.length;

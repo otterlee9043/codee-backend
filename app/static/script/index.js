@@ -13,6 +13,8 @@ function createNewRange(line, start, end) {
   document.getSelection().addRange(new_range);
 }
 
+
+
 function drawLineHide(deco) {
   const { start, end, id } = deco;
   const number = Math.abs(start - end) + 1;
@@ -133,10 +135,10 @@ window.addEventListener("load", async function () {
   const pre = document.querySelector("pre");
   const classes = pre.classList;
   if (classes.contains("context-menu-one")) {
-    ref_data = await readCodee();
+    // ref_data = await readCodee();
     console.log(JSON.stringify(ref_data));
     hideLine();
-    ref_data[0].data.map((deco) => {
+    ref_data.map((deco) => {
       const type = deco.type;
       switch (type) {
         case "line_hide":
@@ -162,7 +164,6 @@ window.addEventListener("load", async function () {
       }
     });
   }
-  openDirectoryTree();
 });
 
 const code = document.querySelector("code");
@@ -170,7 +171,6 @@ let lineSelected = false;
 let start = -1;
 let end = -1;
 let selectedInfo = [];
-let ref_data = null;
 const tbody = document.querySelector("tbody");
 
 const FRAGMENT = {
@@ -301,7 +301,7 @@ function hideLine() {
           // ref_data[0]['data'].push({"type" : "line_hide", "start" : start, "end" : end, "id" : ID}) ;
           console.log(start);
           addLineHide(start, end, ID);
-          console.log(JSON.stringify(ref_data[0]));
+          console.log(JSON.stringify(ref_data));
         }
       }
       lineSelected = !lineSelected;

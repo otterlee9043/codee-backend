@@ -39,12 +39,15 @@
       <a href="{{ url_for('auth.logout') }}">logout</a>
     </div>
   </div>
+  <div class="topbar reponame-container">
+    <span class="reponame">{{ owner }} / {{ repo }}</span>
+  </div>
 </header>
 
 <body>
   <div class="container center-col">
     <div class="full margin20">
-      <span>{{ owner }} / {{ repo }}</span>
+      <span class="filename">{{ content }}</span>
       <button type="button" class="button right" onclick="copyToClip(document.getElementById('code'))">export</button>
     </div>
 
@@ -125,10 +128,16 @@
       {% else %}
       <div class="box" id='export'>
         <div class="border-box">
-          <div class="filename-bar" id="filename">{{ content }}</div>
-          <pre id="pre" class="">
+          {% if content|is_cd  %}
+          <div class="filename-bar" id="filename">{{ file_content['reference_file_path'] }}</div>
+          <pre id="pre" class="context-menu-one">
+            <code id="code" >{{file_content['reference_file_content']}}</code>
+          </pre>
+          {% else %}
+          <pre id="pre">
             <code id="code" >{{file_content}}</code>
           </pre>
+          {% endif %}
         </div>
       </div>
       {% endif %}
@@ -140,10 +149,17 @@
 
 </body>
 <script>
+  let ref_data = null;
+  let jsonData = null;
   const owner = "{{ owner }}";
   const repo = "{{ repo }}";
   const ref = "{{ ref }}";
-  let jsonData = null;
+  
+
+  if (Boolean("{{ content|is_cd }}")){
+    ref_data = JSON.parse({{ file_content['data']|tojson }});
+  }
+  jsonData = JSON.parse({{ tree|tojson }});
 
   $('#tree').on('select_node.jstree', function (e, data) {
     let node = data.node;
@@ -156,7 +172,7 @@
 
 
   $(function () {
-    jsonData = JSON.parse({{ tree|tojson }});
+    
     console.log(jsonData);
     const openedFile = "{{ content }}";
     const jstreeSetting = {
@@ -230,5 +246,7 @@
 <script src="{{ url_for('static', filename = 'script/import/html-to-rtf-browser.min.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/index.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/createcodee.js') }}"></script>
-
+<script src="{{ url_for('static', filename = 'script/component/menubar.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/getIndices.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/editcodee.js') }}"></script>
 </html>

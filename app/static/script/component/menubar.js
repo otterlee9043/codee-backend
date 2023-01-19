@@ -1,7 +1,9 @@
-let menu = document.querySelector(".context-menu-one ");
+let menu = document.querySelector(".context-menu-one");
 let line;
 let start_index;
 let end_index;
+
+console.log(menu);
 
 function getTD(elem) {
   while (elem.tagName != "TD") {
@@ -70,6 +72,7 @@ function addContextMenu() {
   menu = document.querySelector(".context-menu-one ");
   menu.addEventListener("click", addingContextMenu);
 }
+
 function addingContextMenu(e) {
   e.preventDefault();
   var element = document.getSelection();
@@ -94,27 +97,7 @@ if (menu != null) {
   menu.addEventListener("click", addingContextMenu);
 }
 
-// if (menu != null) {
-//   menu.addEventListener("click", function (e) {
-//     e.preventDefault();
-//     var element = document.getSelection();
-//     var selectedText = element.toString();
-//     if (selectedText != "") {
-//       const conMenu = document.querySelector(".context-menu-list.context-menu-root");
-//       const x = window.innerWidth - 200 > e.clientX ? e.clientX : window.innerWidth - 210;
-//       const y = window.innerHeight > e.clientY ? e.clientY : window.innerHeight - 100;
-//       console.log(e.clientX) ;
-//       console.log(window.innerWidth - 200) ;
-//       console.log(x) ;
-//       console.log(x + window.scrollX ) ;
-//       // console.log(`x: ${x}, y: ${y}`) ;
-//       conMenu.style.top = `${y + window.scrollY + 10}px`;
-//       conMenu.style.left = `${x + window.scrollX}px`;
 
-//       $(".context-menu-one").contextMenu();
-//     }
-//   });
-// }
 
 var range = null;
 var selected = null;
@@ -131,7 +114,7 @@ function saveSelection() {
   }
 }
 
-function restroeSelection() {
+function restoreSelection() {
   if (flag) {
     console.log("restoreSelection");
     let tdTag = document.querySelector(`#L${line} > .hljs-ln-code`);
@@ -180,18 +163,13 @@ function removeFakeSelection(event) {
       merge(node);
     });
     merge(select);
-    restroeSelection();
+    restoreSelection();
   }
   console.log(range);
   flag = 0;
 }
 
-// function openLink(self) {
-//   console.log("click link");
-//   console.log(self);
-//   url = self.getAttribute("url");
-//   window.open(url, "_blank").focus();
-// }
+
 function openLink(e) {
   console.log("click link");
   url = e.getAttribute("url");
@@ -204,7 +182,6 @@ $.contextMenu({
   delay: 500,
   autoHide: false,
   position: function (opt, x, y) {
-    // console.log(`${x} ${y}`);
   },
   callback: function (key, opt, e) {
     var m = "clicked: " + key + " " + opt;
@@ -217,46 +194,45 @@ $.contextMenu({
     const ID = randomId();
     span.id = ID;
     
-    if (key == "comment") {
-    } //else if (key == "highlight") {
-    else if (key == "red") {
-      span.classList.add("red");
-      addWordHighlight("red", start, end, line, ID);
-      registerCommentEvent("", span, ID, "highlight");
-    } else if (key == "yellow") {
-      span.classList.add("yellow");
-      addWordHighlight("yellow", start, end, line, ID);
-      registerCommentEvent("", span, ID, "highlight");
-    } else if (key == "green") {
-      span.classList.add("green");
-      addWordHighlight("green", start, end, line, ID);
-      registerCommentEvent("", span, ID, "highlight");
-    } else if (key == "hide") {
-      ellipsisSpan(span) ;
-      addWordHide(start, end, line, ID);
-    } else if (key == "link") {
-      console.log("link");
-      span = createNewSpan(selection);
-      console.log("LINK!!!");
-    } else {
-      console.log("none");
+    switch(key) {
+      case "comment":
+        break;
+      case "red":
+        span.classList.add("red");
+        addWordHighlight("red", start, end, line, ID);
+        registerCommentEvent("", span, ID, "highlight");
+        break;
+      case "yellow":
+        span.classList.add("yellow");
+        addWordHighlight("yellow", start, end, line, ID);
+        registerCommentEvent("", span, ID, "highlight");
+        break;
+      case "green":
+        span.classList.add("green");
+        addWordHighlight("green", start, end, line, ID);
+        registerCommentEvent("", span, ID, "highlight");
+        break;
+      case "hide":
+        ellipsisSpan(span) ;
+        addWordHide(start, end, line, ID);  
+        break;
+      case "link":
+        console.log("link");
+        span = createNewSpan(selection);
+        break;
     }
     selection.removeAllRanges();
   },
   items: {
     comment: {
-      // name: "Comment",
       icon: "fa-light fa-comment-dots",
       autoHide: true,
       items: {
         "link-1": {
           type: "text",
           events: {
-            // mouseleave: function(e) {
-            //   $("ul.context-menu-list").trigger("contextmenu:hide");
-            //   console.log("hello") ;
-            // },
-            keyup: function (e) {
+            keyup: function (e) { // 키보드가 입력되면 발생
+              console.log("item > comments > items > 'link-1' > events");
               let inputs = document.getElementsByName("context-menu-input-link-1");
               if (e.keyCode == 13 && inputs[0].value) {
                 const conMenu = document.querySelector(".context-menu-list.context-menu-root");
@@ -287,7 +263,7 @@ $.contextMenu({
             //   console.log("hello") ;
             // },
             keyup: function (e) {
-              console.log(e.keyCode);
+              console.log("items > comment2 > items > 'link-1' > events");
               let inputs = document.getElementsByName("context-menu-input-link-1");
               if (e.keyCode == 13 && inputs[1].value) {
                 const conMenu = document.querySelector(".context-menu-list.context-menu-root");
@@ -352,6 +328,7 @@ $.contextMenu({
           type: "text",
           events: {
             keyup: function (e) {
+              console.log("items > link > items > 'link-1' > events")
               // add some fancy key handling here?
               let link_tag = document.getElementsByName("context-menu-input-link-1");
               if (e.keyCode == 13 && link_tag[2].value) {
@@ -376,6 +353,7 @@ $.contextMenu({
   },
   events: {
     hide: function (e) {
+      console.log("events > hide");
       var inputs = document.getElementsByName("context-menu-input-link-1");
       Array.from(inputs).map((input) => {
         input.removeEventListener("mousedown", createFakeSelection);
@@ -385,11 +363,11 @@ $.contextMenu({
         removeFakeSelection();
       }
       // const code = document.querySelector("#code");
-      // document.getSelection().removeAllRanges();
+      document.getSelection().removeAllRanges();
       console.log("hide");
     },
     show: function (e) {
-      // show
+      console.log("events > show");
       var inputs = document.getElementsByName("context-menu-input-link-1");
       Array.from(inputs).map((input) => {
         input.addEventListener("mousedown", createFakeSelection);
