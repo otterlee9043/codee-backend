@@ -1,3 +1,4 @@
+
 function createNewRange(line, start, end) {
   console.log(line) ;
   console.log(start) ;
@@ -12,7 +13,6 @@ function createNewRange(line, start, end) {
   document.getSelection().removeAllRanges();
   document.getSelection().addRange(new_range);
 }
-
 
 
 function drawLineHide(deco) {
@@ -112,18 +112,6 @@ function drawWordHide(deco) {
     deleteWordHide(id);
     ellipsisBtn.remove();
     mergeNode(span);
-    // const children = [];
-    // while (span.firstChild) {
-    //   const child = span.firstChild;
-    //   children.push(child);
-    //   span.parentNode.insertBefore(child, span);
-    // }
-    // console.log();
-    // span.remove();
-    // Array.from(children).map((node) => {
-    //   merge(node);
-    // });
-    // merge(newSpan);
   });
 }
 
@@ -153,7 +141,6 @@ window.addEventListener("load", async function () {
         case "comment":
           drawComment(deco);
           break;
-        
         case "highlight":
           drawHighlight(deco);
           break;
@@ -246,9 +233,7 @@ function createEllipsisNode(line) {
     const lineId = `L${info.start}`;
     const number = info.number;
     const ID = info.id;
-    // console.log(ref_data[0]) ;
     deleteLineHide(ID);
-    // console.log(ref_data[0]) ;
     expand(lineId, number);
     const lineNumber = parseInt(lineId.replace(/[^0-9]/g, ""));
     selectedInfo = selectedInfo.filter((item) => {
@@ -392,18 +377,6 @@ function ellipsisSpan(newSpan) {
     deleteWordHide(id);
     ellipsisButton.remove();
     mergeNode(newSpan);
-    // const children = [];
-    // while (newSpan.firstChild) {
-    //   const child = newSpan.firstChild;
-    //   children.push(child);
-    //   // console.log(child);
-    //   newSpan.parentNode.insertBefore(child, newSpan);
-    // }
-    // console.log();
-    // newSpan.remove();
-    // Array.from(children).map((node) => {
-    //   merge(node);
-    // });
 
   });
   newSpan.before(ellipsisButton);
@@ -424,25 +397,28 @@ function nodeType(element) {
 }
 
 function createNewSpan(selectionText) {
-  // console.log(selectionText);
-  // console.log(selectionText.toString());
   if (selectionText.toString() === "") {
     return;
   }
 
-  let selectedFirst = selectionText.anchorNode;
-  let selectedLast = selectionText.focusNode;
-  let firstOffset = selectionText.anchorOffset;
-  let lastOffset = selectionText.focusOffset;
-  let anchorTagType = selectedFirst.parentElement.tagName;
-  let focusTagType = selectedLast.parentElement.tagName;
+  let {
+    anchorNode: selectedFirst,
+    focusNode: selectedLast,
+    anchorOffset: firstOffset,
+    focusOffset: lastOffset,
+  } = selectionText;
+  
+  let { tagName: anchorTagType } = selectedFirst.parentElement;
+  let { tagName: focusTagType } = selectedLast.parentElement;
   let startNode, endNode;
 
+  
   const cutSpan = document.createElement("span");
   let fragmented;
   cutSpan.textContent = "✂️";
 
   if (selectedFirst.compareDocumentPosition(selectedLast) & Node.DOCUMENT_POSITION_PRECEDING) {
+    // 드래그가 뒤에서 앞으로 되는 경우
     [selectedFirst, selectedLast] = [selectedLast, selectedFirst];
     [firstOffset, lastOffset] = [lastOffset, firstOffset];
     [anchorTagType, focusTagType] = [focusTagType, anchorTagType];
@@ -465,6 +441,9 @@ function createNewSpan(selectionText) {
     return newSpan;
   }
 
+  /**
+   * start node 쪼개기
+   */
   const textLength = selectedFirst.nodeValue.substring(firstOffset, selectedFirst.nodeValue.length).length;
   if (nodeType(selectedFirst) == NODE.TEXT) {
     [fragmented, startNode] = splitText(selectedFirst, firstOffset, textLength, true);
@@ -474,6 +453,9 @@ function createNewSpan(selectionText) {
   startNode.parentElement.insertBefore(cutSpan, startNode);
   const start = splitTree(cutSpan, Position.START, fragmented === FRAGMENT.FALSE ? false : true);
 
+  /**
+   * end node 쪼개기
+   */
   const textLength2 = selectedLast.nodeValue.substring(lastOffset, selectedLast.nodeValue.length).length;
   if (nodeType(selectedLast) == NODE.TEXT) {
     [fragmented, endNode] = splitText(selectedLast, lastOffset, textLength2, false);
@@ -514,6 +496,7 @@ const Position = {
 };
 
 function splitTree(cutElement, position, split) {
+  console.log(cutElement);
   const bound = cutElement.parentElement.closest("td");
   let parent, right, grandparent;
   let node = position === Position.START ? cutElement.nextSibling : cutElement.previousSibling;
