@@ -29,19 +29,17 @@
     <div class="topbar">
         <button class="openbtn" onclick="openNav()">☰</button>
         <div class="logout2">
-            <span>{{current_user.username}} 님,</span>
-            <a class="black" href="{{ url_for('auth.logout') }}">logout</a>
+            {% if current_user.is_authenticated %}
+                <span>{{current_user.username}} 님,</span>
+                <a class="black" href="{{ url_for('auth.logout') }}">logout</a>
+            {% else %}
+                <a class="black" href="{{ url_for('auth.github_login') }}">login</a>
+            {% endif %}
         </div>
     </div>
 
     <div class="container center-col">
         <img src="{{url_for('static', filename='/logo.svg')}}" class="big-logo" alt="" srcset="">
-        <div class="clonebar">
-            <form method="post" class="form-clone">
-                <input class="input-clone" type="text" name="repository">
-                <input class="button clone-btn right" type="submit" value="clone">
-            </form>
-        </div>
         <div class="border-box">
             <div class="filename-bar" id="filename">My Repositories</div>
             <ul class="repos">
