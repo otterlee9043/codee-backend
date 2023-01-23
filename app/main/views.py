@@ -93,8 +93,8 @@ def show_file(filepath):
 
     file_content = None
     if content:
-        file_content = get_content_of_file(owner, repo, content)
         if is_cd(content):
+            file_content = get_content_of_file(owner, repo, content)
             codee_content = json.loads(file_content)
             reference_file_path = codee_content['referenced_file']
             reference_file_content = get_content_of_file(owner, repo, reference_file_path)
@@ -103,10 +103,13 @@ def show_file(filepath):
                 'reference_file_content': reference_file_content,
                 'data': codee_content['data']
             }
-            
+        else:
+            file_content = {
+                'content': get_content_of_file(owner, repo, content)
+            }
 
     return render_template('main/index.html', tree=get_tree_of_repository(owner, repo, ref),
-                           owner=owner, repo=repo, ref=ref, content=content, file_content=file_content)
+                           owner=owner, repo=repo, ref=ref, content=content, file_content=json.dumps(file_content))
 
 
 # def read_codee(file_path):

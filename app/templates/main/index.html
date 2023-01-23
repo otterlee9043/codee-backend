@@ -6,26 +6,21 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=deivce-width, initial-scale=1.0">
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
-
-  <script src="https://kit.fontawesome.com/16fd5c8b77.js" crossorigin="anonymous"></script>
-  <script src="http://code.jquery.com/jquery-latest.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-  <link rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.7.1/jquery.contextMenu.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.7.1/jquery.contextMenu.min.js"></script>
-
-  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
-  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/go.min.js"></script>
-  <script
-    src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+  <link rel="shortcut icon" href="#">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300&display=swap" rel="stylesheet">
-    <!-- jsTree -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
-    
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.7.1/jquery.contextMenu.min.css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
+  <script src="https://kit.fontawesome.com/16fd5c8b77.js" crossorigin="anonymous"></script>
+  <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.7.1/jquery.contextMenu.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/go.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>  
   <script>hljs.highlightAll(); hljs.initLineNumbersOnLoad();</script>
   <title>Codee</title>
 </head>
@@ -128,16 +123,9 @@
       {% else %}
       <div class="box" id='export'>
         <div class="border-box">
-          {% if content|is_cd  %}
-          <div class="filename-bar" id="filename">{{ file_content['reference_file_path'] }}</div>
-          <pre id="pre" class="context-menu-one">
-            <code id="code" >{{file_content['reference_file_content']}}</code>
-          </pre>
-          {% else %}
           <pre id="pre">
-            <code id="code" >{{file_content}}</code>
+            <code id="code"></code>
           </pre>
-          {% endif %}
         </div>
       </div>
       {% endif %}
@@ -150,30 +138,45 @@
 </body>
 <script>
   let ref_data = null;
-  let jsonData = null;
+  let treeData = null;
   const owner = "{{ owner }}";
   const repo = "{{ repo }}";
   const ref = "{{ ref }}";
-  
+  const content = "{{ content }}";
+  treeData = JSON.parse({{ tree|tojson }});
+  jsonData = JSON.parse({{ file_content|tojson }});
 
-  if (Boolean("{{ content|is_cd }}")){
-    ref_data = JSON.parse({{ file_content['data']|tojson }});
+  if (content !== ""){
+    if (isCd(content)) {
+      const fileName = $('<div>', {
+        id: "filename",
+        class: "filename-bar"
+      });
+      fileName.text(jsonData['reference_file_path']);
+      $('#code').text(jsonData['reference_file_content']);
+      $('#pre').addClass('context-menu-one');
+      $('#pre').before(fileName);
+      ref_data = JSON.parse(jsonData['data']);
+      
+    } else {
+      $('#code').text(jsonData['content']);
+    }
   }
-  jsonData = JSON.parse({{ tree|tojson }});
+  
 
   $('#tree').on('select_node.jstree', function (e, data) {
     let node = data.node;
-    console.log(node)
     if (node.type === 'file') {
-      console.log(node['a_attr']['path']);
       window.location.href = `/${owner}/${repo}/${ref}/${node['a_attr']['path']}`;
     }
   });
 
+  function isCd(filePath){
+    return filePath.substr(filePath.lastIndexOf(".") + 1) === 'cd';
+  }
 
   $(function () {
-    
-    console.log(jsonData);
+    console.log(treeData);
     const openedFile = "{{ content }}";
     const jstreeSetting = {
       plugins : [ "wholerow" ],
@@ -192,7 +195,7 @@
       },
       plugins: ["types"],
       core: {
-        data: jsonData
+        data: treeData
       }
     }; 
     $("#tree").jstree(jstreeSetting);
@@ -222,27 +225,11 @@
       } 
     });
 
-
-
   });
 
-  settings = {
-    objModalPopupBtn: ".modalButton",
-    objModalCloseBtn: ".overlay, .closeBtn",
-    objModalDataAttr: "data-popup"
-  }
-  $(settings.objModalPopupBtn).bind("click", function () {
-    if ($(this).attr(settings.objModalDataAttr)) {
-      var strDataPopupName = $(this).attr(settings.objModalDataAttr);
-      $(".overlay, #" + strDataPopupName).fadeIn();
-    }
-  });
+  
 
-  $(settings.objModalCloseBtn).bind("click", function () {
-    $(".modal").fadeOut();
-  });
-
-  </script>
+</script>
 <script src="{{ url_for('static', filename = 'script/import/html-to-rtf-browser.min.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/index.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/createcodee.js') }}"></script>
