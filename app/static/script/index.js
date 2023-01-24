@@ -1,11 +1,27 @@
+const settings = {
+  objModalPopupBtn: ".modalButton",
+  objModalCloseBtn: ".overlay, .closeBtn",
+  objModalDataAttr: "data-popup"
+}
+
+$(settings.objModalPopupBtn).bind("click", function () {
+  if ($(this).attr(settings.objModalDataAttr)) {
+    var strDataPopupName = $(this).attr(settings.objModalDataAttr);
+    $(".overlay, #" + strDataPopupName).fadeIn();
+  }
+});
+
+$(settings.objModalCloseBtn).bind("click", function () {
+  $('#codee_name').val('');
+  $('#codee_path').val('');
+  $('#ref_path').val('');
+  $(".modal").fadeOut();
+});
+
 
 function createNewRange(line, start, end) {
-  console.log(line) ;
-  console.log(start) ;
-  console.log(end) ;
-  const tdTag = document.querySelector(`#L${line} .hljs-ln-code`);
+  const tdTag = $(`#L${line} .hljs-ln-code`);
   const startTag = findOffsetTag(tdTag, start);
-  console.log(startTag) ;
   const endTag = findOffsetTag(tdTag, end);
   const new_range = document.createRange();
   new_range.setStart(startTag.tag, startTag.startOffset);
@@ -19,7 +35,7 @@ function drawLineHide(deco) {
   const { start, end, id } = deco;
   const number = Math.abs(start - end) + 1;
   selectedInfo.push({ start: start, number: number, id: id });
-  let line = document.querySelector(`#L${start}`);
+  let line = $(`#L${start}`);
   createEllipsisNode(line);
   for (let i = 0; i < number; i++) {
     line.classList.add("hidden");
@@ -27,12 +43,16 @@ function drawLineHide(deco) {
   }
 }
 
+
 function drawLink(deco) {
   const { start, end, line, url, id } = deco;
+
   createNewRange(line, start, end);
   const span = createNewSpan(document.getSelection());
   document.getSelection().removeAllRanges();
+
   span.classList.add("rendering");
+  
   const link = document.createElement("a");
   link.id = id;
   link.url = url;
@@ -49,11 +69,9 @@ function drawLink(deco) {
     console.log(url);
     if(link_url.pathname == "/watch"){
       videoKey = link_url.searchParams.get("v");
-      console.log(videoKey);
       iframe.src =`https://www.youtube.com/embed/${videoKey}`;
     } else {
       videoKey = link_url.pathname;
-      console.log(videoKey);
       iframe.src =`https://www.youtube.com/${videoKey}`;
     }
     
@@ -118,22 +136,30 @@ function drawWordHide(deco) {
 
 let cacheChange = 0;
 window.addEventListener("load", async function () {
-  // addMenuClass() ;
   
-  const pre = document.querySelector("pre");
-  const classes = pre.classList;
-  if (classes.contains("context-menu-one")) {
-    // ref_data = await readCodee();
+  const pre = $('#pre')[0];
+  if (pre.classList.contains("context-menu-one")) {
     console.log(JSON.stringify(ref_data));
     hideLine();
     ref_data.map((deco) => {
       const type = deco.type;
+
+      createNewRange(deco.line, deco.start, deco.end);
+      const span = createNewSpan(document.getSelection());
+      document.getSelection().removeAllRanges();
+
       switch (type) {
         case "line_hide":
           drawLineHide(deco);
           break;
         case "link":
-          drawLink(deco);
+          const data = {
+            selected: span,
+            url: deco.url,
+            id: deco.id
+          }
+          addLinkTag(data);
+          // drawLink(deco);
           break;
         case "comment-embedded":
           drawComment2(deco);
@@ -187,6 +213,7 @@ function saveSelection() {
   return null;
 }
 
+
 function saveRangeEvent(event) {
   range = saveSelection();
   if (range && !range.collapsed) {
@@ -194,19 +221,23 @@ function saveRangeEvent(event) {
   }
 }
 
+
 window.addEventListener("mouseup", saveRangeEvent);
 window.addEventListener("keyup", saveRangeEvent);
+
 
 function isString(inputText) {
   if (typeof inputText === "string" || inputText instanceof String) return true;
   else return false;
 }
 
+
 function compare(a, b) {
   const num1 = parseInt(a.querySelector(".lineNumber span").innerText);
   const num2 = parseInt(b.querySelector(".lineNumber span").innerText);
   return num1 - num2;
 }
+
 
 function expand(lineId, number) {
   let firstLine = document.querySelector(`.hidden#${lineId}`);
@@ -216,6 +247,7 @@ function expand(lineId, number) {
     firstLine = firstLine.nextSibling;
   }
 }
+
 
 function createEllipsisNode(line) {
   let ellipsisLine = line.cloneNode(true);
@@ -244,6 +276,7 @@ function createEllipsisNode(line) {
   return ellipsisLine;
 }
 
+
 function hideLine() {
   const numbers = document.querySelectorAll(".hljs-ln-numbers");
   //console.log(numbers);
@@ -270,7 +303,7 @@ function hideLine() {
         const ID = randomId();
         selectedInfo.push({ start: start, number: numberLinesSelected, id: ID });
         console.log(selectedInfo);
-        let line = document.querySelector(`#L${start}`);
+        let line = $(`#L${start}`);
         console.log(line);
         createEllipsisNode(line);
 
@@ -294,6 +327,7 @@ function hideLine() {
   });
 }
 
+
 function splitText(textNode, index, textLength, start, same = false) {
   const fullText = textNode.nodeValue;
   text = start ? fullText.substring(index, index + textLength) : fullText.substring(0, index);
@@ -302,6 +336,7 @@ function splitText(textNode, index, textLength, start, same = false) {
   textNode.replaceWith(span);
   return splitSpan(span, index, textLength, start, same);
 }
+
 
 function splitSpan(span, index, textLength, start, same = false) {
   const fullText = span.innerText;
@@ -346,6 +381,7 @@ function splitSpan(span, index, textLength, start, same = false) {
   return start ? [FRAGMENT.TAIL, span2] : [FRAGMENT.HEAD, span];
 }
 
+
 function bindTags(startNode, endNode) {
   const newSpan = document.createElement("span");
   let node = startNode;
@@ -383,6 +419,7 @@ function ellipsisSpan(newSpan) {
   newSpan.classList.add("hidden");
 }
 
+
 function nodeType(element) {
   if (element.parentElement.tagName == "TD") {
     return NODE.TEXT;
@@ -396,11 +433,40 @@ function nodeType(element) {
   }
 }
 
-function createNewSpan(selectionText) {
-  if (selectionText.toString() === "") {
-    return;
-  }
 
+function createCutSpan(){
+  const cutSpan = document.createElement("span");
+  cutSpan.textContent = "✂️";
+  return cutSpan;
+}
+
+function splitNode(parentNode, firstOffset, textLength, start, sameParent=false){
+  let fragmented, node;
+  if (nodeType(parentNode) == NODE.TEXT) {
+    [fragmented, node] = splitText(parentNode, firstOffset, textLength, start, sameParent);
+  } else {
+    [fragmented, node] = splitSpan(parentNode.parentElement, firstOffset, textLength, start, sameParent);
+  }
+  return [fragmented, node];
+}
+
+function setFragmentAttribute(firstOffset, lastOffset, paretNode, node){
+  if (firstOffset == 0){
+    if (lastOffset == paretNode.nodeValue.length){
+      node.setAttribute("fragmented", FRAGMENT.FALSE);
+    }
+    else {
+      node.setAttribute("fragmented", FRAGMENT.HEAD);
+    }
+  } else if (lastOffset == paretNode.nodeValue.length){
+    node.setAttribute("fragmented", FRAGMENT.TAIL);
+  } else {
+    node.setAttribute("fragmented", FRAGMENT.CENTER);
+  }
+  return node;
+}
+
+function createNewSpan(selectionText) {
   let {
     anchorNode: selectedFirst,
     focusNode: selectedLast,
@@ -410,64 +476,41 @@ function createNewSpan(selectionText) {
   
   let { tagName: anchorTagType } = selectedFirst.parentElement;
   let { tagName: focusTagType } = selectedLast.parentElement;
-  let startNode, endNode;
+  let startNode, endNode, fragmented;;
 
   
-  const cutSpan = document.createElement("span");
-  let fragmented;
-  cutSpan.textContent = "✂️";
-
+  const cutSpan = createCutSpan();
   if (selectedFirst.compareDocumentPosition(selectedLast) & Node.DOCUMENT_POSITION_PRECEDING) {
-    // 드래그가 뒤에서 앞으로 되는 경우
     [selectedFirst, selectedLast] = [selectedLast, selectedFirst];
     [firstOffset, lastOffset] = [lastOffset, firstOffset];
     [anchorTagType, focusTagType] = [focusTagType, anchorTagType];
-  } else if (selectedFirst === selectedLast) {
-    // 아예 같은 노드
+  } 
+  
+  else if (selectedFirst === selectedLast) {
     if (lastOffset < firstOffset) [firstOffset, lastOffset] = [lastOffset, firstOffset];
 
     const textLength = selectedFirst.nodeValue.substring(firstOffset, lastOffset).length;
-    let start, end;
-    if (nodeType(selectedFirst) == NODE.TEXT) {
-      [fragmented, startNode] = splitText(selectedFirst, firstOffset, textLength, true, true);
-    } else {
-      [fragmented, startNode] = splitSpan(selectedFirst.parentElement, firstOffset, textLength, true, true);
-    }
-    startNode.parentElement.insertBefore(cutSpan, startNode);
-    start = splitTree(cutSpan, Position.START, fragmented === FRAGMENT.FALSE ? false : true);
-    startNode.parentElement.insertBefore(cutSpan, startNode.nextSibling);
-    end = splitTree(cutSpan, Position.END, fragmented === FRAGMENT.FALSE ? false : true);
-    const newSpan = bindTags(end, null);
+    [fragmented, startNode] = splitNode(selectedFirst, firstOffset, textLength, true, true);
+    startNode = setFragmentAttribute(firstOffset, lastOffset, selectedFirst, startNode);
+
+    const newSpan = bindTags(startNode, null);
     return newSpan;
   }
 
-  /**
-   * start node 쪼개기
-   */
   const textLength = selectedFirst.nodeValue.substring(firstOffset, selectedFirst.nodeValue.length).length;
-  if (nodeType(selectedFirst) == NODE.TEXT) {
-    [fragmented, startNode] = splitText(selectedFirst, firstOffset, textLength, true);
-  } else if (nodeType(selectedFirst) == NODE.SPAN) {
-    [fragmented, startNode] = splitSpan(selectedFirst.parentElement, firstOffset, textLength, true);
-  }
+  [fragmented, startNode] = splitNode(selectedFirst, firstOffset, textLength, true);
   startNode.parentElement.insertBefore(cutSpan, startNode);
   const start = splitTree(cutSpan, Position.START, fragmented === FRAGMENT.FALSE ? false : true);
 
-  /**
-   * end node 쪼개기
-   */
   const textLength2 = selectedLast.nodeValue.substring(lastOffset, selectedLast.nodeValue.length).length;
-  if (nodeType(selectedLast) == NODE.TEXT) {
-    [fragmented, endNode] = splitText(selectedLast, lastOffset, textLength2, false);
-  } else if (nodeType(selectedLast) == NODE.SPAN) {
-    [fragmented, endNode] = splitSpan(selectedLast.parentElement, lastOffset, textLength2, false);
-  }
+  [fragmented, endNode] = splitNode(selectedLast, lastOffset, textLength2, false);
   endNode.parentElement.insertBefore(cutSpan, endNode.nextSibling);
   const end = splitTree(cutSpan, Position.END, fragmented === FRAGMENT.FALSE ? false : true);
 
   const newSpan = bindTags(start, end);
   return newSpan;
 }
+
 
 function hideText() {
   var selectionText;
@@ -479,12 +522,8 @@ function hideText() {
       return;
     }
     const collection = createNewSpan(selectionText);
-    // collection.id = randomId();
-    //if (selectionText.anchorNode === selectionText.focusNode) ellipsisSpan(collection);
-
     ellipsisSpan(collection);
   } else if (document.selection) {
-    console.log("2");
     selectionText = document.selection.createRange().text;
   }
   selectionText.removeAllRanges();
@@ -495,13 +534,15 @@ const Position = {
   END: 1,
 };
 
+function hasBeenFragmentedAsTail(node, cutElement){
+  return parseInt(node.getAttribute("fragmented")) === FRAGMENT.TAIL;
+}
+
 function splitTree(cutElement, position, split) {
-  console.log(cutElement);
   const bound = cutElement.parentElement.closest("td");
-  let parent, right, grandparent;
+  let parent, right, left, grandparent;
   let node = position === Position.START ? cutElement.nextSibling : cutElement.previousSibling;
-  if (parseInt(node.getAttribute("fragmented")) === FRAGMENT.TAIL) {
-    // TAIL이었으면 CENTER
+  if (hasBeenFragmentedAsTail(node, cutElement)) {
     node.setAttribute("fragmented", FRAGMENT.CENTER);
   } else {
     if (split) node.setAttribute("fragmented", position === Position.START ? FRAGMENT.TAIL : FRAGMENT.HEAD);
@@ -521,17 +562,17 @@ function splitTree(cutElement, position, split) {
   }
   if (parent === bound) {
     right = cutElement.nextSibling;
-    parent = cutElement.previousSibling;
+    left = cutElement.previousSibling;
   }
   cutElement.remove();
   if (position === Position.START) {
-    if (nodeType(parent) === NODE.SPAN && parent.hasAttribute("fragmented"))
-      parent.removeAttribute("fragmented");
+    if (left && nodeType(left) === NODE.SPAN && left.hasAttribute("fragmented"))
+      left.removeAttribute("fragmented");
     return right;
   } else {
-    if (nodeType(right) === NODE.SPAN && right.hasAttribute("fragmented"))
+    if (right && nodeType(right) === NODE.SPAN && right.hasAttribute("fragmented"))
       right.removeAttribute("fragmented");
-    return parent;
+    return left;
   }
 }
 
@@ -539,7 +580,6 @@ function merge(wrapper) {
   if (wrapper.nodeType === Node.TEXT_NODE) return;
   if (!wrapper.hasAttribute("fragmented")) return;
 
-  // console.log(listToMerge);
   const type = parseInt(wrapper.getAttribute("fragmented"));
 
   if (wrapper.childNodes.length == 1 && !wrapper.firstChild.firstChild) {
@@ -684,18 +724,31 @@ function mergeNode(node, commentSpan = null){
 }
 
 function registerCommentEvent(comment, node, id, type) {
-  const commentSpan = document.createElement("span");
-  commentSpan.innerText = comment;
-  commentSpan.classList.add("comment");
-  commentSpan.id = id;
 
-  const closeBtn = document.createElement("span");
-  closeBtn.innerText = "X";
-  closeBtn.classList.add("right");
+  // const commentSpan = document.createElement("span");
+  // commentSpan.innerText = comment;
+  // commentSpan.classList.add("comment");
+  // commentSpan.id = id;
 
-  commentSpan.appendChild(closeBtn);
+  const commentSpan = $('<span>', {
+    text: comment,
+    class: 'comment',
+    id: id
+  });
 
-  closeBtn.addEventListener("click", () => {
+  // const closeBtn = document.createElement("span");
+  // closeBtn.innerText = "X";
+  // closeBtn.classList.add("right");
+
+  const closeBtn = $('<span>', {
+    text: 'X',
+    class: 'right'
+  }).appendTo(commentSpan)
+
+  // commentSpan.appendChild(closeBtn);
+
+  // closeBtn.addEventListener("click", () => {
+  closeBtn.click(() => {
     console.log(commentSpan.id);
     if (type == "comment") {
       deleteComment(commentSpan.id);
@@ -711,15 +764,18 @@ function registerCommentEvent(comment, node, id, type) {
 
   console.log(type);
   if (type == "link") {
-    commentSpan.classList.add("linkComment");
-    commentSpan.addEventListener("mouseenter", () => {
+    // commentSpan.classList.add("linkComment");
+    commentSpan.addClass("linkComment")
+    // commentSpan.addEventListener("mouseenter", () => {
+    commentSpan.mouseenter(() =>{
       node.onclick = null;
     });
-    commentSpan.addEventListener("mouseleave", () => {
+    // commentSpan.addEventListener("mouseleave", () => {
+      commentSpan.mouseleave(() =>{
       node.onclick = "openLink(this)";
     });
   }
-  node.addEventListener("mouseenter", () => {
+  node.mouseenter(() => {
     removeContextMenu();
     showCommentDetail(node, commentSpan);
   });
@@ -734,9 +790,9 @@ function showDecoDetail(span) {
 }
 
 function showCommentDetail(span, commentSpan) {
-  if (span.parentElement.tagName === "TD") {
-    span.appendChild(commentSpan);
-    span.addEventListener("mouseleave", () => {
+  if (span.parent().prop('tagName') === "TD") {
+    span.append(commentSpan);
+    span.mouseleave(() => {
       addContextMenu();
       hideCommentDetail(commentSpan);
     });
@@ -746,17 +802,3 @@ function showCommentDetail(span, commentSpan) {
 function hideCommentDetail(span) {
   span.remove();
 }
-
-const diff = [
-  {
-    filepath: "/app/main/views.py",
-    changes: [
-      { start: 268, offset: 4, type: "add", col: 58, content: "b" },
-      { start: 268, offset: 5, type: "add", col: 23, content: ".encode('utf8')" },
-    ],
-  },
-  {
-    filepath: "/app/static/script/component/menubar.js",
-    changes: [{ start: 1, offset: 1, type: "delete", col: 9, content: " " }],
-  },
-];

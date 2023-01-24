@@ -329,12 +329,15 @@ $.contextMenu({
           events: {
             keyup: function (e) {
               console.log("items > link > items > 'link-1' > events")
-              // add some fancy key handling here?
               let link_tag = document.getElementsByName("context-menu-input-link-1");
               if (e.keyCode == 13 && link_tag[2].value) {
                 let url = link_tag[2].value;
-                const conMenu = document.querySelector(".context-menu-list.context-menu-root");
-                addLinkTag(e, conMenu.style.top, conMenu.style.left, url);
+                const data = {
+                  selected: $(".selected"),
+                  url: url,
+                  id: randomId()
+                };
+                addLinkTag(data);
 
                 // removeEventListener하기
                 var inputs = document.getElementsByName("context-menu-input-link-1");
@@ -353,7 +356,7 @@ $.contextMenu({
   },
   events: {
     hide: function (e) {
-      console.log("events > hide");
+      // console.log("events > hide");
       var inputs = document.getElementsByName("context-menu-input-link-1");
       Array.from(inputs).map((input) => {
         input.removeEventListener("mousedown", createFakeSelection);
@@ -364,7 +367,7 @@ $.contextMenu({
       }
       // const code = document.querySelector("#code");
       document.getSelection().removeAllRanges();
-      console.log("hide");
+      // console.log(e);
     },
     show: function (e) {
       console.log("events > show");
@@ -466,24 +469,45 @@ function embedComment(comment, span, id){
 }
 
 function wrapTdtag(span){
-  // const tds = document.querySelectorAll("td.hljs-ln-code");
   const td = span.closest("td");
-  const div = document.createElement("div");
-  div.classList.add("col");
+  const div = $('<div>', {
+    class: "col"
+  });
   td.before(div);
-  div.appendChild(td);
+  div.append(td);
   return div;
 }
-function addLinkTag(e, x, y, url) {
-  let id = randomId();
-  var select = document.querySelector(".selected");
-  $(".selected").wrap(
-    `<a id="${id}" url = "${url}" class="link" href="javascript:void(0);" onclick="openLink(this)"></a>`
-    // `<a id="${id}" url = "${url}" class="link" href="javascript:void(0);"></a>`
 
-  );
-  select.classList.remove("selected");
-  registerCommentEvent(url, select.parentElement, id, "link");
+
+function addLinkTag(data) {
+  const { selected, url, id } = data;
+
+  const link = $('<a>', {
+    id: id,
+    url: url,
+    class: "link",
+    href: "javascript:void(0);"
+  });
+
+  link.click(function(){
+    openLink(this);
+  });
+
+  selected.wrap(link);
+  const link_url = new URL(url);
+  if(link_url.hostname == "www.youtube.com" || link_url.hostname == "youtu.be"){
+    console.log("youtube");
+    const div = wrapTdtag(selected);
+    const iframe = $('<iframe>', {
+      class: "youtube",
+      src: link_url.pathname == "/watch"? 
+      `https://www.youtube.com/embed/${link_url.searchParams.get("v")}` 
+      : `https://www.youtube.com/${link_url.pathname}`,
+    }).appendTo(div);
+  }
+
+  selected.removeClass("selected");
+  registerCommentEvent(url, selected.parent(), id, "link");
 
   if (ref_data != null) {
     console.log("addLink");
