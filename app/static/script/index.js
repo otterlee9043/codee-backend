@@ -38,47 +38,74 @@ function drawLineHide(deco) {
   let line = $(`#L${start}`);
   createEllipsisNode(line);
   for (let i = 0; i < number; i++) {
-    line.classList.add("hidden");
-    line = line.nextElementSibling;
+    line.addClass("hidden");
+    line = line.next();
   }
 }
 
+function createEllipsisNode(line) {
+  let ellipsisLine = line.clone();
+  ellipsisLine.first().removeClass("selecting");
+  const lnNumber = ellipsisLine.find(".hljs-ln-numbers div");
+  lnNumber.attr("data-line-number", "");
+  const ellipsisBtn = $('<span>', {
+    class: "ellipsis",
+    text: "⋯"
+  })
+  lnNumber.append(ellipsisBtn);
+  ellipsisLine.find(".hljs-ln-code").innerText = ""; // <span2>
+  ellipsisLine.click(() => {
+    const info = selectedInfo.find((item) => `L${item.start}` === ellipsisLine.id);
+    const lineId = `L${info.start}`;
+    const number = info.number;
+    const ID = info.id;
+    deleteLineHide(ID);
+    expand(lineId, number);
+    const lineNumber = parseInt(lineId.replace(/[^0-9]/g, ""));
+    selectedInfo = selectedInfo.filter((item) => {
+      return lineNumber !== item.start;
+    });
+  });
+  line.before(ellipsisLine);
+  return ellipsisLine;
+}
 
-function drawLink(deco) {
-  const { start, end, line, url, id } = deco;
 
-  createNewRange(line, start, end);
-  const span = createNewSpan(document.getSelection());
-  document.getSelection().removeAllRanges();
+// function drawLink(deco) {
+//   const { start, end, line, url, id } = deco;
 
-  span.classList.add("rendering");
+//   createNewRange(line, start, end);
+//   const span = createNewSpan(document.getSelection());
+//   document.getSelection().removeAllRanges();
+
+//   span.classList.add("rendering");
   
-  const link = document.createElement("a");
-  link.id = id;
-  link.url = url;
-  span.before(link)
-  link.appendChild(span);
-  registerCommentEvent(url, link, id, "link");
-  const link_url = new URL(url);
-  if(link_url.hostname == "www.youtube.com" || link_url.hostname == "youtu.be"){
-    console.log("youtube");
-    const div = wrapTdtag(span);
-    const iframe = document.createElement("iframe");
-    iframe.classList.add("youtube");
-    let videoKey;
-    console.log(url);
-    if(link_url.pathname == "/watch"){
-      videoKey = link_url.searchParams.get("v");
-      iframe.src =`https://www.youtube.com/embed/${videoKey}`;
-    } else {
-      videoKey = link_url.pathname;
-      iframe.src =`https://www.youtube.com/${videoKey}`;
-    }
+//   const link = document.createElement("a");
+//   link.id = id;
+//   link.url = url;
+//   span.before(link)
+//   link.appendChild(span);
+//   registerCommentEvent(url, link, id, "link");
+//   const link_url = new URL(url);
+//   if(link_url.hostname == "www.youtube.com" || link_url.hostname == "youtu.be"){
+//     console.log("youtube");
+//     const div = wrapTdtag(span);
+//     const iframe = document.createElement("iframe");
+//     iframe.classList.add("youtube");
+//     let videoKey;
+//     console.log(url);
+//     if(link_url.pathname == "/watch"){
+//       videoKey = link_url.searchParams.get("v");
+//       iframe.src =`https://www.youtube.com/embed/${videoKey}`;
+//     } else {
+//       videoKey = link_url.pathname;
+//       iframe.src =`https://www.youtube.com/${videoKey}`;
+//     }
     
-    div.appendChild(iframe);
-  }
+//     div.appendChild(iframe);
+//   }
 
-}
+// }
 
 function drawComment(deco) {
   const { start, end, line, comment, id } = deco;
@@ -103,12 +130,9 @@ function drawComment2(deco) {
 
 
 function drawHighlight(deco) {
-  const { start, end, line, color, id } = deco;
-  createNewRange(line, start, end);
-  const span = createNewSpan(document.getSelection());
-  document.getSelection().removeAllRanges();
-  span.classList.add(color);
-  registerCommentEvent("", span, id, "highlight");
+  const { selected, color, id } = deco;
+  selected.addClass(color);
+  registerCommentEvent("", selected, id, "highlight");
 }
 
 function drawWordHide(deco) {
@@ -168,7 +192,11 @@ window.addEventListener("load", async function () {
           drawComment(deco);
           break;
         case "highlight":
-          drawHighlight(deco);
+          drawHighlight({
+            selected: span,
+            color: deco.color,
+            id: deco.id
+          });
           break;
         case "word_hide":
           console.log(deco) ;
@@ -249,51 +277,23 @@ function expand(lineId, number) {
 }
 
 
-function createEllipsisNode(line) {
-  let ellipsisLine = line.cloneNode(true);
-  console.log(ellipsisLine);
-  ellipsisLine.firstChild.classList.remove("selecting");
-  const lnNumber = ellipsisLine.querySelector(".hljs-ln-numbers div");
-  lnNumber.setAttribute("data-line-number", ""); // <span1>
-  const ellipsisBtn = document.createElement("span");
-  ellipsisBtn.classList.add("ellipsis");
-  ellipsisBtn.innerText = "⋯";
-  lnNumber.appendChild(ellipsisBtn);
-  ellipsisLine.querySelector(".hljs-ln-code").innerText = ""; // <span2>
-  ellipsisLine.addEventListener("click", () => {
-    const info = selectedInfo.find((item) => `L${item.start}` === ellipsisLine.id);
-    const lineId = `L${info.start}`;
-    const number = info.number;
-    const ID = info.id;
-    deleteLineHide(ID);
-    expand(lineId, number);
-    const lineNumber = parseInt(lineId.replace(/[^0-9]/g, ""));
-    selectedInfo = selectedInfo.filter((item) => {
-      return lineNumber !== item.start;
-    });
-  });
-  line.before(ellipsisLine);
-  return ellipsisLine;
-}
+
 
 
 function hideLine() {
-  const numbers = document.querySelectorAll(".hljs-ln-numbers");
-  //console.log(numbers);
-  Array.from(numbers).map((item, index) => {
+  const numbers = $(".hljs-ln-numbers");
+  numbers.get().forEach((item) => {
     const number = parseInt(item.getAttribute("data-line-number"));
-    item.parentElement.id = `L${number}`;
-    item.addEventListener("click", (event) => {
-      console.log(number);
+    item.parent().attr("id", `L${number}`);
+    item.click((event) => {
       if (!lineSelected) {
         start = number;
-        item.classList.add("selecting");
+        item.addClass("selecting");
       } else {
         end = number;
         let numberLinesSelected = Math.abs(start - end) + 1;
         start = Math.min(start, end);
         selectedInfo = selectedInfo.filter((item) => {
-          // contained = 숨길 lines 중에 이미 숨김된 line이 있는지
           const contained = start < item.start && start + numberLinesSelected - 1 > item.start;
           if (contained) {
             expand(`L${String(item.start)}`, item.number);
@@ -304,22 +304,17 @@ function hideLine() {
         selectedInfo.push({ start: start, number: numberLinesSelected, id: ID });
         console.log(selectedInfo);
         let line = $(`#L${start}`);
-        console.log(line);
         createEllipsisNode(line);
 
         for (let i = 0; i < numberLinesSelected; i++) {
-          line.classList.add("hidden");
-          line = line.nextElementSibling;
+          line.addClass("hidden");
+          line = line.next();
         }
         Array.from(numbers).map((number) => {
-          number.classList.remove("selecting");
+          number.removeClass("selecting");
         });
-        console.log(JSON.stringify(ref_data));
         if (ref_data != null) {
-          // ref_data[0]['data'].push({"type" : "line_hide", "start" : start, "end" : end, "id" : ID}) ;
-          console.log(start);
           addLineHide(start, end, ID);
-          console.log(JSON.stringify(ref_data));
         }
       }
       lineSelected = !lineSelected;
@@ -710,10 +705,11 @@ function merge(wrapper) {
 
 function mergeNode(node, commentSpan = null){
   const children = [];
-  while (node.firstChild) {
-    const child = node.firstChild;
+  while (node.first()) {
+    const child = node.firts;
     children.push(child);
-    node.parentNode.insertBefore(child, node);
+    // node.parentNode.insertBefore(child, node);
+    node.before(child);
   }
   console.log();
   node.remove();
@@ -724,12 +720,6 @@ function mergeNode(node, commentSpan = null){
 }
 
 function registerCommentEvent(comment, node, id, type) {
-
-  // const commentSpan = document.createElement("span");
-  // commentSpan.innerText = comment;
-  // commentSpan.classList.add("comment");
-  // commentSpan.id = id;
-
   const commentSpan = $('<span>', {
     text: comment,
     class: 'comment',
