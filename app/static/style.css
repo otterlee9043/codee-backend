@@ -282,8 +282,7 @@ a:visited {
 }
 
 .selected {
-  background-color: dodgerblue;
-  color: white;
+  background-color: #ACCEF7;
 }
 
 .border-box {
@@ -559,6 +558,17 @@ textarea {
   text-align: center;
 }
 
+.link{
+  /* text-decoration: solid underline rgb(255, 215, 82) 3px; */
+  border-bottom: solid rgb(255, 162, 235) 3px;
+  
+}
+
+.link:hover{
+  border-bottom: solid rgb(255, 162, 235) 3px;
+  text-decoration: none;
+}
+
 .comment-underline {
   /* text-decoration: solid underline rgb(255, 215, 82) 3px; */
   border-bottom: solid rgb(255, 215, 82) 3px;
@@ -612,6 +622,9 @@ textarea {
 .reponame {
 }
 
+.link{
+
+}
 .filename{
   font-weight:bold;
 }
@@ -693,16 +706,21 @@ ul.repos{
   text-align: center;
 }
 
-td a{
+/* td a{
   color: blue;
-}
+} */
 
 .youtube{
   width: 400px;
   height: 250px;
   border: none;
+  padding: 5px;
 }
 
 td {
   vertical-align : top;
+}
+
+section{
+  background-color:#ACCEF7;
 }
