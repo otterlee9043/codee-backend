@@ -33,15 +33,18 @@ def send_email(to, subject, template, **kwargs):
 
 def get_credentials():
     if os.path.exists('token.json'):
+        print("token.json exists!")
         creds = Credentials.from_authorized_user_file('token.json', SCOPES)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
+            print("creds expired!")
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
                 'credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
+            print("credentials.json 읽기")
         # Save the credentials for the next run
         with open('token.json', 'w') as token:
             token.write(creds.to_json())
