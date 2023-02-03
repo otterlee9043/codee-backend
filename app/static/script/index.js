@@ -71,41 +71,6 @@ function createEllipsisNode(line) {
 }
 
 
-// function drawLink(deco) {
-//   const { start, end, line, url, id } = deco;
-
-//   createNewRange(line, start, end);
-//   const span = createNewSpan(document.getSelection());
-//   document.getSelection().removeAllRanges();
-
-//   span.classList.add("rendering");
-  
-//   const link = document.createElement("a");
-//   link.id = id;
-//   link.url = url;
-//   span.before(link)
-//   link.appendChild(span);
-//   registerCommentEvent(url, link, id, "link");
-//   const link_url = new URL(url);
-//   if(link_url.hostname == "www.youtube.com" || link_url.hostname == "youtu.be"){
-//     console.log("youtube");
-//     const div = wrapTdtag(span);
-//     const iframe = document.createElement("iframe");
-//     iframe.classList.add("youtube");
-//     let videoKey;
-//     console.log(url);
-//     if(link_url.pathname == "/watch"){
-//       videoKey = link_url.searchParams.get("v");
-//       iframe.src =`https://www.youtube.com/embed/${videoKey}`;
-//     } else {
-//       videoKey = link_url.pathname;
-//       iframe.src =`https://www.youtube.com/${videoKey}`;
-//     }
-    
-//     div.appendChild(iframe);
-//   }
-
-// }
 
 function drawComment(deco) {
   const { start, end, line, comment, id } = deco;
@@ -725,11 +690,7 @@ function registerCommentEvent(comment, node, id, type) {
     class: 'comment',
     id: id
   });
-
-  // const closeBtn = document.createElement("span");
-  // closeBtn.innerText = "X";
-  // closeBtn.classList.add("right");
-
+  
   const closeBtn = $('<span>', {
     text: 'X',
     class: 'right'
