@@ -73,24 +73,38 @@ function createEllipsisNode(line) {
 
 
 function drawComment(deco) {
-  const { start, end, line, comment, id } = deco;
-  createNewRange(line, start, end);
-  const span = createNewSpan(document.getSelection());
-  document.getSelection().removeAllRanges();
-  span.classList.add("comment-underline");
-  console.log(span);
+  const { selected, comment, id } = deco;
+  selected.classList.add("comment-underline");
+  console.log(selected);
 
-  registerCommentEvent(comment, span, id, "comment");
+  registerCommentEvent(comment, selected, id, "comment");
 }
 
 function drawComment2(deco) {
-  const { start, end, line, comment, id } = deco;
-  createNewRange(line, start, end);
-  const span = createNewSpan(document.getSelection());
-  document.getSelection().removeAllRanges();
-  span.classList.add("comment-embed");
-  console.log(span);
-  embedComment(comment, span, id);
+  const { selected, comment, id } = deco;
+  selected.classList.add("comment-embed");
+  console.log(selected);
+  embedComment(comment, selected, id);
+}
+
+function embedComment(comment, span, id){
+  const commentSpan = document.createElement("span");
+  commentSpan.innerText = comment;
+  commentSpan.id = id;
+  commentSpan.classList.add("comment-embedded");
+  span.closest("td").after(commentSpan);
+  const wrapper = wrapTdtag(span);
+  wrapper.appendChild(commentSpan);
+
+  const closeBtn = document.createElement("span");
+  closeBtn.innerText = "X";
+  closeBtn.classList.add("right");
+
+  commentSpan.appendChild(closeBtn);
+  closeBtn.addEventListener("click", () => {
+    deleteComment2(commentSpan.id);
+    mergeNode(node, commentSpan);
+  });
 }
 
 
@@ -142,16 +156,18 @@ window.addEventListener("load", async function () {
           drawLineHide(deco);
           break;
         case "link":
-          const data = {
+          drawLink({
             selected: span,
             url: deco.url,
             id: deco.id
-          }
-          addLinkTag(data);
-          // drawLink(deco);
+          });
           break;
         case "comment-embedded":
-          drawComment2(deco);
+          drawComment2({
+            selected: span,
+            comment: deco.comment,
+            id: deco.id
+          });
           break;
         case "comment":
           drawComment(deco);
