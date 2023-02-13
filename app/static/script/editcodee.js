@@ -51,7 +51,7 @@ function addWordComment2(start, end, line, comment, id) {
 }
 
 
-function addWordHighlight(color, start, end, line, id) {
+function addWordHighlight(start, end, line, color, id) {
   ref_data.push({ type: "highlight", color: color, start: start, end: end, line: line, id: id });
 }
 
