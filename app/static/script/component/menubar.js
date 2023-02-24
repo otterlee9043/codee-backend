@@ -143,10 +143,6 @@ function createFakeSelection(event) {
   // 여기서 range가 없어진다.
 }
 
-function getLineNumber(span){
-  return getTD(span).getAttribute("data-line-number");
-}
-
 function removeFakeSelection(event) {
   // remove fake selection
   console.log("second");
@@ -179,25 +175,11 @@ function openLink(e) {
   window.open(url, "_blank").focus();
 }
 
-function deactivateClickEvent(){
-  var inputs = document.getElementsByName("context-menu-input-link-1");
-  Array.from(inputs).map((input) => {
-    input.removeEventListener("mousedown", createFakeSelection);
-    input.removeEventListener("blur", removeFakeSelection);
-  });
-}
-
-$(document).on('click', '.context-menu-submenu input', function (e) {
-  console.log("~~~~~~)))");
-});
-
-
 $.contextMenu({
   selector: ".context-menu-one",
   trigger: "none",
-  autoHide: false,
   delay: 500,
-  selectableSubMenu: true,
+  autoHide: false,
   position: function (opt, x, y) {
   },
   callback: function (key, opt, e) {
@@ -206,7 +188,8 @@ $.contextMenu({
     const selection = document.getSelection();
     let span = createNewSpan(selection);
     const [start, end] = getIndices(span);
-    const line = getLineNumber(span);
+    var tdNode = getTD(span);
+    line = tdNode.getAttribute("data-line-number");
     const ID = randomId();
     span.id = ID;
     
@@ -215,17 +198,17 @@ $.contextMenu({
         break;
       case "red":
         span.classList.add("red");
-        addWordHighlight(start, end, line, ID, "red");
+        addWordHighlight("red", start, end, line, ID);
         registerCommentEvent("", span, ID, "highlight");
         break;
       case "yellow":
         span.classList.add("yellow");
-        addWordHighlight(start, end, line, ID, "yellow");
+        addWordHighlight("yellow", start, end, line, ID);
         registerCommentEvent("", span, ID, "highlight");
         break;
       case "green":
         span.classList.add("green");
-        addWordHighlight(start, end, line, "green", ID);
+        addWordHighlight("green", start, end, line, ID);
         registerCommentEvent("", span, ID, "highlight");
         break;
       case "hide":
@@ -242,30 +225,28 @@ $.contextMenu({
   items: {
     comment: {
       icon: "fa-light fa-comment-dots",
-      autoHide: false,
+      autoHide: true,
       items: {
-        "comment-input": {
+        "link-1": {
           type: "text",
-          autoHide: false,
-          selectableSubMenu: true,
           events: {
-            click: function(e){
-              e.preventDefault();
-            },
             keyup: function (e) { // 키보드가 입력되면 발생
-              const comment = $('[name="context-menu-input-comment-input"]').val();
-              if (e.keyCode == 13 && comment) { 
+              console.log("item > comments > items > 'link-1' > events");
+              let inputs = document.getElementsByName("context-menu-input-link-1");
+              if (e.keyCode == 13 && inputs[0].value) {
+                
                 drawComment({
                   selected: $(".selected"),
-                  comment: comment,
+                  comment: inputs[1].value,
                   id: randomId()
                 });
-                if (ref_data != null)
-                  addWordComment(start, end, line, comment, id);
-                
-                deactivateClickEvent();
-                
+
+                Array.from(inputs).map((input) => {
+                  input.removeEventListener("mousedown", createFakeSelection);
+                  input.removeEventListener("blur", removeFakeSelection);
+                });
                 flag = 0;
+                $(".context-menu-list.context-menu-root").trigger("contextmenu:hide");
               }
             },
           },
@@ -274,25 +255,26 @@ $.contextMenu({
     },
     comment2: {
       icon: "fa-solid fa-align-justify",
-      autoHide: false,
+      autoHide: true,
       items: {
-        "comment2-input": {
+        "link-1": {
           type: "textarea",
           events: {
             keyup: function (e) {
               console.log("items > comment2 > items > 'link-1' > events");
-              const comment = $('[name="context-menu-input-comment2-input"]');
-              console.log("comment ", comment);
-              if (e.keyCode == 13 && inputs[1].value) {  
+              let inputs = document.getElementsByName("context-menu-input-link-1");
+              if (e.keyCode == 13 && inputs[1].value) {
+                
                 drawComment2({
                   selected: $(".selected"),
                   comment: inputs[1].value,
-                  id: ID
-                }, true);
-                if (ref_data != null)
-                  addWordComment2(start, end, line, comment, ID);
-              
-                deactivateClickEvent();
+                  id: randomId()
+                });
+
+                Array.from(inputs).map((input) => {
+                  input.removeEventListener("mousedown", createFakeSelection);
+                  input.removeEventListener("blur", removeFakeSelection);
+                });
                 flag = 0;
                 $(".context-menu-list.context-menu-root").trigger("contextmenu:hide");
               }
@@ -306,49 +288,66 @@ $.contextMenu({
       },
     },
     highlight: {
+      // name: "Highlight",
       icon: "fa-light fa-highlighter",
       autoHide: true,
       items: {
         red: {
+          // name: "Red",
+          selector: "#red",
           icon: "fa-solid fa-circle",
+          events: {
+            click: function (e) {
+              console.log("RED~~");
+            },
+          },
         },
         yellow: {
+          // name: "Yellow",
           icon: "fa-solid fa-circle",
         },
         green: {
+          // name: "Green",
           icon: "fa-solid fa-circle",
         },
       },
     },
+    // record: {
+    //   // name: "Record",
+    //   icon: "fa-light fa-microphone",
+    // },
     hide: {
+      // name: "Hide",
       icon: "fa-light fa-ellipsis",
     },
     link: {
+      // name: "Link",
       icon: "fa-light fa-link",
       autoHide: true,
       items: {
-        "link-input": {
+        "link-1": {
           type: "text",
-          id: "link-input",
           events: {
             keyup: function (e) {
               console.log("items > link > items > 'link-1' > events")
-              let link_tag = document.getElementsByName("context-menu-input-link-input");
+              let link_tag = document.getElementsByName("context-menu-input-link-1");
               if (e.keyCode == 13 && link_tag[2].value) {
                 let url = link_tag[2].value;
                 const data = {
                   selected: $(".selected"),
                   url: url,
-                  id: ID
+                  id: randomId()
                 };
                 drawLink(data);
-                deactivateClickEvent();
-                
-                if(ref_data != null){
-                  addLink(start, end, line, url, ID);
-                }
+
+                // removeEventListener하기
+                var inputs = document.getElementsByName("context-menu-input-link-1");
+                Array.from(inputs).map((input) => {
+                  input.removeEventListener("mousedown", createFakeSelection);
+                  input.removeEventListener("blur", removeFakeSelection);
+                });
                 flag = 0;
-                // $(".context-menu-list").trigger("contextmenu:hide");
+                $(".context-menu-list").trigger("contextmenu:hide");
               }
             },
           },
@@ -358,17 +357,29 @@ $.contextMenu({
   },
   events: {
     hide: function (e) {
-      deactivateClickEvent();
+      // console.log("events > hide");
+      var inputs = document.getElementsByName("context-menu-input-link-1");
+      Array.from(inputs).map((input) => {
+        input.removeEventListener("mousedown", createFakeSelection);
+        input.removeEventListener("blur", removeFakeSelection);
+      });
       if (flag) {
         removeFakeSelection();
       }
+      // const code = document.querySelector("#code");
       document.getSelection().removeAllRanges();
+      // console.log(e);
     },
     show: function (e) {
-      console.log("events > show, ", e);
-      deactivateClickEvent();
+      console.log("events > show");
+      var inputs = document.getElementsByName("context-menu-input-link-1");
+      Array.from(inputs).map((input) => {
+        input.addEventListener("mousedown", createFakeSelection);
+        input.addEventListener("blur", removeFakeSelection);
+      });
+      // const code = document.querySelector("#code");
       range = saveSelection();
-      // createFakeSe
+
       // line, start index, end index를 구함
       var tdNode = getTD(range.commonAncestorContainer);
       console.log(tdNode);
@@ -385,6 +396,49 @@ function randomId() {
   return Math.random().toString(12).substring(2, 11);
 }
 
+function addComment(e, x, y, comment) {
+  let id = randomId();
+  console.log(id);
+  var select = document.querySelector(".selected");
+  select.classList.remove("selected");
+  select.classList.add("comment-underline");
+  registerCommentEvent(comment, select, id, "comment");
+
+  // const x = window.innerWidth - 200 > e.clientX ? e.clientX : window.innerWidth - 210;
+  // const y = window.innerHeight > e.clientY ? e.clientY : window.innerHeight - 100;
+
+  const input = document.getElementsByName("context-menu-input-link-1")[0];
+  input.removeEventListener("blur", removeFakeSelection);
+
+  var tdNode = getTD(select);
+  const line = tdNode.getAttribute("data-line-number");
+  const [start, end] = getIndices(select);
+  // select.id = id;
+  addWordComment(start, end, line, comment, id);
+}
+
+function addComment2(comment) {
+  let id = randomId();
+  console.log(id);
+  var select = document.querySelector(".selected");
+  select.classList.remove("selected");
+
+
+  select.classList.add("comment-embed");
+  // registerCommentEvent(comment, select, id, "comment-embed");
+  embedComment(comment, select, id)
+
+  const input = document.getElementsByName("context-menu-input-link-1")[1];
+  input.removeEventListener("blur", removeFakeSelection);
+
+  var tdNode = getTD(select);
+  const line = tdNode.getAttribute("data-line-number");
+  const [start, end] = getIndices(select);
+  // select.id = id;
+  addWordComment2(start, end, line, comment, id);
+}
+
+
 function wrapTdtag(span){
   const td = span.closest("td");
   const div = $('<div>', {
@@ -396,46 +450,39 @@ function wrapTdtag(span){
 }
 
 
-// function addComment(e, x, y, comment) {
-//   let id = randomId();
-//   console.log(id);
-//   var select = document.querySelector(".selected");
-//   select.classList.remove("selected");
-//   select.classList.add("comment-underline");
-//   registerCommentEvent(comment, select, id, "comment");
+function drawLink(data, editing) {
+  const { selected, url, id } = data;
 
-//   // const x = window.innerWidth - 200 > e.clientX ? e.clientX : window.innerWidth - 210;
-//   // const y = window.innerHeight > e.clientY ? e.clientY : window.innerHeight - 100;
+  const link = $('<a>', {
+    id: id,
+    url: url,
+    class: "link",
+    href: "javascript:void(0);"
+  });
 
-//   const input = document.getElementsByName("context-menu-input-link-1")[0];
-//   input.removeEventListener("blur", removeFakeSelection);
+  link.click(function(){
+    openLink(this);
+  });
 
-//   var tdNode = getTD(select);
-//   const line = tdNode.getAttribute("data-line-number");
-//   const [start, end] = getIndices(select);
-//   // select.id = id;
-//   addWordComment(start, end, line, comment, id);
-// }
+  selected.wrap(link);
+  const link_url = new URL(url);
+  if(link_url.hostname == "www.youtube.com" || link_url.hostname == "youtu.be"){
+    console.log("youtube");
+    const div = wrapTdtag(selected);
+    const iframe = $('<iframe>', {
+      class: "youtube",
+      src: link_url.pathname == "/watch"? 
+      `https://www.youtube.com/embed/${link_url.searchParams.get("v")}` 
+      : `https://www.youtube.com/${link_url.pathname}`,
+    }).appendTo(div);
+  }
 
-// function addComment2(comment) {
-//   let id = randomId();
-//   console.log(id);
-//   var select = document.querySelector(".selected");
-//   select.classList.remove("selected");
+  selected.removeClass("selected");
+  registerCommentEvent(url, selected.parent(), id, "link");
 
-
-//   select.classList.add("comment-embed");
-//   // registerCommentEvent(comment, select, id, "comment-embed");
-//   embedComment(comment, select, id)
-
-//   const input = document.getElementsByName("context-menu-input-link-1")[1];
-//   input.removeEventListener("blur", removeFakeSelection);
-
-//   var tdNode = getTD(select);
-//   const line = tdNode.getAttribute("data-line-number");
-//   const [start, end] = getIndices(select);
-//   // select.id = id;
-//   addWordComment2(start, end, line, comment, id);
-// }
-
-
+  if (editing && ref_data != null) {
+    console.log("addLink");
+    addLink(start_index, end_index, line, url, id);
+    console.log(ref_data);
+  }
+}
