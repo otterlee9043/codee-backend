@@ -6,9 +6,16 @@ let end_index;
 console.log(menu);
 
 function getTD(elem) {
-  while (elem.prop('tagName') != "TD") {
-    elem = elem.parent();
+  while (elem.tagName != "TD") {
+    elem = elem.parentElement;
   }
+  return elem;
+}
+function findLine(elem) {
+  while (elem.tagName != "TD") {
+    elem = elem.parentElement;
+  }
+
   return elem;
 }
 
@@ -107,17 +114,19 @@ function saveSelection() {
 }
 
 function restoreSelection() {
-  console.log("restoreSelection");
-  let tdTag = document.querySelector(`#L${line} > .hljs-ln-code`);
-  let startTag = findOffsetTag(tdTag, start_index);
-  console.log(startTag) ;
-  let endTag = findOffsetTag(tdTag, end_index);
-  let new_range = document.createRange();
-  new_range.setStart(startTag.tag, startTag.startOffset);
-  new_range.setEnd(endTag.tag, endTag.startOffset);
-  document.getSelection().removeAllRanges();
-  document.getSelection().addRange(new_range);
-  console.log(document.getSelection().anchorNode);
+  if (flag) {
+    console.log("restoreSelection");
+    let tdTag = document.querySelector(`#L${line} > .hljs-ln-code`);
+    let startTag = findOffsetTag(tdTag, start_index);
+    console.log(startTag) ;
+    let endTag = findOffsetTag(tdTag, end_index);
+    let new_range = document.createRange();
+    new_range.setStart(startTag.tag, startTag.startOffset);
+    new_range.setEnd(endTag.tag, endTag.startOffset);
+    document.getSelection().removeAllRanges();
+    document.getSelection().addRange(new_range);
+    console.log(document.getSelection().anchorNode);
+  }
 }
 // let url_flag = 0 ;
 var flag = 0;
@@ -135,48 +144,32 @@ function createFakeSelection(event) {
 }
 
 function getLineNumber(span){
-  return getTD(span).attr("data-line-number");
+  return getTD(span).getAttribute("data-line-number");
 }
 
 function removeFakeSelection(event) {
   // remove fake selection
   console.log("second");
   console.log(flag);
-  // if (flag) {
-  //   var select = document.querySelector(".selected");
-  //   select.classList.remove("selected");
-  //   const children = [];
-  //   while (select.firstChild) {
-  //     const child = select.firstChild;
-  //     children.push(child);
-  //     select.parentNode.insertBefore(child, select);
-  //   }
-  //   console.log();
-  //   select.remove();
-  //   Array.from(children).map((node) => {
-  //     merge(node);
-  //   });
-  //   merge(select);
-  //   restoreSelection();
-  // }
-  // console.log(range);
-  // flag = 0;
-  var select = document.querySelector(".selected");
-  select.classList.remove("selected");
-  const children = [];
-  while (select.firstChild) {
-    const child = select.firstChild;
-    children.push(child);
-    select.parentNode.insertBefore(child, select);
+  if (flag) {
+    var select = document.querySelector(".selected");
+    select.classList.remove("selected");
+    const children = [];
+    while (select.firstChild) {
+      const child = select.firstChild;
+      children.push(child);
+      select.parentNode.insertBefore(child, select);
+    }
+    console.log();
+    select.remove();
+    Array.from(children).map((node) => {
+      merge(node);
+    });
+    merge(select);
+    restoreSelection();
   }
-  console.log();
-  select.remove();
-  Array.from(children).map((node) => {
-    merge(node);
-  });
-  merge(select);
-  restoreSelection();
   console.log(range);
+  flag = 0;
 }
 
 
@@ -186,24 +179,23 @@ function openLink(e) {
   window.open(url, "_blank").focus();
 }
 
-function deactivateInputClickEvent(){
-  let inputs = $('.context-menu-submenu input');
-  $.each(inputs, function(_, input){
-    $(input).off("mousedown");
-    $(input).off("blur");
+function deactivateClickEvent(){
+  var inputs = document.getElementsByName("context-menu-input-link-1");
+  Array.from(inputs).map((input) => {
+    input.removeEventListener("mousedown", createFakeSelection);
+    input.removeEventListener("blur", removeFakeSelection);
   });
 }
 
 $(document).on('click', '.context-menu-submenu input', function (e) {
-  e.preventDefault();
   console.log("~~~~~~)))");
-  
 });
 
 
 $.contextMenu({
   selector: ".context-menu-one",
   trigger: "none",
+  autoHide: false,
   delay: 500,
   selectableSubMenu: true,
   position: function (opt, x, y) {
@@ -215,30 +207,30 @@ $.contextMenu({
     let span = createNewSpan(selection);
     const [start, end] = getIndices(span);
     const line = getLineNumber(span);
-    const id = randomId();
-    span.id = id;
-    console.log("id ", id);
+    const ID = randomId();
+    span.id = ID;
+    
     switch(key) {
       case "comment":
         break;
       case "red":
         span.classList.add("red");
-        addWordHighlight(start, end, line, id, "red");
-        registerCommentEvent("", span, id, "highlight");
+        addWordHighlight(start, end, line, ID, "red");
+        registerCommentEvent("", span, ID, "highlight");
         break;
       case "yellow":
         span.classList.add("yellow");
-        addWordHighlight(start, end, line, id, "yellow");
-        registerCommentEvent("", span, id, "highlight");
+        addWordHighlight(start, end, line, ID, "yellow");
+        registerCommentEvent("", span, ID, "highlight");
         break;
       case "green":
         span.classList.add("green");
-        addWordHighlight(start, end, line, "green", id);
-        registerCommentEvent("", span, id, "highlight");
+        addWordHighlight(start, end, line, "green", ID);
+        registerCommentEvent("", span, ID, "highlight");
         break;
       case "hide":
         ellipsisSpan(span) ;
-        addWordHide(start, end, line, id);  
+        addWordHide(start, end, line, ID);  
         break;
       case "link":
         console.log("link");
@@ -250,6 +242,7 @@ $.contextMenu({
   items: {
     comment: {
       icon: "fa-light fa-comment-dots",
+      autoHide: false,
       items: {
         "comment-input": {
           type: "text",
@@ -262,19 +255,15 @@ $.contextMenu({
             keyup: function (e) { // 키보드가 입력되면 발생
               const comment = $('[name="context-menu-input-comment-input"]').val();
               if (e.keyCode == 13 && comment) { 
-                const [start, end] = getIndices($(".selected"));
-                const line = getLineNumber($(".selected"));
-                const id = randomId();
-                
                 drawComment({
                   selected: $(".selected"),
                   comment: comment,
-                  id: id
+                  id: randomId()
                 });
                 if (ref_data != null)
                   addWordComment(start, end, line, comment, id);
                 
-                deactivateInputClickEvent();
+                deactivateClickEvent();
                 
                 flag = 0;
               }
@@ -294,17 +283,16 @@ $.contextMenu({
               console.log("items > comment2 > items > 'link-1' > events");
               const comment = $('[name="context-menu-input-comment2-input"]');
               console.log("comment ", comment);
-              console.log("id ", id);
               if (e.keyCode == 13 && inputs[1].value) {  
                 drawComment2({
                   selected: $(".selected"),
                   comment: inputs[1].value,
-                  id: id
+                  id: ID
                 }, true);
                 if (ref_data != null)
-                  addWordComment2(start, end, line, comment, id);
+                  addWordComment2(start, end, line, comment, ID);
               
-                deactivateInputClickEvent();
+                deactivateClickEvent();
                 flag = 0;
                 $(".context-menu-list.context-menu-root").trigger("contextmenu:hide");
               }
@@ -351,13 +339,13 @@ $.contextMenu({
                 const data = {
                   selected: $(".selected"),
                   url: url,
-                  id: id
+                  id: ID
                 };
                 drawLink(data);
-                deactivateInputClickEvent();
+                deactivateClickEvent();
                 
                 if(ref_data != null){
-                  addLink(start, end, line, url, id);
+                  addLink(start, end, line, url, ID);
                 }
                 flag = 0;
                 // $(".context-menu-list").trigger("contextmenu:hide");
@@ -370,25 +358,25 @@ $.contextMenu({
   },
   events: {
     hide: function (e) {
-      deactivateInputClickEvent();
-      // if (flag) {
-      //   removeFakeSelection();
-      // }
-      removeFakeSelection();
-      console.log("remove");
+      deactivateClickEvent();
+      if (flag) {
+        removeFakeSelection();
+      }
       document.getSelection().removeAllRanges();
     },
     show: function (e) {
       console.log("events > show, ", e);
-
-      let inputs = $('.context-menu-submenu input');
-      console.log(inputs);
-      $.each(inputs, function(_, input){
-        $(input).on("mousedown", createFakeSelection);
-        $(input).on("blur", removeFakeSelection);
-      })
-
+      deactivateClickEvent();
       range = saveSelection();
+      // createFakeSe
+      // line, start index, end index를 구함
+      var tdNode = getTD(range.commonAncestorContainer);
+      console.log(tdNode);
+      line = tdNode.getAttribute("data-line-number");
+      start_index = findOffset(range.startContainer, range.startOffset);
+      end_index = findOffset(range.endContainer, range.endOffset);
+      console.log(start_index);
+      console.log(end_index);
     },
   },
 });

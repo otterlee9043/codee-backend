@@ -4,6 +4,7 @@ from flask_login import login_user, logout_user, login_required, \
 from . import auth
 from .. import db
 from ..models import User
+from ..email import gmail_send_message
 from .forms import LoginForm, RegistrationForm
 from flask_dance.contrib.github import github
 from flask_login import logout_user

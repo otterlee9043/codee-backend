@@ -66,7 +66,7 @@ function drawLink(data, editing) {
 
 function drawComment(deco) {
   const { selected, comment, id } = deco;
-  selected.addClass("comment-underline");
+  selected.classList.add("comment-underline");
   console.log(selected);
 
   registerCommentEvent(comment, selected, id, "comment");
@@ -74,7 +74,7 @@ function drawComment(deco) {
 
 function drawComment2(deco) {
   const { selected, comment, id } = deco;
-  selected.addClass("comment-embed");
+  selected.classList.add("comment-embed");
   console.log(selected);
 
   embedComment(comment, selected, id);
