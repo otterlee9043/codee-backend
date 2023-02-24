@@ -43,6 +43,8 @@ function findOffsetTag(node, offset) {
   }
 }
 
+// console.log(range.startContainer.hasChildNodes() ) ;
+// console.log(range.startContainer.parentElement.innerText.length ) ;
 function findOffset(node, offset) {
   let prev = node;
   while (node.tagName != "TD") {
@@ -61,7 +63,6 @@ function findOffset(node, offset) {
   }
   return offset;
 }
-
 function removeContextMenu() {
   menu = document.querySelector(".context-menu-one ");
   menu.removeEventListener("click", addingContextMenu);
@@ -234,12 +235,9 @@ $.contextMenu({
               console.log("item > comments > items > 'link-1' > events");
               let inputs = document.getElementsByName("context-menu-input-link-1");
               if (e.keyCode == 13 && inputs[0].value) {
-                
-                drawComment({
-                  selected: $(".selected"),
-                  comment: inputs[1].value,
-                  id: randomId()
-                });
+                const conMenu = document.querySelector(".context-menu-list.context-menu-root");
+
+                addComment(e, conMenu.style.top, conMenu.style.left, inputs[0].value);
 
                 Array.from(inputs).map((input) => {
                   input.removeEventListener("mousedown", createFakeSelection);
@@ -260,16 +258,17 @@ $.contextMenu({
         "link-1": {
           type: "textarea",
           events: {
+            // mouseleave: function(e) {
+            //   $("ul.context-menu-list").trigger("contextmenu:hide");
+            //   console.log("hello") ;
+            // },
             keyup: function (e) {
               console.log("items > comment2 > items > 'link-1' > events");
               let inputs = document.getElementsByName("context-menu-input-link-1");
               if (e.keyCode == 13 && inputs[1].value) {
-                
-                drawComment2({
-                  selected: $(".selected"),
-                  comment: inputs[1].value,
-                  id: randomId()
-                });
+                const conMenu = document.querySelector(".context-menu-list.context-menu-root");
+
+                addComment2(e, conMenu.style.top, conMenu.style.left, inputs[1].value);
 
                 Array.from(inputs).map((input) => {
                   input.removeEventListener("mousedown", createFakeSelection);
@@ -338,7 +337,7 @@ $.contextMenu({
                   url: url,
                   id: randomId()
                 };
-                drawLink(data);
+                addLinkTag(data);
 
                 // removeEventListener하기
                 var inputs = document.getElementsByName("context-menu-input-link-1");
@@ -417,7 +416,7 @@ function addComment(e, x, y, comment) {
   addWordComment(start, end, line, comment, id);
 }
 
-function addComment2(comment) {
+function addComment2(e, x, y, comment) {
   let id = randomId();
   console.log(id);
   var select = document.querySelector(".selected");
@@ -438,6 +437,36 @@ function addComment2(comment) {
   addWordComment2(start, end, line, comment, id);
 }
 
+function embedComment(comment, span, id){
+  const commentSpan = document.createElement("span");
+  commentSpan.innerText = comment;
+  commentSpan.id = id;
+  commentSpan.classList.add("comment-embedded");
+  span.closest("td").after(commentSpan);
+  const wrapper = wrapTdtag(span);
+  wrapper.appendChild(commentSpan);
+
+  const closeBtn = document.createElement("span");
+  closeBtn.innerText = "X";
+  closeBtn.classList.add("right");
+
+  commentSpan.appendChild(closeBtn);
+  closeBtn.addEventListener("click", () => {
+    deleteComment2(commentSpan.id);
+    // console.log(commentSpan.id);
+    // if (type == "comment") {
+    //   deleteComment(commentSpan.id);
+    // } else if (type == "link") {
+    //   deleteLink(id);
+    // } else if (type == "highlight") {
+    //   deleteHighlight(id);
+    // }
+    // addContextMenu();
+
+
+    mergeNode(node, commentSpan);
+  });
+}
 
 function wrapTdtag(span){
   const td = span.closest("td");
@@ -450,7 +479,7 @@ function wrapTdtag(span){
 }
 
 
-function drawLink(data, editing) {
+function addLinkTag(data) {
   const { selected, url, id } = data;
 
   const link = $('<a>', {
@@ -480,7 +509,7 @@ function drawLink(data, editing) {
   selected.removeClass("selected");
   registerCommentEvent(url, selected.parent(), id, "link");
 
-  if (editing && ref_data != null) {
+  if (ref_data != null) {
     console.log("addLink");
     addLink(start_index, end_index, line, url, id);
     console.log(ref_data);
