@@ -3,6 +3,7 @@ let line;
 let start_index;
 let end_index;
 
+
 console.log(menu);
 
 function getTD(elem) {
@@ -115,29 +116,23 @@ function saveSelection() {
 }
 
 function restoreSelection() {
-  if (flag) {
-    console.log("restoreSelection");
-    let tdTag = document.querySelector(`#L${line} > .hljs-ln-code`);
-    let startTag = findOffsetTag(tdTag, start_index);
-    console.log(startTag) ;
-    let endTag = findOffsetTag(tdTag, end_index);
-    let new_range = document.createRange();
-    new_range.setStart(startTag.tag, startTag.startOffset);
-    new_range.setEnd(endTag.tag, endTag.startOffset);
-    document.getSelection().removeAllRanges();
-    document.getSelection().addRange(new_range);
-    console.log(document.getSelection().anchorNode);
-  }
+  console.log("restoreSelection");
+  let tdTag = document.querySelector(`#L${line} > .hljs-ln-code`);
+  let startTag = findOffsetTag(tdTag, start_index);
+  console.log(startTag) ;
+  let endTag = findOffsetTag(tdTag, end_index);
+  let new_range = document.createRange();
+  new_range.setStart(startTag.tag, startTag.startOffset);
+  new_range.setEnd(endTag.tag, endTag.startOffset);
+  document.getSelection().removeAllRanges();
+  document.getSelection().addRange(new_range);
+  console.log(document.getSelection().anchorNode);
 }
-// let url_flag = 0 ;
-var flag = 0;
+
+
 function createFakeSelection(event) {
-  console.log(`createFakeSelection : ${flag}`);
-  if (!flag) {
-    var span = createNewSpan(document.getSelection());
-    span.classList.add("selected");
-    flag = 1;
-  }
+  var span = createNewSpan(document.getSelection());
+  span.classList.add("selected");
   console.log(document.getSelection());
   // selected.removeAllRanges() ;
 
@@ -146,10 +141,9 @@ function createFakeSelection(event) {
 
 function removeFakeSelection(event) {
   // remove fake selection
-  console.log("second");
-  console.log(flag);
-  if (flag) {
-    var select = document.querySelector(".selected");
+  console.log("removeFakeSelection");
+  let select = document.querySelector(".selected");
+  if (select !== null) {
     select.classList.remove("selected");
     const children = [];
     while (select.firstChild) {
@@ -166,7 +160,7 @@ function removeFakeSelection(event) {
     restoreSelection();
   }
   console.log(range);
-  flag = 0;
+  document.getSelection().removeAllRanges();
 }
 
 
@@ -174,6 +168,16 @@ function openLink(e) {
   console.log("click link");
   url = e.getAttribute("url");
   window.open(url, "_blank").focus();
+}
+
+function getTextPosition(span){
+  const [start, end] = getIndices(span);
+  const line = getTD(span).getAttribute("data-line-number");
+  return {
+    start: start,
+    end: end,
+    line: line
+  };
 }
 
 $.contextMenu({
@@ -188,9 +192,7 @@ $.contextMenu({
     console.log(m);
     const selection = document.getSelection();
     let span = createNewSpan(selection);
-    const [start, end] = getIndices(span);
-    var tdNode = getTD(span);
-    line = tdNode.getAttribute("data-line-number");
+    const { start, end, line } = getTextPosition(span);
     const ID = randomId();
     span.id = ID;
     
@@ -235,15 +237,12 @@ $.contextMenu({
               console.log("item > comments > items > 'link-1' > events");
               let inputs = document.getElementsByName("context-menu-input-link-1");
               if (e.keyCode == 13 && inputs[0].value) {
-                const conMenu = document.querySelector(".context-menu-list.context-menu-root");
-
-                addComment(e, conMenu.style.top, conMenu.style.left, inputs[0].value);
+                addComment(inputs[0].value);
 
                 Array.from(inputs).map((input) => {
                   input.removeEventListener("mousedown", createFakeSelection);
                   input.removeEventListener("blur", removeFakeSelection);
                 });
-                flag = 0;
                 $(".context-menu-list.context-menu-root").trigger("contextmenu:hide");
               }
             },
@@ -268,13 +267,12 @@ $.contextMenu({
               if (e.keyCode == 13 && inputs[1].value) {
                 const conMenu = document.querySelector(".context-menu-list.context-menu-root");
 
-                addComment2(e, conMenu.style.top, conMenu.style.left, inputs[1].value);
+                addComment2(inputs[1].value);
 
                 Array.from(inputs).map((input) => {
                   input.removeEventListener("mousedown", createFakeSelection);
                   input.removeEventListener("blur", removeFakeSelection);
                 });
-                flag = 0;
                 $(".context-menu-list.context-menu-root").trigger("contextmenu:hide");
               }
             },
@@ -333,19 +331,19 @@ $.contextMenu({
               if (e.keyCode == 13 && link_tag[2].value) {
                 let url = link_tag[2].value;
                 const data = {
-                  selected: $(".selected"),
+                  selected: get(".selected"),
                   url: url,
                   id: randomId()
                 };
                 addLinkTag(data);
-
+                const { start, end, line } = getTextPosition(get(".selected"));
+                addLink(start, end, line, url, data.id);
                 // removeEventListener하기
                 var inputs = document.getElementsByName("context-menu-input-link-1");
                 Array.from(inputs).map((input) => {
                   input.removeEventListener("mousedown", createFakeSelection);
                   input.removeEventListener("blur", removeFakeSelection);
                 });
-                flag = 0;
                 $(".context-menu-list").trigger("contextmenu:hide");
               }
             },
@@ -356,17 +354,15 @@ $.contextMenu({
   },
   events: {
     hide: function (e) {
-      // console.log("events > hide");
+      console.log("events > hide");
       var inputs = document.getElementsByName("context-menu-input-link-1");
       Array.from(inputs).map((input) => {
         input.removeEventListener("mousedown", createFakeSelection);
         input.removeEventListener("blur", removeFakeSelection);
       });
-      if (flag) {
-        removeFakeSelection();
-      }
+      removeFakeSelection();
       // const code = document.querySelector("#code");
-      document.getSelection().removeAllRanges();
+      // document.getSelection().removeAllRanges();
       // console.log(e);
     },
     show: function (e) {
@@ -378,15 +374,6 @@ $.contextMenu({
       });
       // const code = document.querySelector("#code");
       range = saveSelection();
-
-      // line, start index, end index를 구함
-      var tdNode = getTD(range.commonAncestorContainer);
-      console.log(tdNode);
-      line = tdNode.getAttribute("data-line-number");
-      start_index = findOffset(range.startContainer, range.startOffset);
-      end_index = findOffset(range.endContainer, range.endOffset);
-      console.log(start_index);
-      console.log(end_index);
     },
   },
 });
@@ -395,7 +382,7 @@ function randomId() {
   return Math.random().toString(12).substring(2, 11);
 }
 
-function addComment(e, x, y, comment) {
+function addComment(comment) {
   let id = randomId();
   console.log(id);
   var select = document.querySelector(".selected");
@@ -416,7 +403,7 @@ function addComment(e, x, y, comment) {
   addWordComment(start, end, line, comment, id);
 }
 
-function addComment2(e, x, y, comment) {
+function addComment2(comment) {
   let id = randomId();
   console.log(id);
   var select = document.querySelector(".selected");
@@ -482,32 +469,31 @@ function wrapTdtag(span){
 function addLinkTag(data) {
   const { selected, url, id } = data;
 
-  const link = $('<a>', {
-    id: id,
-    url: url,
-    class: "link",
-    href: "javascript:void(0);"
-  });
+  const link = document.createElement("a");
+  link.id = id;
+  link.url = url;
+  link.classList.add("link");
+  link.href = "javascript:void(0);";
 
-  link.click(function(){
-    openLink(this);
-  });
-
-  selected.wrap(link);
-  const link_url = new URL(url);
-  if(link_url.hostname == "www.youtube.com" || link_url.hostname == "youtu.be"){
+  link.addEventListener("click", openLink); 
+  selected.before(link)
+  link.appendChild(selected);
+  
+  console.log(url);
+  const linkUrl = new URL(url);
+  if(linkUrl.hostname == "www.youtube.com" || linkUrl.hostname == "youtu.be"){
     console.log("youtube");
     const div = wrapTdtag(selected);
     const iframe = $('<iframe>', {
       class: "youtube",
-      src: link_url.pathname == "/watch"? 
-      `https://www.youtube.com/embed/${link_url.searchParams.get("v")}` 
-      : `https://www.youtube.com/${link_url.pathname}`,
+      src: linkUrl.pathname == "/watch"? 
+      `https://www.youtube.com/embed/${linkUrl.searchParams.get("v")}` 
+      : `https://www.youtube.com/${linkUrl.pathname}`,
     }).appendTo(div);
   }
 
-  selected.removeClass("selected");
-  registerCommentEvent(url, selected.parent(), id, "link");
+  // selected.classList.remove("selected");
+  registerCommentEvent(url, selected.parentElement, id, "link");
 
   if (ref_data != null) {
     console.log("addLink");

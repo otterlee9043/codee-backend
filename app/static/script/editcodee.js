@@ -54,6 +54,7 @@ function addLineHide(start, end, ID) {
 function addLink(start, end, line, url, ID) {
   cacheChange = 1;
   ref_data.push({ type: "link", start: start, end: end, line: line, url: url, id: ID });
+  console.log(ref_data);
 }
 
 function addWordComment(start, end, line, comment, ID) {

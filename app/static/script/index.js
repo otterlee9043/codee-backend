@@ -18,6 +18,15 @@ $(settings.objModalCloseBtn).bind("click", function () {
   $(".modal").fadeOut();
 });
 
+const get = function (selector, scope) {
+  scope = scope ? scope : document;
+  return scope.querySelector(selector);
+};
+
+const getAll = function (selector, scope) {
+  scope = scope ? scope : document;
+  return [...scope.querySelectorAll(selector)];
+};
 
 function createNewRange(line, start, end) {
   const tdTag = $(`#L${line} .hljs-ln-code`);
@@ -44,17 +53,18 @@ function drawLineHide(deco) {
 }
 
 function createEllipsisNode(line) {
-  let ellipsisLine = line.clone();
-  ellipsisLine.first().removeClass("selecting");
-  const lnNumber = ellipsisLine.find(".hljs-ln-numbers div");
-  lnNumber.attr("data-line-number", "");
-  const ellipsisBtn = $('<span>', {
-    class: "ellipsis",
-    text: "⋯"
-  })
+  let ellipsisLine = line.cloneNode(true);
+  ellipsisLine.first().classList.remove("selecting");
+  const lnNumber = get(".hljs-ln-numbers div", ellipsisLine);
+  lnNumber.setAttribute("data-line-number", "");
+  
+  const ellipsisBtn = document.createElement("span");
+  ellipsisBtn.classList.add("ellipsis");
+  ellipsisBtn.innerText = "⋯";
   lnNumber.append(ellipsisBtn);
-  ellipsisLine.find(".hljs-ln-code").innerText = ""; // <span2>
-  ellipsisLine.click(() => {
+
+  get(".hljs-ln-code", ellipsisLine).innerText = ""; // <span2>
+  ellipsisLine.addEventListener("click", () => {
     const info = selectedInfo.find((item) => `L${item.start}` === ellipsisLine.id);
     const lineId = `L${info.start}`;
     const number = info.number;
@@ -246,14 +256,15 @@ function expand(lineId, number) {
 
 
 function hideLine() {
-  const numbers = $(".hljs-ln-numbers");
-  numbers.get().forEach((item) => {
+  const numbers = getAll(".hljs-ln-numbers");
+  numbers.forEach((item) => {
     const number = parseInt(item.getAttribute("data-line-number"));
-    item.parent().attr("id", `L${number}`);
-    item.click((event) => {
+    item.parentElement.setAttribute("id", `L${number}`);
+    // item.click((event) => {
+    item.addEventListener("click", (event) => {
       if (!lineSelected) {
         start = number;
-        item.addClass("selecting");
+        item.classList.add("selecting");
       } else {
         end = number;
         let numberLinesSelected = Math.abs(start - end) + 1;
@@ -268,15 +279,15 @@ function hideLine() {
         const ID = randomId();
         selectedInfo.push({ start: start, number: numberLinesSelected, id: ID });
         console.log(selectedInfo);
-        let line = $(`#L${start}`);
+        let line = get(`#L${start}`);
         createEllipsisNode(line);
 
         for (let i = 0; i < numberLinesSelected; i++) {
-          line.addClass("hidden");
-          line = line.next();
+          line.classList.add("hidden");
+          line = line.nextElementSibling;
         }
         Array.from(numbers).map((number) => {
-          number.removeClass("selecting");
+          number.classList.remove("selecting");
         });
         if (ref_data != null) {
           addLineHide(start, end, ID);
@@ -685,21 +696,18 @@ function mergeNode(node, commentSpan = null){
 }
 
 function registerCommentEvent(comment, node, id, type) {
-  const commentSpan = $('<span>', {
-    text: comment,
-    class: 'comment',
-    id: id
-  });
+  const commentSpan = document.createElement("span");
+  commentSpan.innerText = comment;
+  commentSpan.classList.add("comment");
+  commentSpan.id = id;
   
-  const closeBtn = $('<span>', {
-    text: 'X',
-    class: 'right'
-  }).appendTo(commentSpan)
+  const closeBtn = document.createElement("span");
+  closeBtn.innerText = "X";
+  closeBtn.classList.add("right");
 
-  // commentSpan.appendChild(closeBtn);
+  commentSpan.appendChild(closeBtn);
 
-  // closeBtn.addEventListener("click", () => {
-  closeBtn.click(() => {
+  closeBtn.addEventListener("click", () => {
     console.log(commentSpan.id);
     if (type == "comment") {
       deleteComment(commentSpan.id);
@@ -715,18 +723,15 @@ function registerCommentEvent(comment, node, id, type) {
 
   console.log(type);
   if (type == "link") {
-    // commentSpan.classList.add("linkComment");
-    commentSpan.addClass("linkComment")
-    // commentSpan.addEventListener("mouseenter", () => {
-    commentSpan.mouseenter(() =>{
+    commentSpan.classList.add("linkComment");
+    commentSpan.addEventListener("mouseenter", () => {
       node.onclick = null;
     });
-    // commentSpan.addEventListener("mouseleave", () => {
-      commentSpan.mouseleave(() =>{
+    commentSpan.addEventListener("mouseleave", () => {
       node.onclick = "openLink(this)";
     });
   }
-  node.mouseenter(() => {
+  node.addEventListener("mouseenter", () => {
     removeContextMenu();
     showCommentDetail(node, commentSpan);
   });
@@ -741,9 +746,9 @@ function showDecoDetail(span) {
 }
 
 function showCommentDetail(span, commentSpan) {
-  if (span.parent().prop('tagName') === "TD") {
-    span.append(commentSpan);
-    span.mouseleave(() => {
+  if (span.parentElement.tagName === "TD") {
+    span.appendChild(commentSpan);
+    span.addEventListener("mouseleave", () => {
       addContextMenu();
       hideCommentDetail(commentSpan);
     });
