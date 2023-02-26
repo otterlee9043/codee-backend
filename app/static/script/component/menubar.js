@@ -1,8 +1,6 @@
 let menu = document.querySelector(".context-menu-one");
-let line;
-let start_index;
-let end_index;
-
+let line, start_index, end_index;
+let range = null;
 
 console.log(menu);
 
@@ -76,8 +74,8 @@ function addContextMenu() {
 
 function addingContextMenu(e) {
   e.preventDefault();
-  var element = document.getSelection();
-  var selectedText = element.toString();
+  let element = document.getSelection();
+  let selectedText = element.toString();
   if (selectedText != "") {
     const conMenu = document.querySelector(".context-menu-list.context-menu-root");
     const x = window.innerWidth - 200 > e.clientX ? e.clientX : window.innerWidth - 210;
@@ -100,14 +98,13 @@ if (menu != null) {
 
 
 
-var range = null;
-var selected = null;
+
 
 function saveSelection() {
   if (window.getSelection) {
-    selected = document.getSelection();
-    if (selected.getRangeAt && selected.rangeCount) {
-      return selected.getRangeAt(0);
+    let selection = document.getSelection();
+    if (selection.getRangeAt && selection.rangeCount) {
+      return selection.getRangeAt(0);
     } else if (document.selection && document.selection.createRange) {
       return document.createRange();
     }
@@ -121,17 +118,19 @@ function restoreSelection() {
   let startTag = findOffsetTag(tdTag, start_index);
   console.log(startTag) ;
   let endTag = findOffsetTag(tdTag, end_index);
-  let new_range = document.createRange();
-  new_range.setStart(startTag.tag, startTag.startOffset);
-  new_range.setEnd(endTag.tag, endTag.startOffset);
+  let newRange = document.createRange();
+  newRange.setStart(startTag.tag, startTag.startOffset);
+  newRange.setEnd(endTag.tag, endTag.startOffset);
   document.getSelection().removeAllRanges();
-  document.getSelection().addRange(new_range);
+  document.getSelection().addRange(newRange);
+  console.log("newRange");
+  console.log(newRange);
   console.log(document.getSelection().anchorNode);
 }
 
 
 function createFakeSelection(event) {
-  var span = createNewSpan(document.getSelection());
+  let span = createNewSpan(document.getSelection());
   span.classList.add("selected");
   console.log(document.getSelection());
   // selected.removeAllRanges() ;
@@ -159,8 +158,6 @@ function removeFakeSelection(event) {
     merge(select);
     restoreSelection();
   }
-  console.log(range);
-  document.getSelection().removeAllRanges();
 }
 
 
@@ -180,15 +177,23 @@ function getTextPosition(span){
   };
 }
 
+function removeSelectionEvent(inputs){
+  inputs.map((input) => {
+    input.removeEventListener("mousedown", createFakeSelection);
+    input.removeEventListener("blur", removeFakeSelection);
+  });
+}
+
 $.contextMenu({
   selector: ".context-menu-one",
   trigger: "none",
   delay: 500,
   autoHide: false,
+  selectableSubMenu: true,
   position: function (opt, x, y) {
   },
   callback: function (key, opt, e) {
-    var m = "clicked: " + key + " " + opt;
+    let m = "clicked: " + key + " " + opt;
     console.log(m);
     const selection = document.getSelection();
     let span = createNewSpan(selection);
@@ -226,23 +231,38 @@ $.contextMenu({
     selection.removeAllRanges();
   },
   items: {
+    myItem: {
+      icon: "edit",
+      events: {
+        show: function(options) {
+          var $menu = $(this);
+          var $icon = $menu.find(".context-menu-icon");
+          var $input = $menu.find(".context-menu-input");
+
+          $icon.click(function(e) {
+            $input.show();
+            e.stopPropagation();
+            e.preventDefault();
+          });
+        }
+      },
+      input: '<input type="text" class="context-menu-input">'
+    },
     comment: {
       icon: "fa-light fa-comment-dots",
       autoHide: true,
       items: {
-        "link-1": {
+        comment_input: {
           type: "text",
+          id: "comment_input",
           events: {
             keyup: function (e) { // 키보드가 입력되면 발생
-              console.log("item > comments > items > 'link-1' > events");
-              let inputs = document.getElementsByName("context-menu-input-link-1");
+              console.log("item > comments > items > comment > events");
+              // let inputs = document.getElementsByName("context-menu-input-link-1");
+              const inputs = getAll('[name=context-menu-input-comment]');
               if (e.keyCode == 13 && inputs[0].value) {
                 addComment(inputs[0].value);
-
-                Array.from(inputs).map((input) => {
-                  input.removeEventListener("mousedown", createFakeSelection);
-                  input.removeEventListener("blur", removeFakeSelection);
-                });
+                removeSelectionEvent(inputs); 
                 $(".context-menu-list.context-menu-root").trigger("contextmenu:hide");
               }
             },
@@ -268,11 +288,7 @@ $.contextMenu({
                 const conMenu = document.querySelector(".context-menu-list.context-menu-root");
 
                 addComment2(inputs[1].value);
-
-                Array.from(inputs).map((input) => {
-                  input.removeEventListener("mousedown", createFakeSelection);
-                  input.removeEventListener("blur", removeFakeSelection);
-                });
+                removeSelectionEvent(inputs);
                 $(".context-menu-list.context-menu-root").trigger("contextmenu:hide");
               }
             },
@@ -339,11 +355,8 @@ $.contextMenu({
                 const { start, end, line } = getTextPosition(get(".selected"));
                 addLink(start, end, line, url, data.id);
                 // removeEventListener하기
-                var inputs = document.getElementsByName("context-menu-input-link-1");
-                Array.from(inputs).map((input) => {
-                  input.removeEventListener("mousedown", createFakeSelection);
-                  input.removeEventListener("blur", removeFakeSelection);
-                });
+                let inputs = document.getElementsByName("context-menu-input-link-1");
+                removeSelectionEvent(inputs);
                 $(".context-menu-list").trigger("contextmenu:hide");
               }
             },
@@ -352,14 +365,12 @@ $.contextMenu({
       },
     },
   },
+  
   events: {
     hide: function (e) {
       console.log("events > hide");
-      var inputs = document.getElementsByName("context-menu-input-link-1");
-      Array.from(inputs).map((input) => {
-        input.removeEventListener("mousedown", createFakeSelection);
-        input.removeEventListener("blur", removeFakeSelection);
-      });
+      let inputs = document.getElementsByName("context-menu-input-link-1");
+      removeSelectionEvent(inputs);
       removeFakeSelection();
       // const code = document.querySelector("#code");
       // document.getSelection().removeAllRanges();
@@ -367,13 +378,22 @@ $.contextMenu({
     },
     show: function (e) {
       console.log("events > show");
-      var inputs = document.getElementsByName("context-menu-input-link-1");
+      console.log(document.getSelection());
+      let inputs = document.getElementsByName("context-menu-input-link-1");
       Array.from(inputs).map((input) => {
         input.addEventListener("mousedown", createFakeSelection);
         input.addEventListener("blur", removeFakeSelection);
       });
       // const code = document.querySelector("#code");
-      range = saveSelection();
+      let firstRange = saveSelection();
+
+      let tdNode = getTD(firstRange.commonAncestorContainer);
+      console.log(tdNode);
+      line = tdNode.getAttribute("data-line-number");
+      start_index = findOffset(firstRange.startContainer, firstRange.startOffset);
+      end_index = findOffset(firstRange.endContainer, firstRange.endOffset);
+      console.log(start_index);
+      console.log(end_index);
     },
   },
 });
@@ -385,18 +405,14 @@ function randomId() {
 function addComment(comment) {
   let id = randomId();
   console.log(id);
-  var select = document.querySelector(".selected");
+  let select = document.querySelector(".selected");
   select.classList.remove("selected");
   select.classList.add("comment-underline");
   registerCommentEvent(comment, select, id, "comment");
-
-  // const x = window.innerWidth - 200 > e.clientX ? e.clientX : window.innerWidth - 210;
-  // const y = window.innerHeight > e.clientY ? e.clientY : window.innerHeight - 100;
-
   const input = document.getElementsByName("context-menu-input-link-1")[0];
   input.removeEventListener("blur", removeFakeSelection);
 
-  var tdNode = getTD(select);
+  let tdNode = getTD(select);
   const line = tdNode.getAttribute("data-line-number");
   const [start, end] = getIndices(select);
   // select.id = id;
@@ -406,7 +422,7 @@ function addComment(comment) {
 function addComment2(comment) {
   let id = randomId();
   console.log(id);
-  var select = document.querySelector(".selected");
+  let select = document.querySelector(".selected");
   select.classList.remove("selected");
 
 
@@ -417,7 +433,7 @@ function addComment2(comment) {
   const input = document.getElementsByName("context-menu-input-link-1")[1];
   input.removeEventListener("blur", removeFakeSelection);
 
-  var tdNode = getTD(select);
+  let tdNode = getTD(select);
   const line = tdNode.getAttribute("data-line-number");
   const [start, end] = getIndices(select);
   // select.id = id;

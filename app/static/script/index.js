@@ -6,7 +6,7 @@ const settings = {
 
 $(settings.objModalPopupBtn).bind("click", function () {
   if ($(this).attr(settings.objModalDataAttr)) {
-    var strDataPopupName = $(this).attr(settings.objModalDataAttr);
+    let strDataPopupName = $(this).attr(settings.objModalDataAttr);
     $(".overlay, #" + strDataPopupName).fadeIn();
   }
 });
@@ -203,7 +203,7 @@ const NODE = {
 // Problem 1
 // fragment 속성 값은 가장 상위 노드에 설정? 해당 노드에 설정?
 
-var fragment = null;
+let fragment = null;
 function saveSelection() {
   if (window.getSelection) {
     const selection = window.getSelection();
@@ -217,16 +217,16 @@ function saveSelection() {
 }
 
 
-function saveRangeEvent(event) {
-  range = saveSelection();
-  if (range && !range.collapsed) {
-    fragment = range.cloneContents();
-  }
-}
+// function saveRangeEvent(event) {
+//   range = saveSelection();
+//   if (range && !range.collapsed) {
+//     fragment = range.cloneContents();
+//   }
+// }
 
 
-window.addEventListener("mouseup", saveRangeEvent);
-window.addEventListener("keyup", saveRangeEvent);
+// window.addEventListener("mouseup", saveRangeEvent);
+// window.addEventListener("keyup", saveRangeEvent);
 
 
 function isString(inputText) {
@@ -484,7 +484,7 @@ function createNewSpan(selectionText) {
 
 
 function hideText() {
-  var selectionText;
+  let selectionText;
   if (document.getSelection) {
     selectionText = document.getSelection();
     console.log(selectionText);
