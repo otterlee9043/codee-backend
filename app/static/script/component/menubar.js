@@ -131,6 +131,7 @@ function restoreSelection() {
 
 function createFakeSelection(event) {
   let span = createNewSpan(document.getSelection());
+  console.log("createFakeSelection", span);
   span.classList.add("selected");
   console.log(document.getSelection());
   // selected.removeAllRanges() ;
@@ -231,40 +232,23 @@ $.contextMenu({
     selection.removeAllRanges();
   },
   items: {
-    myItem: {
-      icon: "edit",
-      events: {
-        show: function(options) {
-          var $menu = $(this);
-          var $icon = $menu.find(".context-menu-icon");
-          var $input = $menu.find(".context-menu-input");
-
-          $icon.click(function(e) {
-            $input.show();
-            e.stopPropagation();
-            e.preventDefault();
-          });
-        }
-      },
-      input: '<input type="text" class="context-menu-input">'
-    },
     comment: {
       icon: "fa-light fa-comment-dots",
       autoHide: true,
       items: {
-        comment_input: {
+        comment: {
           type: "text",
-          id: "comment_input",
+          id: "comment-input",
           events: {
             keyup: function (e) { // 키보드가 입력되면 발생
-              console.log("item > comments > items > comment > events");
-              // let inputs = document.getElementsByName("context-menu-input-link-1");
-              const inputs = getAll('[name=context-menu-input-comment]');
-              if (e.keyCode == 13 && inputs[0].value) {
-                addComment(inputs[0].value);
+              const inputs = getAll('.context-menu-input input.context-menu-input textarea');
+              const input = get('[name=context-menu-input-comment]');
+              if (e.keyCode == 13 && input.value) {
+                addComment(input.value);
                 removeSelectionEvent(inputs); 
                 $(".context-menu-list.context-menu-root").trigger("contextmenu:hide");
               }
+              
             },
           },
         },
@@ -274,29 +258,26 @@ $.contextMenu({
       icon: "fa-solid fa-align-justify",
       autoHide: true,
       items: {
-        "link-1": {
+        comment2: {
           type: "textarea",
           events: {
-            // mouseleave: function(e) {
-            //   $("ul.context-menu-list").trigger("contextmenu:hide");
-            //   console.log("hello") ;
-            // },
             keyup: function (e) {
-              console.log("items > comment2 > items > 'link-1' > events");
-              let inputs = document.getElementsByName("context-menu-input-link-1");
-              if (e.keyCode == 13 && inputs[1].value) {
-                const conMenu = document.querySelector(".context-menu-list.context-menu-root");
-
-                addComment2(inputs[1].value);
+              const inputs = getAll('.context-menu-input input, .context-menu-input textarea');
+              const input = get('[name=context-menu-input-comment2]');
+              if (e.keyCode == 13 && input.value) {
+                addComment2(input.value);
                 removeSelectionEvent(inputs);
                 $(".context-menu-list.context-menu-root").trigger("contextmenu:hide");
               }
             },
           },
         },
-        "add": {
+        save: {
           name: "<a class='button right'>save</a>",
           isHtmlName: true,
+          callback: function(){
+            console.log("hello~~");
+          }
         }
       },
     },
@@ -369,7 +350,7 @@ $.contextMenu({
   events: {
     hide: function (e) {
       console.log("events > hide");
-      let inputs = document.getElementsByName("context-menu-input-link-1");
+      let inputs = getAll('.context-menu-input input, .context-menu-input textarea');
       removeSelectionEvent(inputs);
       removeFakeSelection();
       // const code = document.querySelector("#code");
@@ -377,9 +358,10 @@ $.contextMenu({
       // console.log(e);
     },
     show: function (e) {
-      console.log("events > show");
+      // console.log("events > show");
       console.log(document.getSelection());
-      let inputs = document.getElementsByName("context-menu-input-link-1");
+      let inputs = getAll('.context-menu-input input, .context-menu-input textarea');
+      console.log("show > inputs", inputs);
       Array.from(inputs).map((input) => {
         input.addEventListener("mousedown", createFakeSelection);
         input.addEventListener("blur", removeFakeSelection);
@@ -473,14 +455,12 @@ function embedComment(comment, span, id){
 
 function wrapTdtag(span){
   const td = span.closest("td");
-  const div = $('<div>', {
-    class: "col"
-  });
+  const div = document.createElement("div");
+  div.classList.add("col");
   td.before(div);
-  div.append(td);
+  div.appendChild(td);
   return div;
 }
-
 
 function addLinkTag(data) {
   const { selected, url, id } = data;
