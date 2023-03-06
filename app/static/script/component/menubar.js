@@ -123,9 +123,6 @@ function restoreSelection() {
   newRange.setEnd(endTag.tag, endTag.startOffset);
   document.getSelection().removeAllRanges();
   document.getSelection().addRange(newRange);
-  console.log("newRange");
-  console.log(newRange);
-  console.log(document.getSelection().anchorNode);
 }
 
 
@@ -133,15 +130,12 @@ function createFakeSelection(event) {
   let span = createNewSpan(document.getSelection());
   console.log("createFakeSelection", span);
   span.classList.add("selected");
-  console.log(document.getSelection());
+  // console.log(document.getSelection());
   // selected.removeAllRanges() ;
-
   // 여기서 range가 없어진다.
 }
 
 function removeFakeSelection(event) {
-  // remove fake selection
-  console.log("removeFakeSelection");
   let select = document.querySelector(".selected");
   if (select !== null) {
     select.classList.remove("selected");
@@ -183,6 +177,10 @@ function removeSelectionEvent(inputs){
     input.removeEventListener("mousedown", createFakeSelection);
     input.removeEventListener("blur", removeFakeSelection);
   });
+}
+
+const KEY = {
+  ENTER: 13
 }
 
 $.contextMenu({
@@ -243,20 +241,28 @@ $.contextMenu({
             keyup: function (e) { // 키보드가 입력되면 발생
               const inputs = getAll('.context-menu-input input.context-menu-input textarea');
               const input = get('[name=context-menu-input-comment]');
-              if (e.keyCode == 13 && input.value) {
+              if (e.keyCode == KEY.ENTER && input.value) {
                 addComment(input.value);
                 removeSelectionEvent(inputs); 
                 $(".context-menu-list.context-menu-root").trigger("contextmenu:hide");
               }
-              
             },
+            mousedown: createFakeSelection,
+            blur: removeFakeSelection
           },
         },
       },
     },
     comment2: {
       icon: "fa-solid fa-align-justify",
-      autoHide: true,
+      className: "comment2",
+      autoHide: false,
+      selectableSubMenu: true,
+      events: {
+        click: (event) => {
+          console.log("@@@ mousedown", event);
+        }
+      },
       items: {
         comment2: {
           type: "textarea",
@@ -264,30 +270,40 @@ $.contextMenu({
             keyup: function (e) {
               const inputs = getAll('.context-menu-input input, .context-menu-input textarea');
               const input = get('[name=context-menu-input-comment2]');
-              if (e.keyCode == 13 && input.value) {
-                addComment2(input.value);
+              if (e.keyCode == KEY.ENTER && input.value) {
+                addComment2(input.value); 
                 removeSelectionEvent(inputs);
                 $(".context-menu-list.context-menu-root").trigger("contextmenu:hide");
               }
             },
+            mousedown: createFakeSelection,
+            blur: () => {
+              removeFakeSelection();
+              console.log("blur...");
+            }
           },
         },
         save: {
-          name: "<a class='button right'>save</a>",
+          name: "<span class='save button'>save</a>",
           isHtmlName: true,
-          callback: function(){
-            console.log("hello~~");
+          className: "button-wrapper",
+          events: {
+            "mouseup": function(){
+              console.log("please...");
+            }
+          },
+          callback: function (key, opt, e) {
+            console.log("callback..!!", e);
+          
           }
         }
       },
     },
     highlight: {
-      // name: "Highlight",
       icon: "fa-light fa-highlighter",
       autoHide: true,
       items: {
         red: {
-          // name: "Red",
           selector: "#red",
           icon: "fa-solid fa-circle",
           events: {
@@ -297,19 +313,13 @@ $.contextMenu({
           },
         },
         yellow: {
-          // name: "Yellow",
           icon: "fa-solid fa-circle",
         },
         green: {
-          // name: "Green",
           icon: "fa-solid fa-circle",
         },
       },
     },
-    // record: {
-    //   // name: "Record",
-    //   icon: "fa-light fa-microphone",
-    // },
     hide: {
       // name: "Hide",
       icon: "fa-light fa-ellipsis",
@@ -319,14 +329,15 @@ $.contextMenu({
       icon: "fa-light fa-link",
       autoHide: true,
       items: {
-        "link-1": {
+        link: {
           type: "text",
           events: {
             keyup: function (e) {
               console.log("items > link > items > 'link-1' > events")
-              let link_tag = document.getElementsByName("context-menu-input-link-1");
-              if (e.keyCode == 13 && link_tag[2].value) {
-                let url = link_tag[2].value;
+              const inputs = getAll('.context-menu-input input, .context-menu-input textarea');
+              const input = get('[name=context-menu-input-link]');
+              if (e.keyCode == KEY.ENTER && input.value) {
+                let url = input.value;
                 const data = {
                   selected: get(".selected"),
                   url: url,
@@ -335,12 +346,12 @@ $.contextMenu({
                 addLinkTag(data);
                 const { start, end, line } = getTextPosition(get(".selected"));
                 addLink(start, end, line, url, data.id);
-                // removeEventListener하기
-                let inputs = document.getElementsByName("context-menu-input-link-1");
                 removeSelectionEvent(inputs);
-                $(".context-menu-list").trigger("contextmenu:hide");
+                $(".context-menu-list.context-menu-root").trigger("contextmenu:hide");
               }
             },
+            mousedown: createFakeSelection,
+            blur: removeFakeSelection
           },
         },
       },
@@ -351,31 +362,31 @@ $.contextMenu({
     hide: function (e) {
       console.log("events > hide");
       let inputs = getAll('.context-menu-input input, .context-menu-input textarea');
-      removeSelectionEvent(inputs);
+      // removeSelectionEvent(inputs);
       removeFakeSelection();
       // const code = document.querySelector("#code");
-      // document.getSelection().removeAllRanges();
+      document.getSelection().removeAllRanges();
       // console.log(e);
     },
     show: function (e) {
       // console.log("events > show");
-      console.log(document.getSelection());
-      let inputs = getAll('.context-menu-input input, .context-menu-input textarea');
-      console.log("show > inputs", inputs);
-      Array.from(inputs).map((input) => {
-        input.addEventListener("mousedown", createFakeSelection);
-        input.addEventListener("blur", removeFakeSelection);
-      });
+      // console.log(document.getSelection());
+      // let inputs = getAll('.context-menu-input input, .context-menu-input textarea');
+      // console.log("show > inputs", inputs);
+      // Array.from(inputs).map((input) => {
+      //   input.addEventListener("mousedown", createFakeSelection);
+      //   input.addEventListener("blur", removeFakeSelection);
+      // });
       // const code = document.querySelector("#code");
       let firstRange = saveSelection();
 
       let tdNode = getTD(firstRange.commonAncestorContainer);
-      console.log(tdNode);
+      // console.log(tdNode);
       line = tdNode.getAttribute("data-line-number");
       start_index = findOffset(firstRange.startContainer, firstRange.startOffset);
       end_index = findOffset(firstRange.endContainer, firstRange.endOffset);
-      console.log(start_index);
-      console.log(end_index);
+      // console.log(start_index);
+      // console.log(end_index);
     },
   },
 });
@@ -391,8 +402,6 @@ function addComment(comment) {
   select.classList.remove("selected");
   select.classList.add("comment-underline");
   registerCommentEvent(comment, select, id, "comment");
-  const input = document.getElementsByName("context-menu-input-link-1")[0];
-  input.removeEventListener("blur", removeFakeSelection);
 
   let tdNode = getTD(select);
   const line = tdNode.getAttribute("data-line-number");
@@ -411,9 +420,6 @@ function addComment2(comment) {
   select.classList.add("comment-embed");
   // registerCommentEvent(comment, select, id, "comment-embed");
   embedComment(comment, select, id)
-
-  const input = document.getElementsByName("context-menu-input-link-1")[1];
-  input.removeEventListener("blur", removeFakeSelection);
 
   let tdNode = getTD(select);
   const line = tdNode.getAttribute("data-line-number");

@@ -724,3 +724,20 @@ td {
 section{
   background-color:#ACCEF7;
 }
+
+
+.button-wrapper{
+  float: right;
+}
+
+.button-wrapper.context-menu-item:hover{
+  background-color: transparent;
+} 
+
+.button-wrapper.context-menu-item.context-menu-hover{
+  color:black;
+}
+
+.save.button:hover{
+  text-decoration: none;
+}
