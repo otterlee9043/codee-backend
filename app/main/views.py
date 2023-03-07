@@ -127,9 +127,9 @@ def show_file(filepath):
 #         else:
 #             cd_data = read_json_file(os.path.join(
 #                 root, username_,  os.path.normpath(cd_path)))
-#             ref_data = read_file(os.path.join(
+#             refData = read_file(os.path.join(
 #                 root, username_, os.path.normpath(cd_data[0]['filepath'])))
-#             if ref_data is not None:
+#             if refData is not None:
 #                 repository = cd_data[0]['filepath'].split("/")[0]
 #                 filepath = cd_data[0]['filepath'].split("/", maxsplit=1)[1]
 #                 codee_comit_id = cd_data[0]['commit_id']
@@ -142,12 +142,12 @@ def show_file(filepath):
 #                     cd_data[0]['commit_id'] = last_commit_id
 #                     save_merged_codee(cd_data, cd_path, username_)
 #                 data_dict = {
-#                     # "ref_data": ref_data,
+#                     # "refData": refData,
 #                     "cd_data": cd_data
 #                 }
 #                 return make_response(jsonify(data_dict), 200)
 #             else:
-#                 return make_response(jsonify({"msg": "no ref_data"}), 200)
+#                 return make_response(jsonify({"msg": "no refData"}), 200)
 
 
 @main.route('/create_codee', methods=['POST'])

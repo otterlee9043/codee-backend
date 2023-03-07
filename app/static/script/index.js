@@ -83,64 +83,87 @@ function createEllipsisNode(line) {
 
 
 function drawComment(deco) {
-  const { start, end, line, comment, id } = deco;
-  createNewRange(line, start, end);
-  const span = createNewSpan(document.getSelection());
-  document.getSelection().removeAllRanges();
-  span.classList.add("comment-underline");
-  console.log(span);
+  const { selected, comment, id } = deco;
+  selected.classList.add("comment-underline");
 
-  registerCommentEvent(comment, span, id, "comment");
+  registerCommentEvent(comment, selected, id, "comment");
 }
 
 function drawComment2(deco) {
-  const { start, end, line, comment, id } = deco;
-  createNewRange(line, start, end);
-  const span = createNewSpan(document.getSelection());
-  document.getSelection().removeAllRanges();
-  span.classList.add("comment-embed");
-  console.log(span);
-  embedComment(comment, span, id);
+  const { selected, comment, id } = deco;
+  selected.classList.add("comment-embed");
+
+  embedComment(comment, selected, id);
 }
 
 
 function drawHighlight(deco) {
   const { selected, color, id } = deco;
-  selected.addClass(color);
+  selected.classList.add(color);
   registerCommentEvent("", selected, id, "highlight");
 }
 
 function drawWordHide(deco) {
-  const { start, end, line, id } = deco;
-  createNewRange(line, start, end);
-  const span = createNewSpan(document.getSelection());
-  document.getSelection().removeAllRanges();
-  span.classList.add("hidden");
+  const { selected, id } = deco;
+  selected.classList.add("hidden");
 
   const ellipsisBtn = document.createElement("span");
   ellipsisBtn.classList.add("ellipsis");
   ellipsisBtn.innerText = "⋯";
-  span.parentElement.insertBefore(ellipsisBtn, span);
+  selected.parentElement.insertBefore(ellipsisBtn, selected);
 
   ellipsisBtn.addEventListener("click", () => {
-    span.classList.remove("hidden");
-    let id = deco.id;
+    selected.classList.remove("hidden");
     console.log(`id is ${id}`);
     deleteWordHide(id);
     ellipsisBtn.remove();
-    mergeNode(span);
+    mergeNode(selected);
   });
 }
 
+/**
+ * 
+ * @param {*} data 
+ *  link 태그로 만들어주는 
+ */
+ function addLinkTag(data) {
+  const { selected, url, id } = data;
+
+  const link = document.createElement("a");
+  link.id = id;
+  link.url = url;
+  link.classList.add("link");
+  link.href = "javascript:void(0);";
+
+  link.addEventListener("click", openLink); 
+  selected.before(link)
+  link.appendChild(selected);
+  
+  console.log(url);
+  const linkUrl = new URL(url);
+  if(linkUrl.hostname == "www.youtube.com" || linkUrl.hostname == "youtu.be"){
+    console.log("youtube");
+    const div = wrapTdtag(selected);
+    const iframe = $('<iframe>', {
+      class: "youtube",
+      src: linkUrl.pathname == "/watch"? 
+      `https://www.youtube.com/embed/${linkUrl.searchParams.get("v")}` 
+      : `https://www.youtube.com/${linkUrl.pathname}`,
+    }).appendTo(div);
+  }
+
+  selected.classList.remove("selected");
+  registerCommentEvent(url, selected.parentElement, id, "link");
+}
 
 let cacheChange = 0;
 window.addEventListener("load", async function () {
   
   const pre = $('#pre')[0];
   if (pre.classList.contains("context-menu-one")) {
-    console.log(JSON.stringify(ref_data));
+    console.log(JSON.stringify(refData));
     hideLine();
-    ref_data.map((deco) => {
+    refData.map((deco) => {
       const type = deco.type;
 
       createNewRange(deco.line, deco.start, deco.end);
@@ -152,19 +175,25 @@ window.addEventListener("load", async function () {
           drawLineHide(deco);
           break;
         case "link":
-          const data = {
+          addLinkTag({
             selected: span,
             url: deco.url,
             id: deco.id
-          }
-          addLinkTag(data);
-          // drawLink(deco);
+          });
           break;
         case "comment-embedded":
-          drawComment2(deco);
+          drawComment2({
+            selected: span,
+            comment: deco.comment,
+            id: deco.id
+          });
           break;
         case "comment":
-          drawComment(deco);
+          drawComment({
+            selected: span,
+            comment: deco.comment,
+            id: deco.id
+          });
           break;
         case "highlight":
           drawHighlight({
@@ -174,8 +203,10 @@ window.addEventListener("load", async function () {
           });
           break;
         case "word_hide":
-          console.log(deco) ;
-          drawWordHide(deco);
+          drawWordHide({
+            selected: span,
+            id: deco.id
+          });
           break;
       }
     });
@@ -217,18 +248,6 @@ function saveSelection() {
 }
 
 
-// function saveRangeEvent(event) {
-//   range = saveSelection();
-//   if (range && !range.collapsed) {
-//     fragment = range.cloneContents();
-//   }
-// }
-
-
-// window.addEventListener("mouseup", saveRangeEvent);
-// window.addEventListener("keyup", saveRangeEvent);
-
-
 function isString(inputText) {
   if (typeof inputText === "string" || inputText instanceof String) return true;
   else return false;
@@ -250,9 +269,6 @@ function expand(lineId, number) {
     firstLine = firstLine.nextSibling;
   }
 }
-
-
-
 
 
 function hideLine() {
@@ -289,7 +305,7 @@ function hideLine() {
         Array.from(numbers).map((number) => {
           number.classList.remove("selecting");
         });
-        if (ref_data != null) {
+        if (refData != null) {
           addLineHide(start, end, ID);
         }
       }
@@ -681,8 +697,8 @@ function merge(wrapper) {
 
 function mergeNode(node, commentSpan = null){
   const children = [];
-  while (node.first()) {
-    const child = node.firts;
+  while (node.firstChild) {
+    const child = node.firstChild;
     children.push(child);
     // node.parentNode.insertBefore(child, node);
     node.before(child);
@@ -758,3 +774,4 @@ function showCommentDetail(span, commentSpan) {
 function hideCommentDetail(span) {
   span.remove();
 }
+
