@@ -87,22 +87,17 @@ def index():
 
 @main.route('/<path:filepath>', methods=['GET'])
 def show_file(filepath):
+    print(filepath.split("/", maxsplit=3))
     owner, repo, ref, content = filepath.split("/", maxsplit=3)
+
     print(f'/repos/{owner}/{repo}/contents/')
     print("content: " + content)
 
     file_content = None
     if content:
         if is_cd(content):
-            file_content = get_content_of_file(owner, repo, content)
-            codee_content = json.loads(file_content)
-            reference_file_path = codee_content['referenced_file']
-            reference_file_content = get_content_of_file(owner, repo, reference_file_path)
-            file_content = {
-                'reference_file_path': reference_file_path,
-                'reference_file_content': reference_file_content,
-                'data': codee_content['data']
-            }
+            return show_codee_file(owner, repo, ref, content)
+            
         else:
             file_content = {
                 'content': get_content_of_file(owner, repo, content)
@@ -111,52 +106,122 @@ def show_file(filepath):
     return render_template('main/index.html', tree=get_tree_of_repository(owner, repo, ref),
                            owner=owner, repo=repo, ref=ref, content=content, file_content=json.dumps(file_content))
 
+def show_codee_file(owner, repo, ref, content ):
+    codee_content = get_content_of_file(owner, repo, content)
+    codee_content_json = json.loads(codee_content)
+    print(type(codee_content_json))
+    reference_file_path = codee_content_json['referenced_file']
+    reference_file_content = get_content_of_file(owner, repo, reference_file_path)
+    return render_template('main/cd.html', tree=get_tree_of_repository(owner, repo, ref),
+                           owner=owner, repo=repo, ref=ref, content=content,
+                           ref_path=reference_file_path,
+                           ref_content=reference_file_content,
+                           codee_content=codee_content)
 
-# def read_codee(file_path):
+@main.route('/update_codee', methods=['POST'])
+def update_codee():
+    json_data = request.get_json(force=True)
+    codee_path = json_data['codee_path']
+    codee_content = json.loads(json_data['codee_content'])
+    repo = json_data['repo']
+    owner = current_user.username
 
-# @main.route('/read_codee', methods=['POST'])
-# def read_codee():
-#     if request.method == 'POST':
-#         error = None
-#         jsonData = request.get_json(force=True)
-#         cd_path = jsonData['cd_filepath'].split("/", maxsplit=1)[1]
-#         username_ = jsonData['username']
-#         if not cd_path:
-#             error = f'there is no such a file: {cd_path}'
-#             return make_response(jsonify({"msg": error}), 200)
-#         else:
-#             cd_data = read_json_file(os.path.join(
-#                 root, username_,  os.path.normpath(cd_path)))
-#             refData = read_file(os.path.join(
-#                 root, username_, os.path.normpath(cd_data[0]['filepath'])))
-#             if refData is not None:
-#                 repository = cd_data[0]['filepath'].split("/")[0]
-#                 filepath = cd_data[0]['filepath'].split("/", maxsplit=1)[1]
-#                 codee_comit_id = cd_data[0]['commit_id']
-#                 last_commit_id = get_commit_id(os.path.join(
-#                     root, username_, repository), os.path.join(".", filepath[0]))
-#                 if codee_comit_id != last_commit_id:
-#                     diff_data = diff(codee_comit_id, last_commit_id,
-#                                      username_, repository, filepath)
-#                     cd_data = merge(cd_path, diff_data, username_)
-#                     cd_data[0]['commit_id'] = last_commit_id
-#                     save_merged_codee(cd_data, cd_path, username_)
-#                 data_dict = {
-#                     # "refData": refData,
-#                     "cd_data": cd_data
-#                 }
-#                 return make_response(jsonify(data_dict), 200)
-#             else:
-#                 return make_response(jsonify({"msg": "no refData"}), 200)
+    # response = github.get(f"/repos/{owner}/{repo}/git/refs/heads/master")
+    # response.raise_for_status()
+    # latest_commit_sha = response.json()["object"]["sha"]
 
+    # response = github.post(f"/repos/{owner}/{repo}/git/refs", json={
+    #     "ref": "refs/heads/new-branch-name",
+    #     "sha": latest_commit_sha
+    # })
+    # response.raise_for_status()
+
+    # # Force push the new branch to the remote repository
+    # response = github.patch(f"/repos/{owner}/{repo}/git/refs/heads/master", json={
+    #     "sha": latest_commit_sha,
+    #     "force": True
+    # })
+    # response.raise_for_status()
+
+
+    print("codee_content")
+    print(codee_content)
+    # 1. codee에 적힌 commit sha 읽고
+    last_commit_sha = codee_content['last_commit_sha']
+
+    # 2. codee 파일 내용대로 blob 생성하기
+    blob_request_body = {
+        'content': json_data['codee_content'],
+        'encoding': "utf-8"
+    }
+
+    blob_resp = github.post(f'/repos/{owner}/{repo}/git/blobs', json=blob_request_body)
+    if blob_resp.ok:
+        blob_json = blob_resp.json()
+        utf8_blob_sha = blob_json['sha']
+        print(f"(2) {utf8_blob_sha} ")
+
+    # 3. tree 생성
+    tree_request_body = {
+        "base_tree": last_commit_sha,
+        "tree": [
+            {
+              "path": codee_path,
+              "mode": "100644",
+              "type": "blob",
+              "sha": utf8_blob_sha
+            }
+        ]
+    }
+    tree_resp = github.post(f'/repos/{owner}/{repo}/git/trees', json=tree_request_body)
+    print(tree_resp)
+    if tree_resp.status_code == 201:
+        tree_json = tree_resp.json()
+        tree_sha = tree_json['sha']
+        print(f"(3) {tree_sha} ")
+
+    # 4. commit 생성
+    commit_request_body = { 
+        "message": "Codee 파일 수정",
+        "author": {
+            "name": current_user.username, # codee
+            "email": current_user.email,
+            "date": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+        },
+        "parents": [
+            last_commit_sha
+        ],
+        "tree": tree_sha
+    }
+    
+    print(commit_request_body)
+    commit_resp = github.post(f'/repos/{owner}/{repo}/git/commits', json = commit_request_body)
+    print(commit_resp.status_code)
+    
+    if commit_resp.ok:
+        commit_json = commit_resp.json()
+        print(commit_resp.status_code)
+        new_commit_sha = commit_json['sha']
+        print(f"(4) {new_commit_sha} ")
+
+    # 5. push
+    push_request_body = {
+        "sha": new_commit_sha,
+        "force": True
+    }
+    push_resp = github.patch(f'/repos/{owner}/{repo}/git/refs/heads/master', 
+                            json=push_request_body)
+    print(push_resp)
+    print(push_resp.json())
+    return "codee file updated", 200
 
 @main.route('/create_codee', methods=['POST'])
 def create_codee():
-    jsonData = request.get_json(force=True)
-    repo = jsonData['repo']
-    codee_path = jsonData['codee_path']
-    codee_name = jsonData['codee_name']
-    ref_path = jsonData['ref_path']
+    json_data = request.get_json(force=True)
+    repo = json_data['repo']
+    codee_path = json_data['codee_path']
+    codee_name = json_data['codee_name']
+    ref_path = json_data['ref_path']
     owner = current_user.username
 
     print(f"codee_path: {codee_path}")
