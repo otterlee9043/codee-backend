@@ -18,6 +18,10 @@ $(settings.objModalCloseBtn).bind("click", function () {
   $(".modal").fadeOut();
 });
 
+// window.addEventListener("beforeunload", () => {
+//   updateCodee();
+// });
+
 const get = function (selector, scope) {
   scope = scope ? scope : document;
   return scope.querySelector(selector);
@@ -29,7 +33,7 @@ const getAll = function (selector, scope) {
 };
 
 function createNewRange(line, start, end) {
-  const tdTag = $(`#L${line} .hljs-ln-code`);
+  const tdTag = get(`#L${line} .hljs-ln-code`);
   const startTag = findOffsetTag(tdTag, start);
   const endTag = findOffsetTag(tdTag, end);
   const new_range = document.createRange();
@@ -54,7 +58,7 @@ function drawLineHide(deco) {
 
 function createEllipsisNode(line) {
   let ellipsisLine = line.cloneNode(true);
-  ellipsisLine.first().classList.remove("selecting");
+  ellipsisLine.firstChild.classList.remove("selecting");
   const lnNumber = get(".hljs-ln-numbers div", ellipsisLine);
   lnNumber.setAttribute("data-line-number", "");
   
@@ -161,7 +165,6 @@ window.addEventListener("load", async function () {
   
   const pre = $('#pre')[0];
   if (pre.classList.contains("context-menu-one")) {
-    console.log(JSON.stringify(refData));
     hideLine();
     refData.map((deco) => {
       const type = deco.type;

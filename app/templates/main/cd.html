@@ -5,7 +5,8 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=deivce-width, initial-scale=1.0">
-  
+  <link rel="shortcut icon" href="#">
+
   <link rel="apple-touch-icon" sizes="57x57" href="{{url_for('static', filename='favicon/apple-icon-57x57.png')}}">
   <link rel="apple-touch-icon" sizes="60x60" href="{{url_for('static', filename='favicon/apple-icon-60x60.png')}}">
   <link rel="apple-touch-icon" sizes="72x72" href="{{url_for('static', filename='favicon/apple-icon-72x72.png')}}">
@@ -53,7 +54,7 @@
     </div>
   </div>
   <div class="topbar reponame-container">
-    <span class="reponame">{{ owner }} / {{ repo }}</span>
+    <span class="reponame">{{ owner }} / {{ repo }} ---codee</span>
   </div>
 </header>
 
@@ -131,15 +132,6 @@
         <section class="modal overlay">
         </section>
       </div>
-      {% if content == "" %}
-      <div class="box" id='export'>
-        <div class="center-col">
-          <img src="{{url_for('static', filename='6579900.jpg')}}" class="image" alt="" srcset="">
-          <a class="image-src" href="http://www.freepik.com">Designed by Freepik</a>
-        </div>
-      </div>
-
-      {% else %}
       <div class="box" id='export'>
         <div class="border-box">
           <pre id="pre">
@@ -147,7 +139,6 @@
           </pre>
         </div>
       </div>
-      {% endif %}
 
     </div>
 
@@ -163,26 +154,19 @@
   const ref = "{{ ref }}";
   const content = "{{ content }}";
   treeData = JSON.parse({{ tree|tojson }});
-  jsonData = JSON.parse({{ file_content|tojson }});
+  jsonData = JSON.parse({{ codee_content|tojson }});
+  console.log(jsonData);
+  const fileName = $('<div>', {
+    id: "filename",
+    class: "filename-bar"
+  });
 
-  if (content !== ""){
-    if (isCd(content)) {
-      const fileName = $('<div>', {
-        id: "filename",
-        class: "filename-bar"
-      });
-      fileName.text(jsonData['reference_file_path']);
-      $('#code').text(jsonData['reference_file_content']);
-      $('#pre').addClass('context-menu-one');
-      $('#pre').before(fileName);
-      
-      refData = JSON.parse(jsonData['data']);
-      
-    } else {
-      $('#code').text(jsonData['content']);
-    }
-  }
+  fileName.text({{ ref_path|tojson }});
+  $('#code').text({{ ref_content|tojson }});
+  $('#pre').addClass('context-menu-one');
+  $('#pre').before(fileName);
   
+  refData = JSON.parse(jsonData['data']);
 
   $('#tree').on('select_node.jstree', function (e, data) {
     let node = data.node;
@@ -196,7 +180,6 @@
   }
 
   $(function () {
-    console.log(treeData);
     const openedFile = "{{ content }}";
     const jstreeSetting = {
       plugins : [ "wholerow" ],

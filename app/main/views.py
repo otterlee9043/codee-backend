@@ -122,189 +122,59 @@ def show_codee_file(owner, repo, ref, content ):
 def update_codee():
     json_data = request.get_json(force=True)
     codee_path = json_data['codee_path']
-    codee_content = json.loads(json_data['codee_content'])
+    codee_content = json_data['codee_content']
     repo = json_data['repo']
     owner = current_user.username
 
-    # response = github.get(f"/repos/{owner}/{repo}/git/refs/heads/master")
-    # response.raise_for_status()
-    # latest_commit_sha = response.json()["object"]["sha"]
-
-    # response = github.post(f"/repos/{owner}/{repo}/git/refs", json={
-    #     "ref": "refs/heads/new-branch-name",
-    #     "sha": latest_commit_sha
-    # })
-    # response.raise_for_status()
-
-    # # Force push the new branch to the remote repository
-    # response = github.patch(f"/repos/{owner}/{repo}/git/refs/heads/master", json={
-    #     "sha": latest_commit_sha,
-    #     "force": True
-    # })
-    # response.raise_for_status()
-
-
-    print("codee_content")
-    print(codee_content)
-    # 1. codee에 적힌 commit sha 읽고
-    last_commit_sha = codee_content['last_commit_sha']
-
-    # 2. codee 파일 내용대로 blob 생성하기
+    utf8_blob_sha = None
     blob_request_body = {
-        'content': json_data['codee_content'],
+        'content': json_data['codee_content'], # JSON str
         'encoding': "utf-8"
     }
-
     blob_resp = github.post(f'/repos/{owner}/{repo}/git/blobs', json=blob_request_body)
     if blob_resp.ok:
         blob_json = blob_resp.json()
         utf8_blob_sha = blob_json['sha']
-        print(f"(2) {utf8_blob_sha} ")
+        print(f">> {utf8_blob_sha} ")
 
-    # 3. tree 생성
-    tree_request_body = {
-        "base_tree": last_commit_sha,
-        "tree": [
-            {
-              "path": codee_path,
-              "mode": "100644",
-              "type": "blob",
-              "sha": utf8_blob_sha
-            }
-        ]
+    request_body = {
+        'message': "Codee 파일 수정",
+        'content': base64.b64encode(codee_content.encode('utf-8')).decode('utf-8'),
+        'sha': utf8_blob_sha
     }
-    tree_resp = github.post(f'/repos/{owner}/{repo}/git/trees', json=tree_request_body)
-    print(tree_resp)
-    if tree_resp.status_code == 201:
-        tree_json = tree_resp.json()
-        tree_sha = tree_json['sha']
-        print(f"(3) {tree_sha} ")
-
-    # 4. commit 생성
-    commit_request_body = { 
-        "message": "Codee 파일 수정",
-        "author": {
-            "name": current_user.username, # codee
-            "email": current_user.email,
-            "date": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-        },
-        "parents": [
-            last_commit_sha
-        ],
-        "tree": tree_sha
-    }
+    resp = github.put(f'/repos/{owner}/{repo}/contents/{codee_path}',
+                        json=request_body)
+    print(resp)
+    print(resp.json())
     
-    print(commit_request_body)
-    commit_resp = github.post(f'/repos/{owner}/{repo}/git/commits', json = commit_request_body)
-    print(commit_resp.status_code)
-    
-    if commit_resp.ok:
-        commit_json = commit_resp.json()
-        print(commit_resp.status_code)
-        new_commit_sha = commit_json['sha']
-        print(f"(4) {new_commit_sha} ")
-
-    # 5. push
-    push_request_body = {
-        "sha": new_commit_sha,
-        "force": True
-    }
-    push_resp = github.patch(f'/repos/{owner}/{repo}/git/refs/heads/master', 
-                            json=push_request_body)
-    print(push_resp)
-    print(push_resp.json())
     return "codee file updated", 200
+
 
 @main.route('/create_codee', methods=['POST'])
 def create_codee():
     json_data = request.get_json(force=True)
     repo = json_data['repo']
-    codee_path = json_data['codee_path']
+    save_location = json_data['save_location']
     codee_name = json_data['codee_name']
     ref_path = json_data['ref_path']
     owner = current_user.username
 
-    print(f"codee_path: {codee_path}")
-
-    # 1. last commit id 가져오기
-    last_commit_sha = None
-    utf8_blob_sha = None
-    tree_sha = None
-    new_commit_sha = None
-
-    commit_list_resp = github.get(f'/repos/{owner}/{repo}/commits')
-    if commit_list_resp.ok:
-        commit_list_json = commit_list_resp.json()
-        last_commit_sha = commit_list_json[0]['sha']
-        print(f"(1) {last_commit_sha} ")
-    # 2. blob 생성
-    codee_content = {
+    
+    codee_content = json.dumps({
         'referenced_file': ref_path,
-        'last_commit_sha': last_commit_sha,
+        'last_commit_sha': '',
         'data': json.dumps([])
-    }
-    blob_request_body = {
-        'content': json.dumps(codee_content),
-        'encoding': "utf-8"
-    } # codee_content는 json string
-
-    blob_resp = github.post(f'/repos/{owner}/{repo}/git/blobs', json=blob_request_body)
-    if blob_resp.ok:
-        blob_json = blob_resp.json()
-        utf8_blob_sha = blob_json['sha']
-        print(f"(2) {utf8_blob_sha} ")
-
-    # 3. tree 생성
-    tree_request_body = {
-        "base_tree": last_commit_sha,
-        "tree": [
-            {
-              "path": f"{codee_path}/{codee_name}.cd",
-              "mode": "100644",
-              "type": "blob",
-              "sha": utf8_blob_sha
-            }
-        ]
-    }
-    tree_resp = github.post(f'/repos/{owner}/{repo}/git/trees', json=tree_request_body)
-    print(tree_resp)
-    if tree_resp.status_code == 201:
-        tree_json = tree_resp.json()
-        tree_sha = tree_json['sha']
-        print(f"(3) {tree_sha} ")
-
-    # 4. commit 생성
-    commit_request_body = { 
-        "message": "Codee 파일 생성",
-        "author": {
-            "name": current_user.username, # codee
-            "email": current_user.email,
-            "date": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-        },
-        "parents": [
-            last_commit_sha
-        ],
-        "tree": tree_sha
-    }
+    })
     
-    print(commit_request_body)
-    commit_resp = github.post(f'/repos/{owner}/{repo}/git/commits', json = commit_request_body)
-    # print(commit_resp)
-    print(commit_resp.status_code)
-    
-    if commit_resp.ok:
-        commit_json = commit_resp.json()
-        print(commit_resp.status_code)
-        new_commit_sha = commit_json['sha']
-        print(f"(4) {new_commit_sha} ")
-
-    # 5. push
-    push_request_body = {
-        "ref": "refs/heads/master",
-        "sha": new_commit_sha
+    request_body = {
+        'message': "Codee 파일 생성",
+        'content': base64.b64encode(codee_content.encode('utf-8')).decode('utf-8')
     }
-    push_resp = github.post(f'/repos/{owner}/{repo}/git/refs/heads/master', json=push_request_body)
-    
+    resp = github.put(f'/repos/{owner}/{repo}/contents/{save_location}/{codee_name}.cd',
+                        json=request_body)
+    print(resp)
+    print(resp.json())
+
     return "codee file created", 200
 
 

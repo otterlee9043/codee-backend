@@ -2,7 +2,6 @@ let menu = document.querySelector(".context-menu-one");
 let line, startIndex, endIndex;
 let range = null;
 
-console.log(menu);
 
 function getTD(elem) {
   while (elem.tagName != "TD") {
@@ -42,8 +41,7 @@ function findOffsetTag(node, offset) {
   }
 }
 
-// console.log(range.startContainer.hasChildNodes() ) ;
-// console.log(range.startContainer.parentElement.innerText.length ) ;
+
 function findOffset(node, offset) {
   let prev = node;
   while (node.tagName != "TD") {
@@ -90,8 +88,6 @@ function addingContextMenu(e) {
 if (menu != null) {
   menu.addEventListener("click", addingContextMenu);
 }
-
-
 
 
 
@@ -156,7 +152,7 @@ function openLink(e) {
 
 function getTextPosition(span){
   const [start, end] = getIndices(span);
-  const line = getTD(span).getAttribute("data-line-number");
+  const line = parseInt(getTD(span).getAttribute("data-line-number"));
   return {
     start: start,
     end: end,

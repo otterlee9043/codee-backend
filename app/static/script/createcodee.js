@@ -3,17 +3,17 @@ function open_dir(id) {
 }
 
 async function createCodee() {
-  const codee_name = document.getElementById("codee_name").value;
-  const codee_path = document.getElementById("codee_path").value;
-  const ref_path = document.getElementById("ref_path").value;
+  const codeeName = document.getElementById("codee_name").value;
+  const saveLocation = document.getElementById("codee_path").value;
+  const refPath = document.getElementById("ref_path").value;
   
   const opts = {
     method: "POST",
     body: JSON.stringify({
       "repo": repo,
-      "codee_name": codee_name,
-      "codee_path": codee_path,
-      "ref_path": ref_path,
+      "codee_name": codeeName,
+      "save_location": saveLocation,
+      "ref_path": refPath,
     }),
     headers: new Headers({
       "content-type": "application/json",
@@ -35,10 +35,8 @@ async function createCodee() {
 }
 
 
-
-
 async function updateCodee(){
-  jsonData['data'] = JSON.stringify(refData);
+  jsonData['data'] = JSON.stringify(`refData`);
   const codee_content = JSON.stringify(jsonData);
 
   const opts = {

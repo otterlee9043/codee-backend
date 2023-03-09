@@ -116,31 +116,3 @@ function deleteHighlight(ID) {
   }
 }
 
-function saveCodee(username) {
-  // path를 읽고
-  // fetch로 보내기
-  cacheChange = 1;
-  console.log(filepath);
-  console.log(refData);
-  const opts = {
-    method: "POST",
-    body: JSON.stringify({
-      codee_path: filepath,
-      codee_data: JSON.stringify(refData),
-      username: document.querySelector("li.dir").getAttribute("id")
-    }),
-    headers: new Headers({
-      "content-type": "application/json",
-    }),
-  };
-  fetch(`${window.origin}/codination/ver1/saveCodee`, opts)
-    .then(function (response) {
-      if (response.status != 200) {
-        console.log(`Looks like there was a problem. Status code: ${response.status}`);
-        return;
-      }
-    })
-    .catch(function (error) {
-      console.log("Fetch error: " + error);
-    });
-}
