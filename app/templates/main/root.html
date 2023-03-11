@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=deivce-width, initial-scale=1.0">
+
+    <link rel="apple-touch-icon" sizes="57x57" href="{{url_for('static', filename='favicon/apple-icon-57x57.png')}}">
+    <link rel="apple-touch-icon" sizes="60x60" href="{{url_for('static', filename='favicon/apple-icon-60x60.png')}}">
+    <link rel="apple-touch-icon" sizes="72x72" href="{{url_for('static', filename='favicon/apple-icon-72x72.png')}}">
+    <link rel="apple-touch-icon" sizes="76x76" href="{{url_for('static', filename='favicon/apple-icon-76x76.png')}}">
+    <link rel="apple-touch-icon" sizes="114x114"
+        href="{{url_for('static', filename='favicon/apple-icon-114x114.png')}}">
+    <link rel="apple-touch-icon" sizes="120x120"
+        href="{{url_for('static', filename='favicon/apple-icon-120x120.png')}}">
+    <link rel="apple-touch-icon" sizes="144x144"
+        href="{{url_for('static', filename='favicon/apple-icon-144x144.png')}}">
+    <link rel="apple-touch-icon" sizes="152x152"
+        href="{{url_for('static', filename='favicon/apple-icon-152x152.png')}}">
+    <link rel="apple-touch-icon" sizes="180x180"
+        href="{{url_for('static', filename='favicon/apple-icon-180x180.png')}}">
+    <link rel="icon" type="image/png" sizes="192x192"
+        href="{{url_for('static', filename='favicon/android-icon-192x192.png')}}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{url_for('static', filename='favicon/favicon-32x32.png')}}">
+    <link rel="icon" type="image/png" sizes="96x96" href="{{url_for('static', filename='favicon/favicon-96x96.png')}}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{url_for('static', filename='favicon/favicon-16x16.png')}}">
+    <link rel="manifest" href="{{url_for('static', filename='favicon/manifest.json')}}">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="{{url_for('static', filename='favicon/ms-icon-144x144.png')}}">
+    <meta name="theme-color" content="#ffffff">
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
+    <script src="https://kit.fontawesome.com/16fd5c8b77.js" crossorigin="anonymous"></script>
+    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
+    <title>Codee</title>
+</head>
+<header>
+    <div class="topbar darkbg">
+        <div class="logo-wrapper"><img src="{{url_for('static', filename='logo_white.svg')}}" class="small-logo" alt=""
+                srcset=""></div>
+
+        <div class="logout2 white">
+            <span>{{current_user.username}} 님,</span>
+            <a href="{{ url_for('auth.logout') }}">logout</a>
+        </div>
+    </div>
+    <div class="topbar reponame-container">
+        <span class="reponame">{{ owner }} / {{ repo }}</span>
+    </div>
+</header>
+
+<body>
+    <div class="container center-col">
+        <br>
+        <div class="center-row full">
+            <div class="sidebar col">
+                <div class="filelist border-box scroll">
+                    <div id="tree"></div>
+                </div>
+                <div class="full">
+                    <button class="button modalButton full" data-popup="popupOne">create codee</button>
+                </div>
+                <section class="modal modalWindow" id="popupOne">
+                    <section class="modalWrapper">
+                        <div>
+                            <form>
+                                <div>
+                                    <div class="col-25">
+                                        <label for="name">codee name</label>
+                                    </div>
+                                    <div class="col-60">
+                                        <input id="codee_name" type="text" name="codee_name">
+                                    </div>
+                                    <div class="col-15">
+                                        <span>.cd</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="col-25"><label for="codee_path">codee path</label></div>
+                                    <div class="col-60">
+                                        <input id='codee_path' type="text" name='codee_path' disabled="true">
+                                        <div id="drawer1" class="browse-dir scroll">
+                                            <ul id="dir_tree" aria-labelledby="tree_label">
+                                                <li id="modal_tree_1" class="dir"></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="col-15"> <button class='browse-btn' type='button'
+                                            onclick="openDir('drawer1')">browse</button>
+                                    </div>
+
+                                </div>
+                                <div>
+                                    <div class="col-25"><label for="ref_filename">reference file name</label></div>
+                                    <div class="col-60">
+                                        <input id='ref_path' name='ref_path' type="text" disabled="true">
+                                        <div id="drawer2" class="browse-dir scroll">
+                                            <ul id="dir_tree" aria-labelledby="tree_label">
+                                                <li id="modal_tree_2" class="dir"></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="col-15"><button class='browse-btn' type='button'
+                                            onclick="openDir('drawer2')">browse</button>
+                                    </div>
+                                </div>
+                                <div class="create-btn">
+                                    <button onclick="createCodee()">Create</button>
+                                </div>
+                            </form>
+
+                        </div>
+                    </section>
+                    <a class="closeBtn">×</a>
+                </section>
+                <section class="modal overlay">
+                </section>
+            </div>
+            <div class="box" id='export'>
+                <div class="center-col">
+                    <img src="{{url_for('static', filename='6579900.jpg')}}" class="image" alt="" srcset="">
+                    <a class="image-src" href="http://www.freepik.com">Designed by Freepik</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+<script>
+    let refData = null;
+    let treeData = null;
+    const owner = "{{ owner }}";
+    const repo = "{{ repo }}";
+    const ref = "{{ ref }}";
+    treeData = JSON.parse({{ tree| tojson }});
+
+    $('#tree').on('select_node.jstree', function (e, data) {
+        let node = data.node;
+        if (node.type === 'file') {
+            window.location.href = `/${owner}/${repo}/${ref}/${node['a_attr']['path']}`;
+        }
+    });
+
+
+    $(function () {
+        console.log(treeData);
+        const jstreeSetting = {
+            plugins: ["wholerow"],
+            core: {
+                themes: {
+                    responsive: false,
+                },
+            },
+            types: {
+                default: {
+                    icon: "fa fa-folder",
+                },
+                file: {
+                    icon: "fa fa-file",
+                },
+            },
+            plugins: ["types"],
+            core: {
+                data: treeData
+            }
+        };
+        $("#tree").jstree(jstreeSetting);
+        $("#modal_tree_1").jstree(jstreeSetting);
+        $("#modal_tree_2").jstree(jstreeSetting);
+
+        $('#modal_tree_1').on('changed.jstree', function (e, data) {
+            let selectedNode = data.instance.get_node(data.selected[0]);
+            if (selectedNode.original.type == "dir") {
+                $('#codee_path').val('');
+                $('#codee_path').val(selectedNode.id);
+            }
+        });
+
+        $('#modal_tree_2').on('changed.jstree', function (e, data) {
+            let selectedNode = data.instance.get_node(data.selected[0]);
+            if (selectedNode.original.type == "file") {
+                $('#ref_path').val('');
+                $('#ref_path').val(selectedNode.id);
+            }
+        });
+
+    });
+
+    const settings = {
+        objModalPopupBtn: ".modalButton",
+        objModalCloseBtn: ".overlay, .closeBtn",
+        objModalDataAttr: "data-popup",
+    };
+
+    $(settings.objModalPopupBtn).bind("click", function () {
+        if ($(this).attr(settings.objModalDataAttr)) {
+            let strDataPopupName = $(this).attr(settings.objModalDataAttr);
+            $(".overlay, #" + strDataPopupName).fadeIn();
+        }
+    });
+
+    $(settings.objModalCloseBtn).bind("click", function () {
+        $("#codee_name").val("");
+        $("#codee_path").val("");
+        $("#ref_path").val("");
+        $(".modal").fadeOut();
+    });
+
+
+
+</script>
+
+</html>

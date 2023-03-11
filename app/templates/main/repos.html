@@ -30,10 +30,10 @@
         <button class="openbtn" onclick="openNav()">☰</button>
         <div class="logout2">
             {% if current_user.is_authenticated %}
-                <span>{{current_user.username}} 님,</span>
-                <a class="black" href="{{ url_for('auth.logout') }}">logout</a>
+            <span>{{current_user.username}} 님,</span>
+            <a class="black" href="{{ url_for('auth.logout') }}">logout</a>
             {% else %}
-                <a class="black" href="{{ url_for('auth.github_login') }}">login</a>
+            <a class="black" href="{{ url_for('auth.github_login') }}">login</a>
             {% endif %}
         </div>
     </div>
@@ -44,7 +44,7 @@
             <div class="filename-bar" id="filename">My Repositories</div>
             <ul class="repos">
                 {% for repo in repos %}
-                <li class="repo"><a class="black" href="otterlee9043/{{ repo }}/master/">/{{ repo
+                <li class="repo"><a class="black" href="otterlee9043/{{ repo }}/master">/{{ repo
                         }}</a></li>
                 {% endfor %}
             </ul>

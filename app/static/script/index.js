@@ -1,8 +1,8 @@
 const settings = {
   objModalPopupBtn: ".modalButton",
   objModalCloseBtn: ".overlay, .closeBtn",
-  objModalDataAttr: "data-popup"
-}
+  objModalDataAttr: "data-popup",
+};
 
 $(settings.objModalPopupBtn).bind("click", function () {
   if ($(this).attr(settings.objModalDataAttr)) {
@@ -12,9 +12,9 @@ $(settings.objModalPopupBtn).bind("click", function () {
 });
 
 $(settings.objModalCloseBtn).bind("click", function () {
-  $('#codee_name').val('');
-  $('#codee_path').val('');
-  $('#ref_path').val('');
+  $("#codee_name").val("");
+  $("#codee_path").val("");
+  $("#ref_path").val("");
   $(".modal").fadeOut();
 });
 
@@ -43,16 +43,15 @@ function createNewRange(line, start, end) {
   document.getSelection().addRange(new_range);
 }
 
-
 function drawLineHide(deco) {
   const { start, end, id } = deco;
   const number = Math.abs(start - end) + 1;
   selectedInfo.push({ start: start, number: number, id: id });
-  let line = $(`#L${start}`);
+  let line = get(`#L${start}`);
   createEllipsisNode(line);
   for (let i = 0; i < number; i++) {
-    line.addClass("hidden");
-    line = line.next();
+    line.classList.add("hidden");
+    line = line.nextElementSibling;
   }
 }
 
@@ -61,7 +60,7 @@ function createEllipsisNode(line) {
   ellipsisLine.firstChild.classList.remove("selecting");
   const lnNumber = get(".hljs-ln-numbers div", ellipsisLine);
   lnNumber.setAttribute("data-line-number", "");
-  
+
   const ellipsisBtn = document.createElement("span");
   ellipsisBtn.classList.add("ellipsis");
   ellipsisBtn.innerText = "⋯";
@@ -73,7 +72,7 @@ function createEllipsisNode(line) {
     const lineId = `L${info.start}`;
     const number = info.number;
     const ID = info.id;
-    deleteLineHide(ID);
+    deleteDeco(ID);
     expand(lineId, number);
     const lineNumber = parseInt(lineId.replace(/[^0-9]/g, ""));
     selectedInfo = selectedInfo.filter((item) => {
@@ -83,8 +82,6 @@ function createEllipsisNode(line) {
   line.before(ellipsisLine);
   return ellipsisLine;
 }
-
-
 
 function drawComment(deco) {
   const { selected, comment, id } = deco;
@@ -99,7 +96,6 @@ function drawComment2(deco) {
 
   embedComment(comment, selected, id);
 }
-
 
 function drawHighlight(deco) {
   const { selected, color, id } = deco;
@@ -119,18 +115,13 @@ function drawWordHide(deco) {
   ellipsisBtn.addEventListener("click", () => {
     selected.classList.remove("hidden");
     console.log(`id is ${id}`);
-    deleteWordHide(id);
+    deleteDeco(id);
     ellipsisBtn.remove();
     mergeNode(selected);
   });
 }
 
-/**
- * 
- * @param {*} data 
- *  link 태그로 만들어주는 
- */
- function addLinkTag(data) {
+function addLinkTag(data) {
   const { selected, url, id } = data;
 
   const link = document.createElement("a");
@@ -139,20 +130,21 @@ function drawWordHide(deco) {
   link.classList.add("link");
   link.href = "javascript:void(0);";
 
-  link.addEventListener("click", openLink); 
-  selected.before(link)
+  link.addEventListener("click", openLink);
+  selected.before(link);
   link.appendChild(selected);
-  
+
   console.log(url);
   const linkUrl = new URL(url);
-  if(linkUrl.hostname == "www.youtube.com" || linkUrl.hostname == "youtu.be"){
+  if (linkUrl.hostname == "www.youtube.com" || linkUrl.hostname == "youtu.be") {
     console.log("youtube");
     const div = wrapTdtag(selected);
-    const iframe = $('<iframe>', {
+    const iframe = $("<iframe>", {
       class: "youtube",
-      src: linkUrl.pathname == "/watch"? 
-      `https://www.youtube.com/embed/${linkUrl.searchParams.get("v")}` 
-      : `https://www.youtube.com/${linkUrl.pathname}`,
+      src:
+        linkUrl.pathname == "/watch"
+          ? `https://www.youtube.com/embed/${linkUrl.searchParams.get("v")}`
+          : `https://www.youtube.com/${linkUrl.pathname}`,
     }).appendTo(div);
   }
 
@@ -160,13 +152,13 @@ function drawWordHide(deco) {
   registerCommentEvent(url, selected.parentElement, id, "link");
 }
 
-let cacheChange = 0;
 window.addEventListener("load", async function () {
-  
-  const pre = $('#pre')[0];
+  const pre = $("#pre")[0];
   if (pre.classList.contains("context-menu-one")) {
     hideLine();
-    refData.map((deco) => {
+    for (let id in refData) {
+      const deco = refData[id];
+      // refData.map((deco) => {
       const type = deco.type;
 
       createNewRange(deco.line, deco.start, deco.end);
@@ -175,44 +167,49 @@ window.addEventListener("load", async function () {
 
       switch (type) {
         case "line_hide":
-          drawLineHide(deco);
+          drawLineHide({
+            start: deco.start,
+            end: deco.end,
+            id: id,
+          });
           break;
         case "link":
           addLinkTag({
             selected: span,
-            url: deco.url,
-            id: deco.id
+            url: url,
+            id: deco.id,
           });
           break;
         case "comment-embedded":
           drawComment2({
             selected: span,
             comment: deco.comment,
-            id: deco.id
+            id: id,
           });
           break;
         case "comment":
           drawComment({
             selected: span,
             comment: deco.comment,
-            id: deco.id
+            id: id,
           });
           break;
         case "highlight":
           drawHighlight({
             selected: span,
             color: deco.color,
-            id: deco.id
+            id: id,
           });
           break;
         case "word_hide":
           drawWordHide({
             selected: span,
-            id: deco.id
+            id: id,
           });
           break;
       }
-    });
+    }
+    // });
   }
 });
 
@@ -250,19 +247,16 @@ function saveSelection() {
   return null;
 }
 
-
 function isString(inputText) {
   if (typeof inputText === "string" || inputText instanceof String) return true;
   else return false;
 }
-
 
 function compare(a, b) {
   const num1 = parseInt(a.querySelector(".lineNumber span").innerText);
   const num2 = parseInt(b.querySelector(".lineNumber span").innerText);
   return num1 - num2;
 }
-
 
 function expand(lineId, number) {
   let firstLine = document.querySelector(`.hidden#${lineId}`);
@@ -272,7 +266,6 @@ function expand(lineId, number) {
     firstLine = firstLine.nextSibling;
   }
 }
-
 
 function hideLine() {
   const numbers = getAll(".hljs-ln-numbers");
@@ -308,15 +301,12 @@ function hideLine() {
         Array.from(numbers).map((number) => {
           number.classList.remove("selecting");
         });
-        if (refData != null) {
-          addLineHide(start, end, ID);
-        }
+        addLineHide(start, end, ID);
       }
       lineSelected = !lineSelected;
     });
   });
 }
-
 
 function splitText(textNode, index, textLength, start, same = false) {
   const fullText = textNode.nodeValue;
@@ -326,7 +316,6 @@ function splitText(textNode, index, textLength, start, same = false) {
   textNode.replaceWith(span);
   return splitSpan(span, index, textLength, start, same);
 }
-
 
 function splitSpan(span, index, textLength, start, same = false) {
   const fullText = span.innerText;
@@ -371,7 +360,6 @@ function splitSpan(span, index, textLength, start, same = false) {
   return start ? [FRAGMENT.TAIL, span2] : [FRAGMENT.HEAD, span];
 }
 
-
 function bindTags(startNode, endNode) {
   const newSpan = document.createElement("span");
   let node = startNode;
@@ -400,15 +388,13 @@ function ellipsisSpan(newSpan) {
     newSpan.classList.remove("hidden");
     let id = newSpan.getAttribute("id");
     console.log(`id is ${id}`);
-    deleteWordHide(id);
+    deleteDeco(id);
     ellipsisButton.remove();
     mergeNode(newSpan);
-
   });
   newSpan.before(ellipsisButton);
   newSpan.classList.add("hidden");
 }
-
 
 function nodeType(element) {
   if (element.parentElement.tagName == "TD") {
@@ -423,32 +409,36 @@ function nodeType(element) {
   }
 }
 
-
-function createCutSpan(){
+function createCutSpan() {
   const cutSpan = document.createElement("span");
   cutSpan.textContent = "✂️";
   return cutSpan;
 }
 
-function splitNode(parentNode, firstOffset, textLength, start, sameParent=false){
+function splitNode(parentNode, firstOffset, textLength, start, sameParent = false) {
   let fragmented, node;
   if (nodeType(parentNode) == NODE.TEXT) {
     [fragmented, node] = splitText(parentNode, firstOffset, textLength, start, sameParent);
   } else {
-    [fragmented, node] = splitSpan(parentNode.parentElement, firstOffset, textLength, start, sameParent);
+    [fragmented, node] = splitSpan(
+      parentNode.parentElement,
+      firstOffset,
+      textLength,
+      start,
+      sameParent
+    );
   }
   return [fragmented, node];
 }
 
-function setFragmentAttribute(firstOffset, lastOffset, paretNode, node){
-  if (firstOffset == 0){
-    if (lastOffset == paretNode.nodeValue.length){
+function setFragmentAttribute(firstOffset, lastOffset, paretNode, node) {
+  if (firstOffset == 0) {
+    if (lastOffset == paretNode.nodeValue.length) {
       node.setAttribute("fragmented", FRAGMENT.FALSE);
-    }
-    else {
+    } else {
       node.setAttribute("fragmented", FRAGMENT.HEAD);
     }
-  } else if (lastOffset == paretNode.nodeValue.length){
+  } else if (lastOffset == paretNode.nodeValue.length) {
     node.setAttribute("fragmented", FRAGMENT.TAIL);
   } else {
     node.setAttribute("fragmented", FRAGMENT.CENTER);
@@ -463,20 +453,17 @@ function createNewSpan(selectionText) {
     anchorOffset: firstOffset,
     focusOffset: lastOffset,
   } = selectionText;
-  
+
   let { tagName: anchorTagType } = selectedFirst.parentElement;
   let { tagName: focusTagType } = selectedLast.parentElement;
-  let startNode, endNode, fragmented;;
+  let startNode, endNode, fragmented;
 
-  
   const cutSpan = createCutSpan();
   if (selectedFirst.compareDocumentPosition(selectedLast) & Node.DOCUMENT_POSITION_PRECEDING) {
     [selectedFirst, selectedLast] = [selectedLast, selectedFirst];
     [firstOffset, lastOffset] = [lastOffset, firstOffset];
     [anchorTagType, focusTagType] = [focusTagType, anchorTagType];
-  } 
-  
-  else if (selectedFirst === selectedLast) {
+  } else if (selectedFirst === selectedLast) {
     if (lastOffset < firstOffset) [firstOffset, lastOffset] = [lastOffset, firstOffset];
 
     const textLength = selectedFirst.nodeValue.substring(firstOffset, lastOffset).length;
@@ -487,12 +474,18 @@ function createNewSpan(selectionText) {
     return newSpan;
   }
 
-  const textLength = selectedFirst.nodeValue.substring(firstOffset, selectedFirst.nodeValue.length).length;
+  const textLength = selectedFirst.nodeValue.substring(
+    firstOffset,
+    selectedFirst.nodeValue.length
+  ).length;
   [fragmented, startNode] = splitNode(selectedFirst, firstOffset, textLength, true);
   startNode.parentElement.insertBefore(cutSpan, startNode);
   const start = splitTree(cutSpan, Position.START, fragmented === FRAGMENT.FALSE ? false : true);
 
-  const textLength2 = selectedLast.nodeValue.substring(lastOffset, selectedLast.nodeValue.length).length;
+  const textLength2 = selectedLast.nodeValue.substring(
+    lastOffset,
+    selectedLast.nodeValue.length
+  ).length;
   [fragmented, endNode] = splitNode(selectedLast, lastOffset, textLength2, false);
   endNode.parentElement.insertBefore(cutSpan, endNode.nextSibling);
   const end = splitTree(cutSpan, Position.END, fragmented === FRAGMENT.FALSE ? false : true);
@@ -501,13 +494,15 @@ function createNewSpan(selectionText) {
   return newSpan;
 }
 
-
 function hideText() {
   let selectionText;
   if (document.getSelection) {
     selectionText = document.getSelection();
     console.log(selectionText);
-    if (!isString(selectionText.anchorNode.nodeValue) || !isString(selectionText.focusNode.nodeValue)) {
+    if (
+      !isString(selectionText.anchorNode.nodeValue) ||
+      !isString(selectionText.focusNode.nodeValue)
+    ) {
       console.log("NOT STRING!!");
       return;
     }
@@ -524,7 +519,7 @@ const Position = {
   END: 1,
 };
 
-function hasBeenFragmentedAsTail(node, cutElement){
+function hasBeenFragmentedAsTail(node, cutElement) {
   return parseInt(node.getAttribute("fragmented")) === FRAGMENT.TAIL;
 }
 
@@ -535,7 +530,8 @@ function splitTree(cutElement, position, split) {
   if (hasBeenFragmentedAsTail(node, cutElement)) {
     node.setAttribute("fragmented", FRAGMENT.CENTER);
   } else {
-    if (split) node.setAttribute("fragmented", position === Position.START ? FRAGMENT.TAIL : FRAGMENT.HEAD);
+    if (split)
+      node.setAttribute("fragmented", position === Position.START ? FRAGMENT.TAIL : FRAGMENT.HEAD);
     else node.setAttribute("fragmented", FRAGMENT.FALSE);
   }
 
@@ -548,7 +544,8 @@ function splitTree(cutElement, position, split) {
     node = position === Position.START ? right : parent;
     if (parseInt(node.getAttribute("fragmented")) === FRAGMENT.TAIL)
       node.setAttribute("fragmented", FRAGMENT.CENTER);
-    else node.setAttribute("fragmented", position === Position.START ? FRAGMENT.TAIL : FRAGMENT.HEAD);
+    else
+      node.setAttribute("fragmented", position === Position.START ? FRAGMENT.TAIL : FRAGMENT.HEAD);
   }
   if (parent === bound) {
     right = cutElement.nextSibling;
@@ -698,7 +695,7 @@ function merge(wrapper) {
   }
 }
 
-function mergeNode(node, commentSpan = null){
+function mergeNode(node, commentSpan = null) {
   const children = [];
   while (node.firstChild) {
     const child = node.firstChild;
@@ -708,7 +705,7 @@ function mergeNode(node, commentSpan = null){
   }
   console.log();
   node.remove();
-  if(commentSpan) commentSpan.remove();
+  if (commentSpan) commentSpan.remove();
   Array.from(children).map((node) => {
     merge(node);
   });
@@ -719,7 +716,7 @@ function registerCommentEvent(comment, node, id, type) {
   commentSpan.innerText = comment;
   commentSpan.classList.add("comment");
   commentSpan.id = id;
-  
+
   const closeBtn = document.createElement("span");
   closeBtn.innerText = "X";
   closeBtn.classList.add("right");
@@ -729,11 +726,11 @@ function registerCommentEvent(comment, node, id, type) {
   closeBtn.addEventListener("click", () => {
     console.log(commentSpan.id);
     if (type == "comment") {
-      deleteComment(commentSpan.id);
+      deleteDeco(commentSpan.id);
     } else if (type == "link") {
-      deleteLink(id);
+      deleteDeco(id);
     } else if (type == "highlight") {
-      deleteHighlight(id);
+      deleteDeco(id);
     }
     addContextMenu();
 
@@ -777,4 +774,3 @@ function showCommentDetail(span, commentSpan) {
 function hideCommentDetail(span) {
   span.remove();
 }
-

@@ -1,9 +1,11 @@
-import json, time, os, re, subprocess
-from flask import render_template, redirect, url_for, flash, request, make_response, jsonify
-from flask_login import current_user, login_required
 from . import main
 from .. import db
 from ..models import User
+
+import json, os
+from flask import render_template, redirect, url_for, flash, request
+from flask_login import current_user, login_required
+from functools import wraps
 from os.path import exists
 from flask_dance.contrib.github import github
 import base64
@@ -15,6 +17,15 @@ def is_cd(file_path):
     print(os.path.splitext(file_path)[1] == "cd")
     return os.path.splitext(file_path)[1] == ".cd"
 
+
+def login_required_for_all(func):
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return abort(401)
+        return func(*args, **kwargs)
+    
+    return decorated_view
 
 def get_content_of_file(owner, repo, path):
     resp = github.get(f'/repos/{owner}/{repo}/contents/{path}')
@@ -74,6 +85,7 @@ def get_tree_of_repository(owner, repo, ref):
     return None
 
 
+@login_required
 @main.route('/', methods=['GET', 'POST'])
 def index():
     repos_name = None
@@ -84,17 +96,14 @@ def index():
         repos_name = [repo['name'] for repo in repos_list]
     return render_template('main/repos.html', repos=repos_name)
 
-
+@login_required
 @main.route('/<path:filepath>', methods=['GET'])
 def show_file(filepath):
-    print(filepath.split("/", maxsplit=3))
-    owner, repo, ref, content = filepath.split("/", maxsplit=3)
-
-    print(f'/repos/{owner}/{repo}/contents/')
-    print("content: " + content)
-
     file_content = None
-    if content:
+
+    path_parts = filepath.split('/')
+    if len(path_parts) >= 4:
+        owner, repo, ref, content = filepath.split("/", maxsplit=3)
         if is_cd(content):
             return show_codee_file(owner, repo, ref, content)
             
@@ -102,9 +111,16 @@ def show_file(filepath):
             file_content = {
                 'content': get_content_of_file(owner, repo, content)
             }
-
-    return render_template('main/index.html', tree=get_tree_of_repository(owner, repo, ref),
+            return render_template('main/index.html', tree=get_tree_of_repository(owner, repo, ref),
                            owner=owner, repo=repo, ref=ref, content=content, file_content=json.dumps(file_content))
+    elif len(path_parts) == 3:
+        owner, repo, ref = filepath.split("/", maxsplit=2)
+        return render_template('main/root.html', tree=get_tree_of_repository(owner, repo, ref),
+                           owner=owner, repo=repo, ref=ref)
+    return "Illegal URL", 400
+
+    
+
 
 def show_codee_file(owner, repo, ref, content ):
     codee_content = get_content_of_file(owner, repo, content)
@@ -118,6 +134,7 @@ def show_codee_file(owner, repo, ref, content ):
                            ref_content=reference_file_content,
                            codee_content=codee_content)
 
+
 @main.route('/update_codee', methods=['POST'])
 def update_codee():
     json_data = request.get_json(force=True)
@@ -125,27 +142,36 @@ def update_codee():
     codee_content = json_data['codee_content']
     repo = json_data['repo']
     owner = current_user.username
+    print(">> codee_content")
+    print(codee_content)
 
-    utf8_blob_sha = None
+    get_resp = github.get(f'/repos/{owner}/{repo}/contents/{codee_path}')
+    get_resp_json = get_resp.json()
+
+    if not get_resp.ok:
+        return 'Failed to get previous file content', 500
+
+    current_sha = get_resp_json['sha']
+    current_content = base64.b64decode(get_resp_json['content']).decode('utf-8')
+
     blob_request_body = {
-        'content': json_data['codee_content'], # JSON str
+        'content': codee_content, # JSON str
         'encoding': "utf-8"
     }
     blob_resp = github.post(f'/repos/{owner}/{repo}/git/blobs', json=blob_request_body)
     if blob_resp.ok:
-        blob_json = blob_resp.json()
-        utf8_blob_sha = blob_json['sha']
-        print(f">> {utf8_blob_sha} ")
-
-    request_body = {
-        'message': "Codee 파일 수정",
-        'content': base64.b64encode(codee_content.encode('utf-8')).decode('utf-8'),
-        'sha': utf8_blob_sha
-    }
-    resp = github.put(f'/repos/{owner}/{repo}/contents/{codee_path}',
-                        json=request_body)
+        request_body = {
+            'message': "Codee 파일 수정",
+            'content': base64.b64encode(codee_content.encode('utf-8')).decode('utf-8'),
+            'sha': current_sha 
+        }
+        resp = github.put(f'/repos/{owner}/{repo}/contents/{codee_path}',
+                            json=request_body)
+        if resp.ok:
+            return 'Codee file updated successfully', 200
     print(resp)
     print(resp.json())
+
     
     return "codee file updated", 200
 
@@ -163,7 +189,7 @@ def create_codee():
     codee_content = json.dumps({
         'referenced_file': ref_path,
         'last_commit_sha': '',
-        'data': json.dumps([])
+        'data': json.dumps({})
     })
     
     request_body = {

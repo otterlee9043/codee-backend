@@ -2,13 +2,13 @@ let menu = document.querySelector(".context-menu-one");
 let line, startIndex, endIndex;
 let range = null;
 
-
 function getTD(elem) {
   while (elem.tagName != "TD") {
     elem = elem.parentElement;
   }
   return elem;
 }
+
 function findLine(elem) {
   while (elem.tagName != "TD") {
     elem = elem.parentElement;
@@ -40,7 +40,6 @@ function findOffsetTag(node, offset) {
     return findOffsetTag(prev, offset - prevOffset);
   }
 }
-
 
 function findOffset(node, offset) {
   let prev = node;
@@ -89,8 +88,6 @@ if (menu != null) {
   menu.addEventListener("click", addingContextMenu);
 }
 
-
-
 function saveSelection() {
   if (window.getSelection) {
     let selection = document.getSelection();
@@ -107,7 +104,7 @@ function restoreSelection() {
   console.log("restoreSelection");
   let tdTag = document.querySelector(`#L${line} > .hljs-ln-code`);
   let startTag = findOffsetTag(tdTag, startIndex);
-  console.log(startTag) ;
+  console.log(startTag);
   let endTag = findOffsetTag(tdTag, endIndex);
   let newRange = document.createRange();
   newRange.setStart(startTag.tag, startTag.startOffset);
@@ -115,7 +112,6 @@ function restoreSelection() {
   document.getSelection().removeAllRanges();
   document.getSelection().addRange(newRange);
 }
-
 
 function createFakeSelection(event) {
   let span = createNewSpan(document.getSelection());
@@ -143,24 +139,23 @@ function removeFakeSelection(event) {
   }
 }
 
-
 function openLink(e) {
   console.log("click link");
   url = e.getAttribute("url");
   window.open(url, "_blank").focus();
 }
 
-function getTextPosition(span){
+function getTextPosition(span) {
   const [start, end] = getIndices(span);
   const line = parseInt(getTD(span).getAttribute("data-line-number"));
   return {
     start: start,
     end: end,
-    line: line
+    line: line,
   };
 }
 
-function removeSelectionEvent(inputs){
+function removeSelectionEvent(inputs) {
   inputs.map((input) => {
     input.removeEventListener("mousedown", createFakeSelection);
     input.removeEventListener("blur", removeFakeSelection);
@@ -168,8 +163,8 @@ function removeSelectionEvent(inputs){
 }
 
 const KEY = {
-  ENTER: 13
-}
+  ENTER: 13,
+};
 
 $.contextMenu({
   selector: ".context-menu-one",
@@ -177,8 +172,7 @@ $.contextMenu({
   delay: 500,
   autoHide: false,
   selectableSubMenu: true,
-  position: function (opt, x, y) {
-  },
+  position: function (opt, x, y) {},
   items: {
     comment: {
       icon: "fa-light fa-comment-dots",
@@ -188,16 +182,17 @@ $.contextMenu({
           type: "text",
           id: "comment-input",
           events: {
-            keyup: function (event) { // 키보드가 입력되면 발생
-              const inputs = getAll('.context-menu-input input.context-menu-input textarea');
-              const input = get('[name=context-menu-input-comment]');
+            keyup: function (event) {
+              // 키보드가 입력되면 발생
+              const inputs = getAll(".context-menu-input input.context-menu-input textarea");
+              const input = get("[name=context-menu-input-comment]");
               if (event.keyCode == KEY.ENTER && input.value) {
                 addComment(input.value);
                 $(".context-menu-list.context-menu-root").trigger("contextmenu:hide");
               }
             },
             mousedown: createFakeSelection,
-            blur: removeFakeSelection
+            blur: removeFakeSelection,
           },
         },
       },
@@ -210,14 +205,14 @@ $.contextMenu({
       events: {
         click: (event) => {
           console.log("@@@ mousedown", event);
-        }
+        },
       },
       items: {
         comment2: {
           type: "textarea",
           events: {
             mousedown: createFakeSelection,
-            blur: removeFakeSelection
+            blur: removeFakeSelection,
           },
         },
         save: {
@@ -226,15 +221,15 @@ $.contextMenu({
           className: "button-wrapper",
           callback: function (key, opt, e) {
             createFakeSelection();
-            const inputs = getAll('.context-menu-input input, .context-menu-input textarea');
-            const input = get('[name=context-menu-input-comment2]');
-            if (input.value){
-              addComment2(input.value); 
-              $(".context-menu-list.context-menu-root").trigger("contextmenu:hide");  
+            const inputs = getAll(".context-menu-input input, .context-menu-input textarea");
+            const input = get("[name=context-menu-input-comment2]");
+            if (input.value) {
+              addComment2(input.value);
+              $(".context-menu-list.context-menu-root").trigger("contextmenu:hide");
             }
             removeFakeSelection();
-          }
-        }
+          },
+        },
       },
     },
     highlight: {
@@ -243,15 +238,21 @@ $.contextMenu({
       items: {
         red: {
           icon: "fa-solid fa-circle",
-          callback: () => { addHighlight("red"); }
+          callback: () => {
+            addHighlight("red");
+          },
         },
         yellow: {
           icon: "fa-solid fa-circle",
-          callback: () => { addHighlight("yellow"); }
+          callback: () => {
+            addHighlight("yellow");
+          },
         },
         green: {
           icon: "fa-solid fa-circle",
-          callback: () => { addHighlight("green"); }
+          callback: () => {
+            addHighlight("green");
+          },
         },
       },
     },
@@ -264,9 +265,9 @@ $.contextMenu({
         const ID = randomId();
         span.id = ID;
 
-        ellipsisSpan(span) ;
+        ellipsisSpan(span);
         addWordHide(start, end, line, ID);
-      }
+      },
     },
     link: {
       icon: "fa-light fa-link",
@@ -276,15 +277,15 @@ $.contextMenu({
           type: "text",
           events: {
             keyup: function (e) {
-              console.log("items > link > items > 'link-1' > events")
-              const inputs = getAll('.context-menu-input input, .context-menu-input textarea');
-              const input = get('[name=context-menu-input-link]');
+              console.log("items > link > items > 'link-1' > events");
+              const inputs = getAll(".context-menu-input input, .context-menu-input textarea");
+              const input = get("[name=context-menu-input-link]");
               if (e.keyCode == KEY.ENTER && input.value) {
                 let url = input.value;
                 const data = {
                   selected: get(".selected"),
                   url: url,
-                  id: randomId()
+                  id: randomId(),
                 };
 
                 const { start, end, line } = getTextPosition(get(".selected"));
@@ -295,7 +296,7 @@ $.contextMenu({
               }
             },
             mousedown: createFakeSelection,
-            blur: removeFakeSelection
+            blur: removeFakeSelection,
           },
         },
       },
@@ -312,9 +313,8 @@ $.contextMenu({
     },
     show: function (e) {
       const range = saveSelection();
-      if (!isValidRange(range))
-        return false;
-      
+      if (!isValidRange(range)) return false;
+
       let tdNode = getTD(range.commonAncestorContainer);
       line = tdNode.getAttribute("data-line-number");
       startIndex = findOffset(range.startContainer, range.startOffset);
@@ -324,7 +324,7 @@ $.contextMenu({
   },
 });
 
-function isValidRange(range){
+function isValidRange(range) {
   const nodeName = range.commonAncestorContainer.nodeName;
   return nodeName != null && nodeName != "TBODY";
 }
@@ -332,7 +332,6 @@ function isValidRange(range){
 function randomId() {
   return Math.random().toString(12).substring(2, 11);
 }
-
 
 function addComment(comment) {
   let id = randomId();
@@ -344,15 +343,14 @@ function addComment(comment) {
   let tdNode = getTD(selected);
   const line = tdNode.getAttribute("data-line-number");
   const [start, end] = getIndices(selected);
-  
+
   drawComment({
     selected: selected,
     comment: comment,
-    id: id
+    id: id,
   });
   addWordComment(start, end, line, comment, id);
 }
-
 
 function addComment2(comment) {
   let id = randomId();
@@ -360,7 +358,7 @@ function addComment2(comment) {
   selected.classList.remove("selected");
   selected.classList.add("comment-embed");
   selected.id = id;
-  
+
   let tdNode = getTD(selected);
   const line = tdNode.getAttribute("data-line-number");
   const [start, end] = getIndices(selected);
@@ -368,13 +366,13 @@ function addComment2(comment) {
   drawComment2({
     selected: selected,
     comment: comment,
-    id: id
+    id: id,
   });
 
   addWordComment2(start, end, line, comment, id);
 }
 
-function addHighlight(color){
+function addHighlight(color) {
   const selection = document.getSelection();
   let selected = createNewSpan(selection);
   const { start, end, line } = getTextPosition(selected);
@@ -384,13 +382,12 @@ function addHighlight(color){
   drawHighlight({
     selected: selected,
     color: color,
-    id: id
-  })
+    id: id,
+  });
   addWordHighlight(color, start, end, line, id);
 }
 
-
-function embedComment(comment, span, id){
+function embedComment(comment, span, id) {
   const commentSpan = document.createElement("span");
   commentSpan.innerText = comment;
   commentSpan.id = id;
@@ -405,13 +402,12 @@ function embedComment(comment, span, id){
 
   commentSpan.appendChild(closeBtn);
   closeBtn.addEventListener("click", () => {
-    deleteComment2(commentSpan.id);
+    deleteDeco(commentSpan.id);
     mergeNode(span, commentSpan);
   });
 }
 
-
-function wrapTdtag(span){
+function wrapTdtag(span) {
   const td = span.closest("td");
   const div = document.createElement("div");
   div.classList.add("col");
