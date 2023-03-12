@@ -72,8 +72,12 @@ def save_or_update(user_info):
 @auth.route('/logout')
 @login_required
 def logout():
+    print(current_user)
     logout_user()
+    print(current_user)
+    print(session)
     session.clear()
+    print(session)
     flash('You have been logged out.')
     return redirect(url_for('main.index'))
 

@@ -160,19 +160,20 @@ window.addEventListener("load", async function () {
       const deco = refData[id];
       // refData.map((deco) => {
       const type = deco.type;
+      if (type === "line_hide") {
+        drawLineHide({
+          start: deco.start,
+          end: deco.end,
+          id: id,
+        });
+        continue;
+      }
 
       createNewRange(deco.line, deco.start, deco.end);
       const span = createNewSpan(document.getSelection());
       document.getSelection().removeAllRanges();
 
       switch (type) {
-        case "line_hide":
-          drawLineHide({
-            start: deco.start,
-            end: deco.end,
-            id: id,
-          });
-          break;
         case "link":
           addLinkTag({
             selected: span,

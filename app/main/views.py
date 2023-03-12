@@ -3,7 +3,7 @@ from .. import db
 from ..models import User
 
 import json, os
-from flask import render_template, redirect, url_for, flash, request
+from flask import abort, render_template, redirect, url_for, flash, request
 from flask_login import current_user, login_required
 from functools import wraps
 from os.path import exists
@@ -11,6 +11,11 @@ from flask_dance.contrib.github import github
 import base64
 from datetime import datetime
 
+
+@main.before_request
+@login_required
+def require_login():
+    pass
 
 @main.app_template_filter()
 def is_cd(file_path):
@@ -105,6 +110,10 @@ def show_file(filepath):
     if len(path_parts) >= 4:
         owner, repo, ref, content = filepath.split("/", maxsplit=3)
         if is_cd(content):
+            '''
+            TODO
+            reference 하는 파일의 commit sha와 codee 파일에 적힌 commit sha를 비교하여 다르면, compare하기
+            '''
             return show_codee_file(owner, repo, ref, content)
             
         else:
@@ -122,7 +131,7 @@ def show_file(filepath):
     
 
 
-def show_codee_file(owner, repo, ref, content ):
+def show_codee_file(owner, repo, ref, content):
     codee_content = get_content_of_file(owner, repo, content)
     codee_content_json = json.loads(codee_content)
     print(type(codee_content_json))
@@ -185,23 +194,29 @@ def create_codee():
     ref_path = json_data['ref_path']
     owner = current_user.username
 
+    last_commit_sha = None
+    commit_list_resp = github.get(f'/repos/{owner}/{repo}/commits')
+    if commit_list_resp.ok:
+        commit_list_json = commit_list_resp.json()
+        last_commit_sha = commit_list_json[0]['sha']
     
-    codee_content = json.dumps({
-        'referenced_file': ref_path,
-        'last_commit_sha': '',
-        'data': json.dumps({})
-    })
-    
-    request_body = {
-        'message': "Codee 파일 생성",
-        'content': base64.b64encode(codee_content.encode('utf-8')).decode('utf-8')
-    }
-    resp = github.put(f'/repos/{owner}/{repo}/contents/{save_location}/{codee_name}.cd',
-                        json=request_body)
-    print(resp)
-    print(resp.json())
+        codee_content = json.dumps({
+            'referenced_file': ref_path,
+            'last_commit_sha': last_commit_sha,
+            'data': json.dumps({})
+        })
+        
+        request_body = {
+            'message': "Codee 파일 생성",
+            'content': base64.b64encode(codee_content.encode('utf-8')).decode('utf-8')
+        }
+        resp = github.put(f'/repos/{owner}/{repo}/contents/{save_location}/{codee_name}.cd',
+                            json=request_body)
+        print(resp)
+        print(resp.json())
+        return "created codee file", 20
 
-    return "codee file created", 200
+    return "Failed to create codee file", 500
 
 
 # @main.route('/get_codee/<path:filepath>', methods=['GET'])

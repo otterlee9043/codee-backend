@@ -113,7 +113,7 @@
                                     </div>
                                 </div>
                                 <div class="create-btn">
-                                    <button onclick="createCodee()">Create</button>
+                                    <button id="create-button">Create</button>
                                 </div>
                             </form>
 
@@ -214,8 +214,11 @@
         $(".modal").fadeOut();
     });
 
-
+    function openDir(id) {
+        document.getElementById(id).style.height = "250px";
+    }
 
 </script>
+<script src="{{ url_for('static', filename = 'script/createcodee.js') }}"></script>
 
 </html>
