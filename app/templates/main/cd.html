@@ -57,7 +57,7 @@
     </div>
   </div>
   <div class="topbar reponame-container">
-    <span class="reponame">{{ owner }} / {{ repo }}</span>
+    <span class="reponame">{{ g.owner }} / {{ g.repo }}</span>
   </div>
 </header>
 
@@ -152,8 +152,8 @@
 <script>
   let refData = null;
   let treeData = null;
-  const owner = "{{ owner }}";
-  const repo = "{{ repo }}";
+  const owner = "{{ g.owner }}";
+  const repo = "{{ g.repo }}";
   const ref = "{{ ref }}";
   const content = "{{ content }}";
   treeData = JSON.parse({{ tree| tojson }});
