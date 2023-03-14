@@ -1,15 +1,18 @@
+import re
 from . import main
 from .. import db
 from ..models import User
 
-import json, os
-from flask import abort, render_template, redirect, url_for, flash, request
+import json, os, difflib
+from flask import abort, render_template, redirect, url_for, g, request
 from flask_login import current_user, login_required
 from functools import wraps
 from os.path import exists
 from flask_dance.contrib.github import github
 import base64
 from datetime import datetime
+from git import Repo
+
 
 
 @main.before_request
@@ -23,17 +26,8 @@ def is_cd(file_path):
     return os.path.splitext(file_path)[1] == ".cd"
 
 
-def login_required_for_all(func):
-    @wraps(func)
-    def decorated_view(*args, **kwargs):
-        if not current_user.is_authenticated:
-            return abort(401)
-        return func(*args, **kwargs)
-    
-    return decorated_view
-
-def get_content_of_file(owner, repo, path):
-    resp = github.get(f'/repos/{owner}/{repo}/contents/{path}')
+def get_content_of_file(owner, repo, ref, path):
+    resp = github.get(f'/repos/{owner}/{repo}/contents/{path}?ref={ref}')
     if resp.ok:
         resp_json = resp.json()
         base64_content = resp_json['content']
@@ -90,58 +84,150 @@ def get_tree_of_repository(owner, repo, ref):
     return None
 
 
-@login_required
+def get_last_commit_sha(owner, repo, ref, filepath):
+    last_commit_sha = None
+
+    commit_list_resp = github.get(f'/repos/{owner}/{repo}/commits', json={'sha': ref, 'path': filepath})
+    
+    if commit_list_resp.ok:
+        commit_list_json = commit_list_resp.json()
+        last_commit_sha = commit_list_json[0]['sha']
+    return last_commit_sha
+
+
+def set_repo_info(owner, repo):
+    g.owner = owner
+    g.repo = repo
+
+
+@main.route('/test', methods=['GET'])
+def test():
+    g.owner = "otterlee9043"
+    g.repo = "blog"
+    file_path = "flask-tutorial/flaskr/auth.py"
+    old_sha = "5cddc070b4807abe5416fa0f5b9cf5316750e4ce"
+    new_sha = "1f87086e0da86a6fbe8faaba858104c4473264a3"
+    
+    resp = github.get(f'/repos/{g.owner}/{g.repo}/compare/{old_sha}...{new_sha}')
+    # resp_json = resp.json()
+    # files = resp_json['files']
+    # patches = []
+    # for file in files:
+    #     if file['filename'] == file_path:
+    #         patches.append(file['patch'])
+    print(resp.text)
+    return resp.json()
+
+@main.route('/test2', methods=['GET'])
+def generate_word_diff_data():
+    """
+    Generates word-level diff data between old_text and new_text
+    """
+
+    old_lines = get_content_of_file("otterlee9043", "blog", "5cddc070b4807abe5416fa0f5b9cf5316750e4ce", "flask-tutorial/flaskr/auth.py").splitlines()
+    new_lines = get_content_of_file("otterlee9043", "blog", "1f87086e0da86a6fbe8faaba858104c4473264a3", "flask-tutorial/flaskr/auth.py").splitlines()
+    # # Create a SequenceMatcher object to compare the old and new text
+    # matcher = difflib.SequenceMatcher(None, old_lines, new_lines)
+    diff_data = difflib.ndiff(old_lines, new_lines)
+    # # Generate a list of tuples representing the diff data
+    # # Each tuple represents a diff operation and contains 3 elements:
+    # #   - operation: a string indicating the type of diff operation ("equal", "delete", or "insert")
+    # #   - old_text: a list of lines from the old text that are involved in this diff operation
+    # #   - new_text: a list of lines from the new text that are involved in this diff operation
+    # diff_data = []
+    # for opcode in matcher.get_opcodes():
+    #     tag, i1, i2, j1, j2 = opcode
+    #     print(opcode)
+    #     if tag == "equal":
+    #         # For "equal" operations, just append the lines from both old and new text
+    #         diff_data.append(("equal", old_lines[i1:i2], new_lines[j1:j2]))
+    #     elif tag == "delete":
+    #         # For "delete" operations, only append the lines from the old text
+    #         diff_data.append(("delete", old_lines[i1:i2], []))
+    #     elif tag == "insert":
+    #         # For "insert" operations, only append the lines from the new text
+    #         diff_data.append(("insert", [], new_lines[j1:j2]))
+    for d in diff_data:
+        print(d)
+    return diff_data
+
+
+@main.route('/test3', methods=['GET'])
+def test3():
+    repo = Repo('blog')
+
+    # Get the commit object for the current HEAD
+    head_commit = repo.head.commit
+
+    # Get the diff between the current HEAD and the previous commit
+    diff = head_commit.diff(head_commit.parents[2], word_diff_regex='.')
+
+    # Get the diff data for a specific file, with context
+    filename = "flask-tutorial/flaskr/auth.py"
+    file_diff = diff.diff(filename)
+
+    # Get the diff data as a string
+    diff_data = file_diff.diff.decode('utf-8')
+    print(diff_data)
+    return diff_data
+
+
+
+
 @main.route('/', methods=['GET', 'POST'])
 def index():
     repos_name = None
     repos_resp = github.get('/user/repos')
-    print(repos_resp)
     if repos_resp.ok:
         repos_list = repos_resp.json()
         repos_name = [repo['name'] for repo in repos_list]
     return render_template('main/repos.html', repos=repos_name)
 
-@login_required
+
 @main.route('/<path:filepath>', methods=['GET'])
 def show_file(filepath):
-    file_content = None
-
     path_parts = filepath.split('/')
+    set_repo_info(path_parts[0], path_parts[1])
     if len(path_parts) >= 4:
         owner, repo, ref, content = filepath.split("/", maxsplit=3)
         if is_cd(content):
-            '''
-            TODO
-            reference 하는 파일의 commit sha와 codee 파일에 적힌 commit sha를 비교하여 다르면, compare하기
-            '''
-            return show_codee_file(owner, repo, ref, content)
+            
+            return show_codee_file(ref, content)
             
         else:
             file_content = {
-                'content': get_content_of_file(owner, repo, content)
+                'content': get_content_of_file(owner, repo, ref, content)
             }
             return render_template('main/index.html', tree=get_tree_of_repository(owner, repo, ref),
-                           owner=owner, repo=repo, ref=ref, content=content, file_content=json.dumps(file_content))
+                           ref=ref, content=content, file_content=json.dumps(file_content))
     elif len(path_parts) == 3:
         owner, repo, ref = filepath.split("/", maxsplit=2)
-        return render_template('main/root.html', tree=get_tree_of_repository(owner, repo, ref),
-                           owner=owner, repo=repo, ref=ref)
+        return render_template('main/root.html', tree=get_tree_of_repository(owner, repo, ref), ref=ref)
     return "Illegal URL", 400
 
     
+def merge(old_sha, new_sha):
+    resp = github.get(f'/repos/{g.owner}/{g.repo}/compare/{old_sha}...{new_sha}')
+    return 
 
 
-def show_codee_file(owner, repo, ref, content):
-    codee_content = get_content_of_file(owner, repo, content)
+
+def show_codee_file(ref, content):
+    codee_content = get_content_of_file(g.owner, g.repo, ref, content)
     codee_content_json = json.loads(codee_content)
     print(type(codee_content_json))
     reference_file_path = codee_content_json['referenced_file']
-    reference_file_content = get_content_of_file(owner, repo, reference_file_path)
-    return render_template('main/cd.html', tree=get_tree_of_repository(owner, repo, ref),
-                           owner=owner, repo=repo, ref=ref, content=content,
-                           ref_path=reference_file_path,
-                           ref_content=reference_file_content,
-                           codee_content=codee_content)
+    reference_file_content = get_content_of_file(g.owner, g.repo, ref, reference_file_path)
+
+    actual_last_sha = get_last_commit_sha(g.owner, g.repo, ref, content)
+    written_last_sha = codee_content_json['last_commit_sha']
+
+    if actual_last_sha != written_last_sha:            
+        pass
+    
+    return render_template('main/cd.html', tree=get_tree_of_repository(g.owner, g.repo, ref),
+                           ref=ref, content=content, ref_path=reference_file_path,
+                           ref_content=reference_file_content, codee_content=codee_content)
 
 
 @main.route('/update_codee', methods=['POST'])
@@ -214,45 +300,11 @@ def create_codee():
                             json=request_body)
         print(resp)
         print(resp.json())
-        return "created codee file", 20
+        return "created codee file", 200
 
     return "Failed to create codee file", 500
 
 
-# @main.route('/get_codee/<path:filepath>', methods=['GET'])
-# def get_codee(filepath):
-#     data = None
-#     if exists(filepath):
-#         print("ALREADY EXISTS!")
-#         f = open(f"{filepath}", "r")
-#         print(filepath)
-#         data = f.read()
-#         print("DATA")
-#         # print(data)
-#     return make_response(data, 200)
-
-
-# @main.route('/saveCodee', methods=['POST'])
-# def saveCodee():
-#     jsonData = request.get_json(force=True)
-#     codee_path = jsonData['codee_path']
-#     codee_data = jsonData['codee_data']
-#     username_ = jsonData['username']
-#     print(codee_path)
-#     print("SAVECODEE: " + os.path.join(root, username_,
-#           codee_path.split("/", maxsplit=1)[1]))
-#     f = open(os.path.join(root, username_,
-#              codee_path.split("/", maxsplit=1)[1]), "wb")
-#     f.write(codee_data.encode('utf8'))
-#     f.close()
-#     return make_response("codee file updated", 200)
-
-
-# def save_merged_codee(codee_data, codee_path, username_):
-#     print("save_merged_codee!")
-#     f = open(os.path.join(root, username_, codee_path), "wb")
-#     f.write(json.dumps(codee_data).encode('utf8'))
-#     f.close()
 
 
 # def diff(cmtid1, cmtid2, username_, repository, filepath):
@@ -291,76 +343,76 @@ def create_codee():
 #     return make_response(jsonify(diff), 200)
 
 
-# def parse_diff_line(data, diff_data):
-#     i = 0
-#     while (i < len(data)):
-#         line = data[i]
-#         if line[0:11] == "diff --git ":
-#             # if changes:
-#             #     diff_data['changes'] = changes
-#             #     diff.append(diff_data)
-#             diff_data = {}
-#             # changes = []
-#         # elif line[0:13] == "--- /dev/null":
-#         elif line[0:5] == "--- a":
-#             diff_data['old_filepath'] = line.strip("--- a")
-#             print(line.strip("--- a"))
-#         elif line[0:5] == "+++ b":
-#             diff_data['new_filepath'] = line.strip("+++ b")
-#             diff_data['changes'] = []
-#         elif line[0:2] == "@@":
-#             if not "old_filepath" in diff_data:
-#                 diff_data = {}
-#                 i = i + 1
-#                 continue
-#             if not "new_filepath" in diff_data:
-#                 diff_data = {}
-#                 i = i + 1
-#                 continue
-#             # if ".cd" in diff[-1]['new_filepath']:
-#             #     diff.pop()
-#             #     i = i + 1
-#             #     continue
-#             changes = diff_data['changes']
-#             ranges = re.findall(r'@@ (.*?) @@', line)[0]
-#             ranges = ranges.split(" ")
-#             old_range = ranges[0]
-#             new_range = ranges[1]
-#             print("range ", ranges)
-#             print(line)
-#             new_range = new_range.lstrip('+')
-#             # diff_data['new_filepath'] = new_range.split(",")[0]
-#             start = int(new_range.split(",")[0])  # 바뀌기 전 line nuber
-#             line_num = int(new_range.split(
-#                 ",")[1]) if "," in new_range else 1  # line offset
-#             i = i + 1
-#             if re.sub(r'@@ (.*?) @@', "", line, count=1):
-#                 print("THERE IS ANOTHER LINE BEHIND THIS LINE")
-#                 print(line.strip().split("@@"))
-#                 line_num = line_num - 1
-#             # @@ 뒤에 코드가 나오는 경우 한 줄 덜 읽도록
-#             for j in range(line_num):
-#                 # print("start: ", start, " j: ", j)
-#                 line = data[i+j]
-#                 if len(line) == 1:
-#                     if line[0] == "+":
-#                         change = {
-#                             "line": True,
-#                             "line_num": start + j,
-#                             "type": "add",
-#                         }
-#                         diff_data['changes'].append(change)
-#                     elif line[0] == "-":
-#                         change = {
-#                             "line": True,
-#                             "line_num": start + j,
-#                             "type": "delete",
-#                         }
-#                         diff_data['changes'].append(change)
-#             i = i + line_num - 1
-#         i = i + 1
-#     print("Print data!!")
-#     return diff_data
+def parse_diff_line(data, diff_data):
+    i = 0
+    while (i < len(data)):
+        line = data[i]
+        if line[0:11] == "diff --git ":
+            # if changes:
+            #     diff_data['changes'] = changes
+            #     diff.append(diff_data)
+            diff_data = {}
+            # changes = []
+
+        # elif line[0:13] == "--- /dev/null":
+        elif line[0:5] == "--- a":
+            diff_data['old_filepath'] = line.strip("--- a")
+            print(line.strip("--- a"))
+        elif line[0:5] == "+++ b":
+            diff_data['new_filepath'] = line.strip("+++ b")
+            diff_data['changes'] = []
+        elif line[0:2] == "@@":
+            if not "old_filepath" in diff_data:
+                diff_data = {}
+                i = i + 1
+                continue
+            if not "new_filepath" in diff_data:
+                diff_data = {}
+                i = i + 1
+                continue
+            # if ".cd" in diff[-1]['new_filepath']:
+            #     diff.pop()
+            #     i = i + 1
+            #     continue
+            changes = diff_data['changes']
+            ranges = re.findall(r'@@ (.*?) @@', line)[0]
+            ranges = ranges.split(" ")
+            old_range = ranges[0]
+            new_range = ranges[1]
+            print("range ", ranges)
+            print(line)
+            new_range = new_range.lstrip('+')
+            # diff_data['new_filepath'] = new_range.split(",")[0]
+            start = int(new_range.split(",")[0])  # 바뀌기 전 line nuber
+            line_num = int(new_range.split(",")[1]) if "," in new_range else 1  # line offset
+            i = i + 1
+            if re.sub(r'@@ (.*?) @@', "", line, count=1):
+                print("THERE IS ANOTHER LINE BEHIND THIS LINE")
+                print(line.strip().split("@@"))
+                line_num = line_num - 1
+            # @@ 뒤에 코드가 나오는 경우 한 줄 덜 읽도록
+            for j in range(line_num):
+                # print("start: ", start, " j: ", j)
+                line = data[i+j]
+                if len(line) == 1:
+                    if line[0] == "+":
+                        change = {
+                            "line": True,
+                            "line_num": start + j,
+                            "type": "add",
+                        }
+                        diff_data['changes'].append(change)
+                    elif line[0] == "-":
+                        change = {
+                            "line": True,
+                            "line_num": start + j,
+                            "type": "delete",
+                        }
+                        diff_data['changes'].append(change)
+            i = i + line_num - 1
+        i = i + 1
+    print("Print data!!")
+    return diff_data
 
 
 # def parse_diff_data(data):
