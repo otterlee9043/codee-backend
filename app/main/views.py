@@ -124,12 +124,38 @@ def test4():
     diffs = dmp.diff_main(old_code, new_code)
     content = ''.join([
         diff_str if diff_type == 0 else
-        '{+' + diff_str.replace('\n', '+}\n{+') + '+}' if diff_type == 1 else
-        '[-' + diff_str.replace('\n', '-]\n[-') + '-]'
+        wrap_word('+', diff_str) if diff_type == 1 else
+        wrap_word('-', diff_str)
         for diff_type, diff_str in diffs
     ])
+    changes = detect_changes(content)
     print(content)
-    return content
+    print(changes)
+    return json.dumps(changes)
+
+
+def merge(changes, deco):
+    line_offset = 0
+    for change in changes:
+        col_offset = 0
+        if change['line']:
+            if change['type'] == 'add':
+                line_offset += 1
+            else:
+                line_offset -= 1
+        else: # 단어 단위
+            pass
+
+    return deco
+
+
+def wrap_word(change_type, line):
+    start = 1 if line.startswith("\n") else 0
+    end = len(line) - 1 if line.endswith("\n") else len(line)    
+    inner = line[start:end].replace('\n', ('+}\n{+' if change_type == '+' else '-]\n[-'))
+    inner = '{+' + inner + '+}' if change_type == '+' else '[-' + inner + '-]'
+    return (("\n" if line.startswith("\n") else "") + inner + ("" if line.endswith("\n") else ""))
+
 
 
 def find_added_word(line):
@@ -142,19 +168,47 @@ def find_deleted_word(line):
     return [(match.start(), match.group(1), '-') for match in matches]
 
 
-
 def detect_changes(diff_string):
+    changes = []
     diff_lines = diff_string.split("\n")
-    for diff_line in diff_lines:
+    type_key = {'+': 'add', '-': 'delete'}
+    for line_num, diff_line in enumerate(diff_lines):
+        print(line_num, diff_line)
         detected_words = find_added_word(diff_line) + find_deleted_word(diff_line)
-        if len(detected_words) == 1 and detected_words[0][]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-        detected_words.sort(key=lambda x: x[0])
-        words = [(word[0] - 4 * (i+1), word[1], word[2]) for i, word in enumerate(detected_words) ]
-        
-
-
-
-
+        print(detected_words)
+        print(f"len(detected_words) : {len(detected_words) }")
+        if len(detected_words) == 1 and len(detected_words[0][1]) == len(diff_line) - 4:
+            c = {
+                'line': True,
+                'type': type_key[detected_words[0][2]],
+                'line_num': line_num + 1
+            }
+            changes.append({
+                'line': True,
+                'type': type_key[detected_words[0][2]],
+                'line_num': line_num + 1
+            })
+            print(c)
+        else:
+            detected_words.sort(key=lambda x: x[0])
+            words = [(word[0] - 4 * i, word[1], word[2]) for i, word in enumerate(detected_words) ]
+            for word in words:
+                changes.append({
+                    'line': False,
+                    'type': type_key[word[2]],
+                    'line_num': line_num + 1,
+                    'col': word[0],
+                    'length': len(word[1])
+                })
+                c = {
+                    'line': False,
+                    'type': type_key[word[2]],
+                    'line_num': line_num + 1,
+                    'col': word[0],
+                    'length': len(word[1])
+                }
+                print(c)
+    return changes
 
 
 
