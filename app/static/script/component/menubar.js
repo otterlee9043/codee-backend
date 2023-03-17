@@ -340,9 +340,7 @@ function addComment(comment) {
   selected.classList.add("comment-underline");
   registerCommentEvent(comment, selected, id, "comment");
 
-  let tdNode = getTD(selected);
-  const line = tdNode.getAttribute("data-line-number");
-  const [start, end] = getIndices(selected);
+  const { start, end, line } = getTextPosition(selected);
 
   drawComment({
     selected: selected,
@@ -358,10 +356,7 @@ function addComment2(comment) {
   selected.classList.remove("selected");
   selected.classList.add("comment-embed");
   selected.id = id;
-
-  let tdNode = getTD(selected);
-  const line = tdNode.getAttribute("data-line-number");
-  const [start, end] = getIndices(selected);
+  const { start, end, line } = getTextPosition(selected);
 
   drawComment2({
     selected: selected,

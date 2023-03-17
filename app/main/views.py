@@ -119,6 +119,7 @@ def test4():
     dmp = diff_match_patch()
     dmp.Diff_Timeout = 0
     dmp.Diff_EditCost = 4
+    # deco = sorted(deco, key=lambda x: x['line'])
     old_code = escape(get_content_of_file("otterlee9043", "blog", "5cddc070b4807abe5416fa0f5b9cf5316750e4ce", "flask-tutorial/flaskr/auth.py"))
     new_code = escape(get_content_of_file("otterlee9043", "blog", "1f87086e0da86a6fbe8faaba858104c4473264a3", "flask-tutorial/flaskr/auth.py"))
     diffs = dmp.diff_main(old_code, new_code)
@@ -133,20 +134,6 @@ def test4():
     print(changes)
     return json.dumps(changes)
 
-
-def merge(changes, deco):
-    line_offset = 0
-    for change in changes:
-        col_offset = 0
-        if change['line']:
-            if change['type'] == 'add':
-                line_offset += 1
-            else:
-                line_offset -= 1
-        else: # 단어 단위
-            pass
-
-    return deco
 
 
 def wrap_word(change_type, line):
@@ -169,45 +156,40 @@ def find_deleted_word(line):
 
 
 def detect_changes(diff_string):
-    changes = []
+    changes = {}
     diff_lines = diff_string.split("\n")
     type_key = {'+': 'add', '-': 'delete'}
     for line_num, diff_line in enumerate(diff_lines):
         print(line_num, diff_line)
         detected_words = find_added_word(diff_line) + find_deleted_word(diff_line)
+        if not detected_words:
+            continue
         print(detected_words)
         print(f"len(detected_words) : {len(detected_words) }")
         if len(detected_words) == 1 and len(detected_words[0][1]) == len(diff_line) - 4:
-            c = {
+            changes[line_num+1] = {
                 'line': True,
-                'type': type_key[detected_words[0][2]],
-                'line_num': line_num + 1
+                'info': {
+                    'line': True,
+                    'type': type_key[detected_words[0][2]],
+                    'line_num': line_num + 1
+                }
             }
-            changes.append({
-                'line': True,
-                'type': type_key[detected_words[0][2]],
-                'line_num': line_num + 1
-            })
-            print(c)
         else:
             detected_words.sort(key=lambda x: x[0])
-            words = [(word[0] - 4 * i, word[1], word[2]) for i, word in enumerate(detected_words) ]
+            words = [(word[0] - 4 * i, word[1], word[2]) for i, word in enumerate(detected_words)]
+            word_changes = []
+            change = {'line': False}
             for word in words:
-                changes.append({
+                word_changes.append({
                     'line': False,
                     'type': type_key[word[2]],
                     'line_num': line_num + 1,
                     'col': word[0],
                     'length': len(word[1])
                 })
-                c = {
-                    'line': False,
-                    'type': type_key[word[2]],
-                    'line_num': line_num + 1,
-                    'col': word[0],
-                    'length': len(word[1])
-                }
-                print(c)
+            change['info'] = word_changes
+            changes[line_num+1] = change
     return changes
 
 
@@ -241,11 +223,53 @@ def show_file(filepath):
         return render_template('main/root.html', tree=get_tree_of_repository(owner, repo, ref), ref=ref)
     return "Illegal URL", 400
 
-    
 
-def merge(old_sha, new_sha):
-    resp = github.get(f'/repos/{g.owner}/{g.repo}/compare/{old_sha}...{new_sha}')
-    return 
+def init_diff_match_patch():
+    dmp = diff_match_patch()
+    dmp.Diff_Timeout = 0
+    dmp.Diff_EditCost = 4
+    return dmp
+
+
+def update_deco(changes_dict, deco):
+    # two-pointer로 하면될 듯 N^2 할 필요 없듯이
+    line_offset = 0
+    for line_num in changes_dict:
+        changes = changes_dict[line_num]
+        if changes[0]['line'] == True:
+            line_offset += 1 if changes[0]['type'] == 'add' else -1
+        col_offset = 0
+        for change in changes:
+            if change['line']:
+                if change['type'] == 'add':
+                    line_offset += 1
+                else:
+                    line_offset -= 1
+            else: # 단어 단위
+                pass
+    return deco
+
+
+def merge(old_sha, new_sha, ref_file, deco):
+    dmp = init_diff_match_patch()
+    print("=========deco")
+    print(deco)
+    print(f"old_sha: {old_sha}, new_sha: {new_sha}")
+    # deco = sorted(deco, key=lambda x: x['line'])
+    old_code = escape(get_content_of_file(g.owner, g.repo, old_sha, ref_file))
+    new_code = escape(get_content_of_file(g.owner, g.repo, new_sha, ref_file))
+    diffs = dmp.diff_main(old_code, new_code)
+    content = ''.join([
+        diff_str if diff_type == 0 else
+        wrap_word('+', diff_str) if diff_type == 1 else
+        wrap_word('-', diff_str)
+        for diff_type, diff_str in diffs
+    ])
+    changes = detect_changes(content)
+    # deco = update_deco(changes, deco)
+    # print(content)
+    print(changes)
+    return json.dumps(changes)
 
 
 def show_codee_file(ref, content):
@@ -259,8 +283,9 @@ def show_codee_file(ref, content):
     written_last_sha = codee_content_json['last_commit_sha']
 
     if actual_last_sha != written_last_sha:            
-        pass
-    
+        # codee_content_json['last_commit_sha'] = actual_last_sha
+        codee_content_json['data'] = merge(written_last_sha, actual_last_sha, reference_file_path, codee_content_json['data'])
+        return codee_content_json['data']
     return render_template('main/cd.html', tree=get_tree_of_repository(g.owner, g.repo, ref),
                            ref=ref, content=content, ref_path=reference_file_path,
                            ref_content=reference_file_content, codee_content=codee_content)
@@ -317,7 +342,7 @@ def create_codee():
     owner = current_user.username
 
     last_commit_sha = None
-    commit_list_resp = github.get(f'/repos/{owner}/{repo}/commits')
+    commit_list_resp = github.get(f'/repos/{owner}/{repo}/commits?path={ref_path}')
     if commit_list_resp.ok:
         commit_list_json = commit_list_resp.json()
         last_commit_sha = commit_list_json[0]['sha']
@@ -560,113 +585,113 @@ def parse_diff_data(data):
     return diff_data
 
 
-def merge(cd_path, diff, username_):
-    cd_data = read_json_file(os.path.join(root, username_, cd_path))
-    print(cd_data)
-    print(diff)
-    repoName = cd_data[0]['filepath'].split("/")[0]
-    print(diff)
-    print("repoName", repoName)
-    filepath = diff["new_filepath"]
-    full_path = repoName + filepath  # os.path.join(repoName, filepath)
-    print("full_path", full_path)
-    cd_data[0]['filepath'] = full_path
-    # comit id update하기
-    # cd_data[0]['commit_id']
-    decos = cd_data[0]['data']
-    print("cd_path:", cd_path)
-    print(cd_data[0]['filepath'])
-    for change in diff['changes']:
-        print("    ================== change ", change)
-        if change['line']:
-            for deco in decos:
-                print("     *********** deco, ", deco)
-                start = int(deco['start'])
-                end = int(deco['end'])
-                # line이 empty라면
-                if deco["type"] == "line_hide":
-                    if change['type'] == "add":
-                        if change["line_num"] <= start:
-                            print('if change["line_num"] <= start :')
-                            deco["start"] = start + 1
-                            deco["end"] = end + 1
-                        elif change["line_num"] > start and change["line_num"] <= end:
-                            print(
-                                'elif change["line_num"] > start and change["line_num"] <= end :')
-                            deco["end"] = end + 1
-                    else:
-                        print('if deco["type"] == "line_hide":')
-                        if change["line_num"] <= start:
-                            print('if change["line_num"] <= start :')
-                            deco["start"] = start - 1
-                            deco["end"] = end - 1
-                        elif change["line_num"] > start and change["line_num"] <= end:
-                            print(
-                                'elif change["line_num"] > start and change["line_num"] <= end :')
-                            deco["end"] = end - 1
-                else:
-                    line = int(deco["line"])
-                    if change['type'] == "add":
-                        if change["line_num"] <= line:
-                            print('if change["line_num"] <= line:')
-                            deco["line"] = line + 1
-                    else:
-                        print("else:")
-                        if change["line_num"] <= line:
-                            deco["line"] = line - 1
-        else:  # word단위로 추가된 경우
-            for deco in decos:
-                start = int(deco['start'])
-                end = int(deco['end'])
-                print("*@@@* deco", deco)
-                if deco["type"] == "line_hide":
-                    continue
-                line = int(deco["line"])
-                if line == change['line_num']:
-                    if change["type"] == "add":  # 추가
-                        print('if change["type"] == "add":')
-                        if change["col"] <= start:  # deco 나오기 전에
-                            print('if change["col"] <= start:')
-                            deco["start"] += change["length"]
-                            deco["end"] += change["length"]
-                        elif change["col"] > start and change["col"] < end:  # deco 중간에
-                            print(
-                                'elif change["col"] > start and change["col"] <= end:')
-                            deco["end"] += change["length"]
-                    else:
-                        print("else:")
-                        if change["col"] <= start:
-                            print('if change["col"] <= start:')
-                            if change["col"] + change["length"] <= start:
-                                print(
-                                    ' if change["col"] + change["length"] < start:')
-                                deco["start"] -= change["length"]
-                                deco["end"] -= change["length"]
-                            elif change["col"] + change["length"] > start and change["col"] + change["length"] < end:
-                                print(
-                                    'elif  change["col"] + change["length"] > start and change["col"] + change["length"] <= end:')
-                                deco["start"] = change["col"]
-                                deco["end"] = end - change["length"]
-                            elif change["col"] + change["length"] >= end:
-                                print(
-                                    'elif change["col"] + change["length"] >=  end:')
-                                decos.remove(deco)
-                        elif change["col"] > start and change["col"] <= end:
-                            print(
-                                'elif change["col"] > start and change["col"] <= end:')
-                            if change["col"] + change["length"] <= end:
-                                print(
-                                    'if  change["col"] + change["length"] <= end:')
-                                deco["end"] = end - change["length"]
-                            elif change["col"] + change["length"] > end:
-                                print(
-                                    'elif change["col"] + change["length"] >  end:')
-                                deco["end"] = change["col"]
-    cd_data[0]['data'] = decos
-    # return cd_data
-    print(" >> merge")
-    print(cd_data)
-    print(" >> merge")
-    return cd_data
+# def merge(cd_path, diff, username_):
+#     cd_data = read_json_file(os.path.join(root, username_, cd_path))
+#     print(cd_data)
+#     print(diff)
+#     repoName = cd_data[0]['filepath'].split("/")[0]
+#     print(diff)
+#     print("repoName", repoName)
+#     filepath = diff["new_filepath"]
+#     full_path = repoName + filepath  # os.path.join(repoName, filepath)
+#     print("full_path", full_path)
+#     cd_data[0]['filepath'] = full_path
+#     # comit id update하기
+#     # cd_data[0]['commit_id']
+#     decos = cd_data[0]['data']
+#     print("cd_path:", cd_path)
+#     print(cd_data[0]['filepath'])
+#     for change in diff['changes']:
+#         print("    ================== change ", change)
+#         if change['line']:
+#             for deco in decos:
+#                 print("     *********** deco, ", deco)
+#                 start = int(deco['start'])
+#                 end = int(deco['end'])
+#                 # line이 empty라면
+#                 if deco["type"] == "line_hide":
+#                     if change['type'] == "add":
+#                         if change["line_num"] <= start:
+#                             print('if change["line_num"] <= start :')
+#                             deco["start"] = start + 1
+#                             deco["end"] = end + 1
+#                         elif change["line_num"] > start and change["line_num"] <= end:
+#                             print(
+#                                 'elif change["line_num"] > start and change["line_num"] <= end :')
+#                             deco["end"] = end + 1
+#                     else:
+#                         print('if deco["type"] == "line_hide":')
+#                         if change["line_num"] <= start:
+#                             print('if change["line_num"] <= start :')
+#                             deco["start"] = start - 1
+#                             deco["end"] = end - 1
+#                         elif change["line_num"] > start and change["line_num"] <= end:
+#                             print(
+#                                 'elif change["line_num"] > start and change["line_num"] <= end :')
+#                             deco["end"] = end - 1
+#                 else:
+#                     line = int(deco["line"])
+#                     if change['type'] == "add":
+#                         if change["line_num"] <= line:
+#                             print('if change["line_num"] <= line:')
+#                             deco["line"] = line + 1
+#                     else:
+#                         print("else:")
+#                         if change["line_num"] <= line:
+#                             deco["line"] = line - 1
+#         else:  # word단위로 추가된 경우
+#             for deco in decos:
+#                 start = int(deco['start'])
+#                 end = int(deco['end'])
+#                 print("*@@@* deco", deco)
+#                 if deco["type"] == "line_hide":
+#                     continue
+#                 line = int(deco["line"])
+#                 if line == change['line_num']:
+#                     if change["type"] == "add":  # 추가
+#                         print('if change["type"] == "add":')
+#                         if change["col"] <= start:  # deco 나오기 전에
+#                             print('if change["col"] <= start:')
+#                             deco["start"] += change["length"]
+#                             deco["end"] += change["length"]
+#                         elif change["col"] > start and change["col"] < end:  # deco 중간에
+#                             print(
+#                                 'elif change["col"] > start and change["col"] <= end:')
+#                             deco["end"] += change["length"]
+#                     else:
+#                         print("else:")
+#                         if change["col"] <= start:
+#                             print('if change["col"] <= start:')
+#                             if change["col"] + change["length"] <= start:
+#                                 print(
+#                                     ' if change["col"] + change["length"] < start:')
+#                                 deco["start"] -= change["length"]
+#                                 deco["end"] -= change["length"]
+#                             elif change["col"] + change["length"] > start and change["col"] + change["length"] < end:
+#                                 print(
+#                                     'elif  change["col"] + change["length"] > start and change["col"] + change["length"] <= end:')
+#                                 deco["start"] = change["col"]
+#                                 deco["end"] = end - change["length"]
+#                             elif change["col"] + change["length"] >= end:
+#                                 print(
+#                                     'elif change["col"] + change["length"] >=  end:')
+#                                 decos.remove(deco)
+#                         elif change["col"] > start and change["col"] <= end:
+#                             print(
+#                                 'elif change["col"] > start and change["col"] <= end:')
+#                             if change["col"] + change["length"] <= end:
+#                                 print(
+#                                     'if  change["col"] + change["length"] <= end:')
+#                                 deco["end"] = end - change["length"]
+#                             elif change["col"] + change["length"] > end:
+#                                 print(
+#                                     'elif change["col"] + change["length"] >  end:')
+#                                 deco["end"] = change["col"]
+#     cd_data[0]['data'] = decos
+#     # return cd_data
+#     print(" >> merge")
+#     print(cd_data)
+#     print(" >> merge")
+#     return cd_data
 
 
