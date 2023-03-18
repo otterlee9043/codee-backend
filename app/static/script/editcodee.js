@@ -1,27 +1,32 @@
 function addLineHide(start, end, id) {
-  refData[id] = { type: "line_hide", start: start, end: end };
+  addDeco(start, { type: "line_hide", start: start, end: end, id: id });
 }
 
 function addLink(start, end, line, url, id) {
-  refData[id] = { type: "link", start: start, end: end, line: line, url: url };
+  addDeco(line, { type: "link", start: start, end: end, url: url, id: id });
 }
 
 function addWordComment(start, end, line, comment, id) {
-  refData[id] = { type: "comment", start: start, end: end, line: line, comment: comment };
+  addDeco(line, { type: "comment", start: start, end: end, comment: comment, id: id });
 }
 
 function addWordComment2(start, end, line, comment, id) {
-  refData[id] = { type: "comment-embedded", start: start, end: end, line: line, comment: comment };
+  addDeco(line, { type: "comment-embedded", start: start, end: end, comment: comment, id: id });
 }
 
 function addWordHighlight(color, start, end, line, id) {
-  refData[id] = { type: "highlight", color: color, start: start, end: end, line: line };
+  addDeco(line, { type: "highlight", color: color, start: start, end: end, id: id });
 }
 
 function addWordHide(start, end, line, id) {
-  refData[id] = { type: "word_hide", start: start, end: end, line: line };
+  addDeco(line, { type: "word_hide", start: start, end: end });
 }
 
-function deleteDeco(id) {
-  delete refData[id];
+function addDeco(line, info) {
+  (refData[line] || (refData[line] = [])).push(info);
+}
+
+function deleteDeco(line, id) {
+  refData[line].filter((info) => info["id"] !== id);
+  if (refData[line].length === 0) delete refData[line];
 }

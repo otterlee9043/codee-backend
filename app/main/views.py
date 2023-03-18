@@ -38,6 +38,13 @@ def get_content_of_file(owner, repo, ref, path):
     return "error"
 
 
+def init_diff_match_patch():
+    dmp = diff_match_patch()
+    dmp.Diff_Timeout = 0
+    dmp.Diff_EditCost = 4
+    return dmp
+
+
 def get_tree_of_repository(owner, repo, ref):
     ref = "master"
 
@@ -169,11 +176,7 @@ def detect_changes(diff_string):
         if len(detected_words) == 1 and len(detected_words[0][1]) == len(diff_line) - 4:
             changes[line_num+1] = {
                 'line': True,
-                'info': {
-                    'line': True,
-                    'type': type_key[detected_words[0][2]],
-                    'line_num': line_num + 1
-                }
+                'type': type_key[detected_words[0][2]]
             }
         else:
             detected_words.sort(key=lambda x: x[0])
@@ -182,9 +185,7 @@ def detect_changes(diff_string):
             change = {'line': False}
             for word in words:
                 word_changes.append({
-                    'line': False,
                     'type': type_key[word[2]],
-                    'line_num': line_num + 1,
                     'col': word[0],
                     'length': len(word[1])
                 })
@@ -224,30 +225,60 @@ def show_file(filepath):
     return "Illegal URL", 400
 
 
-def init_diff_match_patch():
-    dmp = diff_match_patch()
-    dmp.Diff_Timeout = 0
-    dmp.Diff_EditCost = 4
-    return dmp
-
 
 def update_deco(changes_dict, deco):
-    # two-pointer로 하면될 듯 N^2 할 필요 없듯이
+    print("changes_dict")
+    print(changes_dict)
+    print("deco")
+    print(deco)
+    new_deco = {}
+
+    changes_keys = list(changes_dict.keys())
+    changes_keys.append(-1)
+    deco_keys = list(deco.keys())
+    change_i, deco_i = 0, 0
+    
     line_offset = 0
-    for line_num in changes_dict:
-        changes = changes_dict[line_num]
-        if changes[0]['line'] == True:
-            line_offset += 1 if changes[0]['type'] == 'add' else -1
-        col_offset = 0
-        for change in changes:
-            if change['line']:
-                if change['type'] == 'add':
+    while deco_i < len(deco_keys):
+        change_line = changes_keys[change_i]
+        deco_line = deco_keys[deco_i]
+        if int(change_line) < int(deco_line):
+            change_line_num = change_line
+            if changes_dict[change_line_num]['line']:
+                if changes_dict[change_line_num]['type'] == 'add':
                     line_offset += 1
                 else:
                     line_offset -= 1
-            else: # 단어 단위
-                pass
-    return deco
+            if change_i < len(changes_keys):
+                change_i += 1
+        elif int(change_line) > int(deco_line): 
+            deco_i += 1
+        else:
+            col_offset = 0
+            word_change_i, word_deco_i = 0, 0
+            word_change_list = changes_dict[change_line]['info']
+            print(deco_line)
+            print(deco[deco_line])
+            word_deco_list = sorted(deco[deco_line], key=lambda x: x['start'])
+            while word_deco_i < len(word_deco_list):
+                word_change = word_change_list[word_change_i]
+                word_deco = word_deco_list[word_deco_i]
+                if word_change['col'] < word_deco['start']:
+                    if word_change['type'] == 'add':
+                        col_offset += word_change['length']
+                    else:
+                        col_offset -= word_change['length']
+                    if word_change_i < len(word_change_list):
+                        word_change_i += 1
+                else:
+                    word_deco['start'] += col_offset
+                    word_deco['end'] += col_offset
+                    word_deco_list[word_deco_i] = word_deco
+                    word_deco_i += 1
+            new_deco[int(deco_line) + line_offset] = word_deco_list
+            change_i += 1
+            deco_i += 1
+    return new_deco
 
 
 def merge(old_sha, new_sha, ref_file, deco):
@@ -266,29 +297,32 @@ def merge(old_sha, new_sha, ref_file, deco):
         for diff_type, diff_str in diffs
     ])
     changes = detect_changes(content)
-    # deco = update_deco(changes, deco)
+    deco = update_deco(changes, deco)
     # print(content)
     print(changes)
-    return json.dumps(changes)
+    return deco
 
 
 def show_codee_file(ref, content):
     codee_content = get_content_of_file(g.owner, g.repo, ref, content)
     codee_content_json = json.loads(codee_content)
+    decoration = json.loads(codee_content_json['data'])
     print(type(codee_content_json))
-    reference_file_path = codee_content_json['referenced_file']
-    reference_file_content = get_content_of_file(g.owner, g.repo, ref, reference_file_path)
+    ref_file_path = codee_content_json['referenced_file']
+    ref_file_content = get_content_of_file(g.owner, g.repo, ref, ref_file_path)
 
-    actual_last_sha = get_last_commit_sha(g.owner, g.repo, ref, content)
-    written_last_sha = codee_content_json['last_commit_sha']
+    actual_sha = get_last_commit_sha(g.owner, g.repo, ref, content)
+    written_sha = codee_content_json['last_commit_sha']
 
-    if actual_last_sha != written_last_sha:            
+    if actual_sha != written_sha:            
         # codee_content_json['last_commit_sha'] = actual_last_sha
-        codee_content_json['data'] = merge(written_last_sha, actual_last_sha, reference_file_path, codee_content_json['data'])
-        return codee_content_json['data']
+        codee_content_json['data'] = json.dumps(
+            merge(written_sha, actual_sha, ref_file_path, decoration)
+        )
+        codee_content = json.dumps(codee_content_json)
     return render_template('main/cd.html', tree=get_tree_of_repository(g.owner, g.repo, ref),
-                           ref=ref, content=content, ref_path=reference_file_path,
-                           ref_content=reference_file_content, codee_content=codee_content)
+                           ref=ref, content=content, ref_path=ref_file_path,
+                           ref_content=ref_file_content, codee_content=codee_content)
 
 
 @main.route('/update_codee', methods=['POST'])

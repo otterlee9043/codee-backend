@@ -156,59 +156,62 @@ window.addEventListener("load", async function () {
   const pre = $("#pre")[0];
   if (pre.classList.contains("context-menu-one")) {
     hideLine();
-    for (let id in refData) {
-      const deco = refData[id];
-      // refData.map((deco) => {
-      const type = deco.type;
-      if (type === "line_hide") {
-        drawLineHide({
-          start: deco.start,
-          end: deco.end,
-          id: id,
-        });
-        continue;
-      }
-
-      createNewRange(deco.line, deco.start, deco.end);
-      const span = createNewSpan(document.getSelection());
-      document.getSelection().removeAllRanges();
-
-      switch (type) {
-        case "link":
-          addLinkTag({
-            selected: span,
-            url: url,
+    for (let line in refData) {
+      const decoList = refData[line];
+      // for (let deco in decoList) {
+      decoList.map((deco) => {
+        // refData.map((deco) => {
+        const type = deco.type;
+        if (type === "line_hide") {
+          drawLineHide({
+            start: deco.start,
+            end: deco.end,
             id: deco.id,
           });
-          break;
-        case "comment-embedded":
-          drawComment2({
-            selected: span,
-            comment: deco.comment,
-            id: id,
-          });
-          break;
-        case "comment":
-          drawComment({
-            selected: span,
-            comment: deco.comment,
-            id: id,
-          });
-          break;
-        case "highlight":
-          drawHighlight({
-            selected: span,
-            color: deco.color,
-            id: id,
-          });
-          break;
-        case "word_hide":
-          drawWordHide({
-            selected: span,
-            id: id,
-          });
-          break;
-      }
+          return;
+        }
+
+        createNewRange(line, deco.start, deco.end);
+        const span = createNewSpan(document.getSelection());
+        document.getSelection().removeAllRanges();
+
+        switch (type) {
+          case "link":
+            addLinkTag({
+              selected: span,
+              url: url,
+              id: deco.id,
+            });
+            break;
+          case "comment-embedded":
+            drawComment2({
+              selected: span,
+              comment: deco.comment,
+              id: deco.id,
+            });
+            break;
+          case "comment":
+            drawComment({
+              selected: span,
+              comment: deco.comment,
+              id: deco.id,
+            });
+            break;
+          case "highlight":
+            drawHighlight({
+              selected: span,
+              color: deco.color,
+              id: deco.id,
+            });
+            break;
+          case "word_hide":
+            drawWordHide({
+              selected: span,
+              id: deco.id,
+            });
+            break;
+        }
+      });
     }
     // });
   }
