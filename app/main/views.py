@@ -121,77 +121,8 @@ def set_repo_info(owner, repo):
     g.repo = repo
 
 
-@main.route('/test4', methods=['GET'])
-def test4():
-    dmp = diff_match_patch()
-    dmp.Diff_Timeout = 0
-    dmp.Diff_EditCost = 4
-    # deco = sorted(deco, key=lambda x: x['line'])
-    old_code = escape(get_content_of_file("otterlee9043", "blog", "5cddc070b4807abe5416fa0f5b9cf5316750e4ce", "flask-tutorial/flaskr/auth.py"))
-    new_code = escape(get_content_of_file("otterlee9043", "blog", "1f87086e0da86a6fbe8faaba858104c4473264a3", "flask-tutorial/flaskr/auth.py"))
-    diffs = dmp.diff_main(old_code, new_code)
-    content = ''.join([
-        diff_str if diff_type == 0 else
-        wrap_word('+', diff_str) if diff_type == 1 else
-        wrap_word('-', diff_str)
-        for diff_type, diff_str in diffs
-    ])
-    changes = detect_changes(content)
-    print(content)
-    print(changes)
-    return json.dumps(changes)
 
 
-
-def wrap_word(change_type, line):
-    start = 1 if line.startswith("\n") else 0
-    end = len(line) - 1 if line.endswith("\n") else len(line)    
-    inner = line[start:end].replace('\n', ('+}\n{+' if change_type == '+' else '-]\n[-'))
-    inner = '{+' + inner + '+}' if change_type == '+' else '[-' + inner + '-]'
-    return (("\n" if line.startswith("\n") else "") + inner + ("" if line.endswith("\n") else ""))
-
-
-
-def find_added_word(line):
-    matches = re.finditer(r'\{\+(.*?)\+\}', line)
-    return [(match.start(), match.group(1), '+') for match in matches]
-
-
-def find_deleted_word(line):
-    matches = re.finditer(r'\[\-(.*?)\-\]', line)
-    return [(match.start(), match.group(1), '-') for match in matches]
-
-
-def detect_changes(diff_string):
-    changes = {}
-    diff_lines = diff_string.split("\n")
-    type_key = {'+': 'add', '-': 'delete'}
-    for line_num, diff_line in enumerate(diff_lines):
-        print(line_num, diff_line)
-        detected_words = find_added_word(diff_line) + find_deleted_word(diff_line)
-        if not detected_words:
-            continue
-        print(detected_words)
-        print(f"len(detected_words) : {len(detected_words) }")
-        if len(detected_words) == 1 and len(detected_words[0][1]) == len(diff_line) - 4:
-            changes[line_num+1] = {
-                'line': True,
-                'type': type_key[detected_words[0][2]]
-            }
-        else:
-            detected_words.sort(key=lambda x: x[0])
-            words = [(word[0] - 4 * i, word[1], word[2]) for i, word in enumerate(detected_words)]
-            word_changes = []
-            change = {'line': False}
-            for word in words:
-                word_changes.append({
-                    'type': type_key[word[2]],
-                    'col': word[0],
-                    'length': len(word[1])
-                })
-            change['info'] = word_changes
-            changes[line_num+1] = change
-    return changes
 
 
 
@@ -226,6 +157,53 @@ def show_file(filepath):
 
 
 
+def wrap_word(change_type, line):
+    start = 1 if line.startswith("\n") else 0
+    end = len(line) - 1 if line.endswith("\n") else len(line)    
+    inner = line[start:end].replace('\n', ('+}\n{+' if change_type == '+' else '-]\n[-'))
+    inner = '{+' + inner + '+}' if change_type == '+' else '[-' + inner + '-]'
+    return (("\n" if line.startswith("\n") else "") + inner + ("" if line.endswith("\n") else ""))
+
+
+def find_added_word(line):
+    matches = re.finditer(r'\{\+(.*?)\+\}', line)
+    return [(match.start(), match.group(1), '+') for match in matches]
+
+
+def find_deleted_word(line):
+    matches = re.finditer(r'\[\-(.*?)\-\]', line)
+    return [(match.start(), match.group(1), '-') for match in matches]
+
+
+def detect_changes(diff_string):
+    changes = {}
+    diff_lines = diff_string.split("\n")
+    type_key = {'+': 'add', '-': 'delete'}
+    for line_num, diff_line in enumerate(diff_lines):
+        detected_words = find_added_word(diff_line) + find_deleted_word(diff_line)
+        if not detected_words:
+            continue
+        if len(detected_words) == 1 and len(detected_words[0][1]) == len(diff_line) - 4:
+            changes[line_num+1] = {
+                'line': True,
+                'type': type_key[detected_words[0][2]]
+            }
+        else:
+            detected_words.sort(key=lambda x: x[0])
+            words = [(word[0] - 4 * i, word[1], word[2]) for i, word in enumerate(detected_words)]
+            word_changes = []
+            change = {'line': False}
+            for word in words:
+                word_changes.append({
+                    'type': type_key[word[2]],
+                    'col': word[0],
+                    'length': len(word[1])
+                })
+            change['info'] = word_changes
+            changes[line_num+1] = change
+    return changes
+
+
 def update_deco(changes_dict, deco):
     print("changes_dict")
     print(changes_dict)
@@ -242,14 +220,15 @@ def update_deco(changes_dict, deco):
     while deco_i < len(deco_keys):
         change_line = changes_keys[change_i]
         deco_line = deco_keys[deco_i]
+        print(f"change_line :{change_line}, deco_line: {deco_line}")
+
         if int(change_line) < int(deco_line):
-            change_line_num = change_line
-            if changes_dict[change_line_num]['line']:
-                if changes_dict[change_line_num]['type'] == 'add':
+            if changes_dict[change_line]['line']:
+                if changes_dict[change_line]['type'] == 'add':
                     line_offset += 1
                 else:
                     line_offset -= 1
-            if change_i < len(changes_keys):
+            if change_i < len(changes_keys) - 1:
                 change_i += 1
         elif int(change_line) > int(deco_line): 
             deco_i += 1
@@ -263,12 +242,13 @@ def update_deco(changes_dict, deco):
             while word_deco_i < len(word_deco_list):
                 word_change = word_change_list[word_change_i]
                 word_deco = word_deco_list[word_deco_i]
+                print(f"word_change: {word_change}, word_deco: {word_deco}")
                 if word_change['col'] < word_deco['start']:
                     if word_change['type'] == 'add':
                         col_offset += word_change['length']
                     else:
                         col_offset -= word_change['length']
-                    if word_change_i < len(word_change_list):
+                    if word_change_i < len(word_change_list) - 1: # 0 < 0이 되면 무한반복
                         word_change_i += 1
                 else:
                     word_deco['start'] += col_offset
@@ -307,7 +287,6 @@ def show_codee_file(ref, content):
     codee_content = get_content_of_file(g.owner, g.repo, ref, content)
     codee_content_json = json.loads(codee_content)
     decoration = json.loads(codee_content_json['data'])
-    print(type(codee_content_json))
     ref_file_path = codee_content_json['referenced_file']
     ref_file_content = get_content_of_file(g.owner, g.repo, ref, ref_file_path)
 
@@ -316,6 +295,7 @@ def show_codee_file(ref, content):
 
     if actual_sha != written_sha:            
         # codee_content_json['last_commit_sha'] = actual_last_sha
+        print(f"actual_sha: {actual_sha}, written_sha: {written_sha}")
         codee_content_json['data'] = json.dumps(
             merge(written_sha, actual_sha, ref_file_path, decoration)
         )
