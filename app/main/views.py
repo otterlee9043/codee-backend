@@ -3,6 +3,7 @@ from .. import db
 from ..models import User
 
 import json, os, difflib, re
+from collections import deque, defaultdict
 from flask import abort, render_template, redirect, url_for, g, request
 from flask_login import current_user, login_required
 from functools import wraps
@@ -156,6 +157,27 @@ def show_file(filepath):
     return "Illegal URL", 400
 
 
+def show_codee_file(ref, content):
+    codee_content = get_content_of_file(g.owner, g.repo, ref, content)
+    codee_content_json = json.loads(codee_content)
+    decoration = json.loads(codee_content_json['data'])
+    ref_file_path = codee_content_json['referenced_file']
+    ref_file_content = get_content_of_file(g.owner, g.repo, ref, ref_file_path)
+
+    actual_sha = get_last_commit_sha(g.owner, g.repo, ref, content)
+    written_sha = codee_content_json['last_commit_sha']
+
+    if actual_sha != written_sha:            
+        codee_content_json['last_commit_sha'] = actual_sha
+        print(f"actual_sha: {actual_sha}, written_sha: {written_sha}")
+        codee_content_json['data'] = json.dumps(
+            merge(written_sha, actual_sha, ref_file_path, decoration)
+        )
+        codee_content = json.dumps(codee_content_json)
+    return render_template('main/cd.html', tree=get_tree_of_repository(g.owner, g.repo, ref),
+                           ref=ref, content=content, ref_path=ref_file_path,
+                           ref_content=ref_file_content, codee_content=codee_content)
+
 
 def wrap_word(change_type, line):
     start = 1 if line.startswith("\n") else 0
@@ -212,26 +234,29 @@ def update_deco(changes_dict, deco):
     new_deco = {}
 
     changes_keys = list(changes_dict.keys())
-    changes_keys.append(-1)
     deco_keys = list(deco.keys())
     change_i, deco_i = 0, 0
-    
-    line_offset = 0
-    while deco_i < len(deco_keys):
-        change_line = changes_keys[change_i]
-        deco_line = deco_keys[deco_i]
-        print(f"change_line :{change_line}, deco_line: {deco_line}")
+    change_line = changes_keys[change_i]
+    deco_line = deco_keys[deco_i]
 
-        if int(change_line) < int(deco_line):
+    line_offset = 0
+    # 변경사항 다 읽으면 데코에 적용만 해야 함
+    # 데코 다 읽으면 끝내야 함
+    while deco_i < len(deco_keys):
+        # 변경사항 읽기
+        if int(change_line) < int(deco_line) and change_i < len(changes_keys):
             if changes_dict[change_line]['line']:
                 if changes_dict[change_line]['type'] == 'add':
                     line_offset += 1
                 else:
                     line_offset -= 1
-            if change_i < len(changes_keys) - 1:
-                change_i += 1
+            change_i += 1
+        # 데코 뛰어넘어 읽기
         elif int(change_line) > int(deco_line): 
+            # line_offset 적용
+            # new_deco[int(deco_line) + line_offset] = 
             deco_i += 1
+        # 데코에 적용
         else:
             col_offset = 0
             word_change_i, word_deco_i = 0, 0
@@ -243,13 +268,12 @@ def update_deco(changes_dict, deco):
                 word_change = word_change_list[word_change_i]
                 word_deco = word_deco_list[word_deco_i]
                 print(f"word_change: {word_change}, word_deco: {word_deco}")
-                if word_change['col'] < word_deco['start']:
+                if word_change_i < len(word_change_list) - 1 and word_change['col'] < word_deco['start']:
                     if word_change['type'] == 'add':
                         col_offset += word_change['length']
                     else:
                         col_offset -= word_change['length']
-                    if word_change_i < len(word_change_list) - 1: # 0 < 0이 되면 무한반복
-                        word_change_i += 1
+                    word_change_i += 1
                 else:
                     word_deco['start'] += col_offset
                     word_deco['end'] += col_offset
@@ -260,6 +284,85 @@ def update_deco(changes_dict, deco):
             deco_i += 1
     return new_deco
 
+def update_deco2(changes, decorations):
+    new_deco = defaultdict(list)
+    line_offset = 0
+    change_i = 0
+    for deco_line_num, deco_list in decorations.items():
+        deco_line_num = int(deco_line_num)
+        line_offset = 0
+        for deco in deco_list:
+            if deco["type"] == "line_hide":
+                    # 줄단위 데코
+                deco["start"] += line_offset
+                deco["end"] += line_offset
+            else:
+                start = deco["start"]
+                end = deco["end"]
+                for i, (change_line_num, change) in enumerate(changes.items()):
+                    change_line_num = int(change_line_num)
+                    if change_line_num < deco_line_num:
+                        if change["line"]:
+                            line_offset += 1 if change["info"]["type"] == "add" else -1
+                            deco_line_num += 1 if change["info"]["type"] == "add" else -1
+                        continue
+                    elif change_line_num > deco_line_num:
+                        break
+                    # int(change_line_num) == int(deco_line_num)
+                    if change["line"]:
+                        if change["info"]["type"] == "add":
+                            new_deco[deco_line_num + 1].append(deco)
+                    else:
+                        for word_change in change["info"]:
+                            if word_change['col'] + word_change['length'] <= start:
+                                start += word_change['length'] if word_change['type'] == 'add' else -word_change['length']
+                                end += word_change['length'] if word_change['type'] == 'add' else -word_change['length']
+                            elif start < word_change['col'] < end or start < word_change['col'] + word_change['length'] < end:
+                                end += word_change['length'] if word_change['type'] == 'add' else -word_change['length']
+                            elif word_change['col'] >= end:
+                                break
+                        deco["start"] = start
+                        deco["end"] = end
+                        new_deco[deco_line_num].append(deco)
+
+    return new_deco
+
+
+def update_word_deco(deco, word_changes):
+    start = deco["start"]
+    end = deco["end"]
+    for change in word_changes:
+        change_end = change["col"] + change["length"]
+        if change["type"] == "add":    
+            if change["col"] <= start:
+                if change_end < start:
+                    pass
+                elif change_end >= start and change_end < end:
+                    pass
+                else: # change_end >= end
+                    pass
+            elif change["col"] > start and change["col"] <= end:
+                if change_end > start and change_end <= end:
+                    pass
+                elif change_end > end:
+                    pass
+        else:
+            if change["col"] <= start:
+                if change_end < start:
+                    pass
+                elif change_end >= start and change_end < end:
+                    pass
+                else: # change_end >= end
+                    pass
+            elif change["col"] > start and change["col"] <= end:
+                if change_end > start and change_end <= end:
+                    pass
+                elif change_end > end:
+                    pass
+    deco["start"] = start
+    deco["end"] = end
+    return deco
+    
 
 def merge(old_sha, new_sha, ref_file, deco):
     dmp = init_diff_match_patch()
@@ -283,26 +386,6 @@ def merge(old_sha, new_sha, ref_file, deco):
     return deco
 
 
-def show_codee_file(ref, content):
-    codee_content = get_content_of_file(g.owner, g.repo, ref, content)
-    codee_content_json = json.loads(codee_content)
-    decoration = json.loads(codee_content_json['data'])
-    ref_file_path = codee_content_json['referenced_file']
-    ref_file_content = get_content_of_file(g.owner, g.repo, ref, ref_file_path)
-
-    actual_sha = get_last_commit_sha(g.owner, g.repo, ref, content)
-    written_sha = codee_content_json['last_commit_sha']
-
-    if actual_sha != written_sha:            
-        # codee_content_json['last_commit_sha'] = actual_last_sha
-        print(f"actual_sha: {actual_sha}, written_sha: {written_sha}")
-        codee_content_json['data'] = json.dumps(
-            merge(written_sha, actual_sha, ref_file_path, decoration)
-        )
-        codee_content = json.dumps(codee_content_json)
-    return render_template('main/cd.html', tree=get_tree_of_repository(g.owner, g.repo, ref),
-                           ref=ref, content=content, ref_path=ref_file_path,
-                           ref_content=ref_file_content, codee_content=codee_content)
 
 
 @main.route('/update_codee', methods=['POST'])
@@ -381,41 +464,6 @@ def create_codee():
 
 
 
-
-# def diff(cmtid1, cmtid2, username_, repository, filepath):
-#     print(type(cmtid1))
-#     print("DATA!!")
-#     # os.system("cd /home/codination/ver1")
-#     os.chdir(os.path.join(
-#         "/home/codination/ver1/app/static/files/", username_, repository))
-#     data = subprocess.check_output(
-#         ['git', 'diff', '--word-diff-regex=.', cmtid1+":"+filepath, cmtid2+":"+filepath], encoding='utf_8')
-#     print("unparsed data!")
-#     print(data)
-#     data = data.split("\n")
-#     # print(data)
-#     diff = parse_diff_data(data)
-#     # diff = parse_diff_line(data, diff)
-
-#     print("DIFFS!!")
-#     print(diff)
-#     return diff
-
-
-# @main.route('/diff/<cmtid1>/<cmtid2>', methods=['GET'])
-# def diff2(cmtid1, cmtid2):
-#     print(type(cmtid1))
-#     print("DATA!!")
-#     # os.system("cd /home/codination/ver1")
-#     os.chdir("/home/codination/ver1/app/static/files/user2/OSSLab_0420_test")
-#     data = subprocess.check_output(
-#         ['git', 'diff', '--word-diff-regex=.', cmtid1, cmtid2], encoding='utf_8')
-#     print(data)
-#     data = data.split("\n")
-#     print(len(data))
-#     diff = parse_diff_data(data)
-#     print(diff)
-#     return make_response(jsonify(diff), 200)
 
 
 def parse_diff_line(data, diff_data):
