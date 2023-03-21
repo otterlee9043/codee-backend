@@ -226,103 +226,90 @@ def detect_changes(diff_string):
     return changes
 
 
-def update_deco(changes_dict, deco):
-    print("changes_dict")
-    print(changes_dict)
-    print("deco")
-    print(deco)
-    new_deco = {}
+# def update_deco(changes_dict, deco):
+#     print("changes_dict")
+#     print(changes_dict)
+#     print("deco")
+#     print(deco)
+#     new_deco = {}
 
-    changes_keys = list(changes_dict.keys())
-    deco_keys = list(deco.keys())
-    change_i, deco_i = 0, 0
-    change_line = changes_keys[change_i]
-    deco_line = deco_keys[deco_i]
+#     changes_keys = list(changes_dict.keys())
+#     deco_keys = list(deco.keys())
+#     change_i, deco_i = 0, 0
+#     change_line = changes_keys[change_i]
+#     deco_line = deco_keys[deco_i]
 
-    line_offset = 0
-    # 변경사항 다 읽으면 데코에 적용만 해야 함
-    # 데코 다 읽으면 끝내야 함
-    while deco_i < len(deco_keys):
-        # 변경사항 읽기
-        if int(change_line) < int(deco_line) and change_i < len(changes_keys):
-            if changes_dict[change_line]['line']:
-                if changes_dict[change_line]['type'] == 'add':
-                    line_offset += 1
-                else:
-                    line_offset -= 1
-            change_i += 1
-        # 데코 뛰어넘어 읽기
-        elif int(change_line) > int(deco_line): 
-            # line_offset 적용
-            # new_deco[int(deco_line) + line_offset] = 
-            deco_i += 1
-        # 데코에 적용
-        else:
-            col_offset = 0
-            word_change_i, word_deco_i = 0, 0
-            word_change_list = changes_dict[change_line]['info']
-            print(deco_line)
-            print(deco[deco_line])
-            word_deco_list = sorted(deco[deco_line], key=lambda x: x['start'])
-            while word_deco_i < len(word_deco_list):
-                word_change = word_change_list[word_change_i]
-                word_deco = word_deco_list[word_deco_i]
-                print(f"word_change: {word_change}, word_deco: {word_deco}")
-                if word_change_i < len(word_change_list) - 1 and word_change['col'] < word_deco['start']:
-                    if word_change['type'] == 'add':
-                        col_offset += word_change['length']
-                    else:
-                        col_offset -= word_change['length']
-                    word_change_i += 1
-                else:
-                    word_deco['start'] += col_offset
-                    word_deco['end'] += col_offset
-                    word_deco_list[word_deco_i] = word_deco
-                    word_deco_i += 1
-            new_deco[int(deco_line) + line_offset] = word_deco_list
-            change_i += 1
-            deco_i += 1
-    return new_deco
+#     line_offset = 0
+#     # 변경사항 다 읽으면 데코에 적용만 해야 함
+#     # 데코 다 읽으면 끝내야 함
+#     while deco_i < len(deco_keys):
+#         # 변경사항 읽기
+#         if int(change_line) < int(deco_line) and change_i < len(changes_keys):
+#             if changes_dict[change_line]['line']:
+#                 if changes_dict[change_line]['type'] == 'add':
+#                     line_offset += 1
+#                 else:
+#                     line_offset -= 1
+#             change_i += 1
+#         # 데코 뛰어넘어 읽기
+#         elif int(change_line) > int(deco_line): 
+#             # line_offset 적용
+#             # new_deco[int(deco_line) + line_offset] = 
+#             deco_i += 1
+#         # 데코에 적용
+#         else:
+#             col_offset = 0
+#             word_change_i, word_deco_i = 0, 0
+#             word_change_list = changes_dict[change_line]['info']
+#             print(deco_line)
+#             print(deco[deco_line])
+#             word_deco_list = sorted(deco[deco_line], key=lambda x: x['start'])
+#             while word_deco_i < len(word_deco_list):
+#                 word_change = word_change_list[word_change_i]
+#                 word_deco = word_deco_list[word_deco_i]
+#                 print(f"word_change: {word_change}, word_deco: {word_deco}")
+#                 if word_change_i < len(word_change_list) - 1 and word_change['col'] < word_deco['start']:
+#                     if word_change['type'] == 'add':
+#                         col_offset += word_change['length']
+#                     else:
+#                         col_offset -= word_change['length']
+#                     word_change_i += 1
+#                 else:
+#                     word_deco['start'] += col_offset
+#                     word_deco['end'] += col_offset
+#                     word_deco_list[word_deco_i] = word_deco
+#                     word_deco_i += 1
+#             new_deco[int(deco_line) + line_offset] = word_deco_list
+#             change_i += 1
+#             deco_i += 1
+#     return new_deco
 
-def update_deco2(changes, decorations):
+def update_deco(changes, decorations):
     new_deco = defaultdict(list)
     line_offset = 0
-    change_i = 0
     for deco_line_num, deco_list in decorations.items():
         deco_line_num = int(deco_line_num)
         line_offset = 0
         for deco in deco_list:
-            if deco["type"] == "line_hide":
-                    # 줄단위 데코
-                deco["start"] += line_offset
-                deco["end"] += line_offset
-            else:
-                start = deco["start"]
-                end = deco["end"]
-                for i, (change_line_num, change) in enumerate(changes.items()):
-                    change_line_num = int(change_line_num)
-                    if change_line_num < deco_line_num:
-                        if change["line"]:
-                            line_offset += 1 if change["info"]["type"] == "add" else -1
-                            deco_line_num += 1 if change["info"]["type"] == "add" else -1
-                        continue
-                    elif change_line_num > deco_line_num:
-                        break
-                    # int(change_line_num) == int(deco_line_num)
+            for i, (change_line_num, change) in enumerate(changes.items()):
+                change_line_num = int(change_line_num)
+                if change_line_num < deco_line_num:
                     if change["line"]:
+                        line_offset += 1 if change["info"]["type"] == "add" else -1
+                        deco_line_num += 1 if change["info"]["type"] == "add" else -1
+                    continue
+                elif change_line_num > deco_line_num:
+                    break
+                # change_line_num == deco_line_num
+                if change["line"]:
+                    if deco["type"] == "line_hide":
+                        pass
+                    else:
                         if change["info"]["type"] == "add":
                             new_deco[deco_line_num + 1].append(deco)
-                    else:
-                        for word_change in change["info"]:
-                            if word_change['col'] + word_change['length'] <= start:
-                                start += word_change['length'] if word_change['type'] == 'add' else -word_change['length']
-                                end += word_change['length'] if word_change['type'] == 'add' else -word_change['length']
-                            elif start < word_change['col'] < end or start < word_change['col'] + word_change['length'] < end:
-                                end += word_change['length'] if word_change['type'] == 'add' else -word_change['length']
-                            elif word_change['col'] >= end:
-                                break
-                        deco["start"] = start
-                        deco["end"] = end
+                else:
+                    deco = update_word_deco(deco, change["info"])
+                    if deco:
                         new_deco[deco_line_num].append(deco)
 
     return new_deco
@@ -332,33 +319,29 @@ def update_word_deco(deco, word_changes):
     start = deco["start"]
     end = deco["end"]
     for change in word_changes:
-        change_end = change["col"] + change["length"]
+        # line change 분류
+        change_end = change["col"] + change["length"] - 1
         if change["type"] == "add":    
-            if change["col"] <= start:
-                if change_end < start:
-                    pass
-                elif change_end >= start and change_end < end:
-                    pass
-                else: # change_end >= end
-                    pass
-            elif change["col"] > start and change["col"] <= end:
-                if change_end > start and change_end <= end:
-                    pass
-                elif change_end > end:
-                    pass
+            if change["col"] < start:
+                start += change["length"]
+                end += change["length"]
+            elif change["col"] >= start and change["col"] <= end:
+                end += change["length"]
         else:
-            if change["col"] <= start:
+            if change["col"] < start:
                 if change_end < start:
-                    pass
+                    start -= change["length"]
+                    end -= change["length"]
                 elif change_end >= start and change_end < end:
-                    pass
+                    start = change["col"]
+                    end -= change["length"]
                 else: # change_end >= end
-                    pass
-            elif change["col"] > start and change["col"] <= end:
-                if change_end > start and change_end <= end:
-                    pass
-                elif change_end > end:
-                    pass
+                    return None
+            elif change["col"] >= start and change["col"] <= end:
+                if change_end >= start and change_end < end:
+                    end -= change["length"]
+                elif change_end >= end:
+                    end = start + 1
     deco["start"] = start
     deco["end"] = end
     return deco
