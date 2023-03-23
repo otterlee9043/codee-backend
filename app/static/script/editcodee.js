@@ -19,7 +19,7 @@ function addWordHighlight(color, start, end, line, id) {
 }
 
 function addWordHide(start, end, line, id) {
-  addDeco(line, { type: "word_hide", start: start, end: end });
+  addDeco(line, { type: "word_hide", start: start, end: end, id: id });
 }
 
 function addDeco(line, info) {

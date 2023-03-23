@@ -11,7 +11,6 @@ from os.path import exists
 from flask_dance.contrib.github import github
 import base64
 from datetime import datetime
-from git import Repo
 from diff_match_patch import diff_match_patch
 
 
@@ -229,28 +228,36 @@ def detect_changes(diff_string):
 
 def update_deco(changes, decorations):
     new_deco = defaultdict(list)
-    line_offset = 0
     for deco_line_num, deco_list in decorations.items():
-        deco_line_num = int(deco_line_num) + line_offset
+        print(f"deco_line_num: {deco_line_num}, deco_list: {deco_list}")
+        deco_line_num = int(deco_line_num)
         for deco in deco_list:
             for change_line_num, change in changes.items():
-                change_line_num = int(change_line_num) + line_offset
+                print(f"    change_line_num: {change_line_num}, change: {change}")
+                change_line_num = int(change_line_num)
                 if change_line_num < deco_line_num:
+                    print(1)
                     if change["line"]:
-                        line_offset += 1 if change["type"] == "add" else -1
+                        print(2)
                         deco_line_num += 1 if change["type"] == "add" else -1
+                        print(f"deco_line_num: {deco_line_num}")
                     continue
                 elif change_line_num > deco_line_num:
+                    print(3)
                     break
                 # change_line_num == deco_line_num
                 if change["line"]: # 줄 단위의 변경 사항
                     if deco["type"] == "line_hide":
+                        print(4)
                         # line_hide 하는 범위에 겹치는 변경사항이 있으면 데코 삭제
                         pass
                     else:
+                        print(5)
                         if change["info"]["type"] == "add":
+                            print(6)
                             new_deco[deco_line_num + 1].append(deco)
                 else: # 단어 단위의 변경 사항
+                    print(7)
                     deco = update_word_deco(deco, change["info"])
             if deco:
                 new_deco[deco_line_num].append(deco)
@@ -261,38 +268,37 @@ def update_deco(changes, decorations):
 def update_word_deco(deco, word_changes):
     start = deco["start"]
     end = deco["end"]
-    col_offset = 0
     for change in word_changes:
         # line change 분류
-        change["col"] += col_offset
         change_end = change["col"] + change["length"] - 1
         if change["type"] == "add":    
             if change["col"] < start:
-                col_offset += change["length"]   
-                start += col_offset
-                end += col_offset
+                print("(1)")
+                start += change["length"]
+                end += change["length"]
             elif change["col"] >= start and change["col"] <= end:
-                col_offset += change["length"]   
+                print("(2)")
                 end += change["length"]
         else:
             if change["col"] < start:
                 if change_end < start:
-                    col_offset -= change["length"]   
-                    start += col_offset
-                    end += col_offset
+                    print("(3)")
+                    start -= change["length"]
+                    end -= change["length"]
                 elif change_end >= start and change_end < end:
-                    col_offset -= change["length"] 
+                    print("(4)")
                     start = change["col"]
                     end -= change["length"]
                 else: # change_end >= end
+                    print(5)
                     return None
             elif change["col"] >= start and change["col"] <= end:
                 if change_end >= start and change_end < end:
-                    col_offset -= change["length"] 
+                    print("(6)")
                     end -= change["length"]
                 elif change_end >= end:
-                    col_offset -= end - change["col"] + 1
-                    end = change["col"]
+                    print("(7)")
+                    end = start + 1
     deco["start"] = start
     deco["end"] = end
     return deco
@@ -300,6 +306,10 @@ def update_word_deco(deco, word_changes):
 
 def merge(old_sha, new_sha, ref_file, deco):
     dmp = init_diff_match_patch()
+    print("=========deco")
+    print(deco)
+    print(f"old_sha: {old_sha}, new_sha: {new_sha}")
+    # deco = sorted(deco, key=lambda x: x['line'])
     old_code = escape(get_content_of_file(g.owner, g.repo, old_sha, ref_file))
     new_code = escape(get_content_of_file(g.owner, g.repo, new_sha, ref_file))
     diffs = dmp.diff_main(old_code, new_code)
@@ -310,6 +320,10 @@ def merge(old_sha, new_sha, ref_file, deco):
         for diff_type, diff_str in diffs
     ])
     changes = detect_changes(content)
+    print(">> diffs")
+    print(diffs)
+    print(">> changes")
+    print(changes)
     deco = update_deco(changes, deco)
     
     print(changes)

@@ -72,7 +72,7 @@ function createEllipsisNode(line) {
     const lineId = `L${info.start}`;
     const number = info.number;
     const ID = info.id;
-    deleteDeco(ID);
+    deleteDeco(info.start, ID);
     expand(lineId, number);
     const lineNumber = parseInt(lineId.replace(/[^0-9]/g, ""));
     selectedInfo = selectedInfo.filter((item) => {
@@ -106,6 +106,7 @@ function drawHighlight(deco) {
 function drawWordHide(deco) {
   const { selected, id } = deco;
   selected.classList.add("hidden");
+  const line = parseInt(getTD(selected).getAttribute("data-line-number"));
 
   const ellipsisBtn = document.createElement("span");
   ellipsisBtn.classList.add("ellipsis");
@@ -114,8 +115,7 @@ function drawWordHide(deco) {
 
   ellipsisBtn.addEventListener("click", () => {
     selected.classList.remove("hidden");
-    console.log(`id is ${id}`);
-    deleteDeco(id);
+    deleteDeco(line, id);
     ellipsisBtn.remove();
     mergeNode(selected);
   });
@@ -388,11 +388,12 @@ function ellipsisSpan(newSpan) {
   const ellipsisButton = document.createElement("span");
   ellipsisButton.innerText = "⋯";
   ellipsisButton.classList.add("ellipsis");
+  const line = parseInt(getTD(newSpan).getAttribute("data-line-number"));
+
   ellipsisButton.addEventListener("click", () => {
     newSpan.classList.remove("hidden");
     let id = newSpan.getAttribute("id");
-    console.log(`id is ${id}`);
-    deleteDeco(id);
+    deleteDeco(line, id);
     ellipsisButton.remove();
     mergeNode(newSpan);
   });
@@ -726,15 +727,15 @@ function registerCommentEvent(comment, node, id, type) {
   closeBtn.classList.add("right");
 
   commentSpan.appendChild(closeBtn);
-
+  const line = parseInt(getTD(node).getAttribute("data-line-number"));
   closeBtn.addEventListener("click", () => {
     console.log(commentSpan.id);
     if (type == "comment") {
-      deleteDeco(commentSpan.id);
+      deleteDeco(line, commentSpan.id);
     } else if (type == "link") {
-      deleteDeco(id);
+      deleteDeco(line, id);
     } else if (type == "highlight") {
-      deleteDeco(id);
+      deleteDeco(line, id);
     }
     addContextMenu();
 

@@ -396,8 +396,9 @@ function embedComment(comment, span, id) {
   closeBtn.classList.add("right");
 
   commentSpan.appendChild(closeBtn);
+  const line = parseInt(getTD(selected).getAttribute("data-line-number"));
   closeBtn.addEventListener("click", () => {
-    deleteDeco(commentSpan.id);
+    deleteDeco(line, commentSpan.id);
     mergeNode(span, commentSpan);
   });
 }
