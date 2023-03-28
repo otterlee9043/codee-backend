@@ -1,13 +1,19 @@
-FROM python:3-alpine3.15
+# Use the Python3.7.2 container image
+FROM python:3.7.2-stretch
 
-RUN apk update && apk add uwsgi uwsgi-python3
-
+# Set the working directory to /app
 WORKDIR /codee
 
+# Copy the current directory contents into the container at /app 
 ADD . /codee
 
+# Install the dependencies
 RUN pip install -r requirements.txt
-ENV FLASK_APP=codee.py
-ENV UWSGI_INI=./uwsgi.ini
 
-CMD sleep 5 && uwsgi --ini uwsgi.ini
+# Create a uwsgi log directory and files
+RUN mkdir /var/log/uwsgi
+RUN touch /var/log/uwsgi/uwsgi_access.log
+RUN touch /var/log/uwsgi/uwsgi_error.log
+
+# run the command to start uWSGI
+CMD ["uwsgi", "uwsgi.ini"]
