@@ -1,0 +1,55 @@
+<section class="modal modalWindow" id="popupOne">
+    <section class="modalWrapper">
+        <div>
+            <form>
+                <div>
+                    <div class="col-25">
+                        <label for="name">codee name</label>
+                    </div>
+                    <div class="col-60">
+                        <input id="codee_name" type="text" name="codee_name">
+                    </div>
+                    <div class="col-15">
+                        <span>.cd</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="col-25"><label for="codee_path">codee path</label></div>
+                    <div class="col-60">
+                        <input id='codee_path' type="text" name='codee_path' disabled="true">
+                        <div id="drawer1" class="browse-dir scroll">
+                            <ul id="dir_tree" aria-labelledby="tree_label">
+                                <li id="modal_tree_1" class="dir"></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-15"> <button class='browse-btn' type='button'
+                            onclick="openDir('drawer1')">browse</button>
+                    </div>
+
+                </div>
+                <div>
+                    <div class="col-25"><label for="ref_filename">reference file name</label></div>
+                    <div class="col-60">
+                        <input id='ref_path' name='ref_path' type="text" disabled="true">
+                        <div id="drawer2" class="browse-dir scroll">
+                            <ul id="dir_tree" aria-labelledby="tree_label">
+                                <li id="modal_tree_2" class="dir"></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-15"><button class='browse-btn' type='button'
+                            onclick="openDir('drawer2')">browse</button>
+                    </div>
+                </div>
+                <div class="create-btn">
+                    <button id="create-button">Create</button>
+                </div>
+            </form>
+
+        </div>
+    </section>
+    <a class="closeBtn">×</a>
+</section>
+<section class="modal overlay">
+</section>

@@ -1,262 +1,63 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=deivce-width, initial-scale=1.0">
-
-  <link rel="apple-touch-icon" sizes="57x57" href="{{url_for('static', filename='favicon/apple-icon-57x57.png')}}">
-  <link rel="apple-touch-icon" sizes="60x60" href="{{url_for('static', filename='favicon/apple-icon-60x60.png')}}">
-  <link rel="apple-touch-icon" sizes="72x72" href="{{url_for('static', filename='favicon/apple-icon-72x72.png')}}">
-  <link rel="apple-touch-icon" sizes="76x76" href="{{url_for('static', filename='favicon/apple-icon-76x76.png')}}">
-  <link rel="apple-touch-icon" sizes="114x114" href="{{url_for('static', filename='favicon/apple-icon-114x114.png')}}">
-  <link rel="apple-touch-icon" sizes="120x120" href="{{url_for('static', filename='favicon/apple-icon-120x120.png')}}">
-  <link rel="apple-touch-icon" sizes="144x144" href="{{url_for('static', filename='favicon/apple-icon-144x144.png')}}">
-  <link rel="apple-touch-icon" sizes="152x152" href="{{url_for('static', filename='favicon/apple-icon-152x152.png')}}">
-  <link rel="apple-touch-icon" sizes="180x180" href="{{url_for('static', filename='favicon/apple-icon-180x180.png')}}">
-  <link rel="icon" type="image/png" sizes="192x192"
-    href="{{url_for('static', filename='favicon/android-icon-192x192.png')}}">
-  <link rel="icon" type="image/png" sizes="32x32" href="{{url_for('static', filename='favicon/favicon-32x32.png')}}">
-  <link rel="icon" type="image/png" sizes="96x96" href="{{url_for('static', filename='favicon/favicon-96x96.png')}}">
-  <link rel="icon" type="image/png" sizes="16x16" href="{{url_for('static', filename='favicon/favicon-16x16.png')}}">
-  <link rel="manifest" href="{{url_for('static', filename='favicon/manifest.json')}}">
-  <meta name="msapplication-TileColor" content="#ffffff">
-  <meta name="msapplication-TileImage" content="{{url_for('static', filename='favicon/ms-icon-144x144.png')}}">
-  <meta name="theme-color" content="#ffffff">
-
-  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300&display=swap" rel="stylesheet">
-  <link rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.7.1/jquery.contextMenu.min.css">
-  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
-  <script src="https://kit.fontawesome.com/16fd5c8b77.js" crossorigin="anonymous"></script>
-  <script src="http://code.jquery.com/jquery-latest.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.7.1/jquery.contextMenu.min.js"></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/go.min.js"></script>
-  <script
+{% extends "main/base.html" %}
+{% block extra_head %}
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/go.min.js"></script>
+<script
     src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
-  <script>hljs.highlightAll(); hljs.initLineNumbersOnLoad();</script>
-  <title>Codee</title>
-</head>
-<header>
-  <div class="topbar darkbg">
-    <div class="logo-wrapper"><img src="{{url_for('static', filename='logo_white.svg')}}" class="small-logo" alt=""
-        srcset=""></div>
-
-    <div class="logout2 white">
-      <span>{{current_user.username}} 님,</span>
-      <a href="{{ url_for('auth.logout') }}">logout</a>
-    </div>
-  </div>
-  <div class="topbar reponame-container">
-    <span class="reponame">{{ g.owner }} / {{ g.repo }}</span>
-  </div>
-</header>
-
-<body>
-  <div class="container center-col">
-    <div class="full margin20">
-      <span class="filename">{{ content }}</span>
-    </div>
-
-    </h3>
-    <div class="center-row full">
-      <div class="sidebar col">
-        <div class="filelist border-box scroll">
-          <div id="tree"></div>
-        </div>
-        <div class="full">
-          <button class="button modalButton full" data-popup="popupOne">create codee</button>
-        </div>
-        <section class="modal modalWindow" id="popupOne">
-          <section class="modalWrapper">
-            <div>
-              <form>
-                <div>
-                  <div class="col-25">
-                    <label for="name">codee name</label>
-                  </div>
-                  <div class="col-60">
-                    <input id="codee_name" type="text" name="codee_name">
-                  </div>
-                  <div class="col-15">
-                    <span>.cd</span>
-                  </div>
-                </div>
-                <div>
-                  <div class="col-25"><label for="codee_path">codee path</label></div>
-                  <div class="col-60">
-                    <input id='codee_path' type="text" name='codee_path' disabled="true">
-                    <div id="drawer1" class="browse-dir scroll">
-                      <ul id="dir_tree" aria-labelledby="tree_label">
-                        <li id="modal_tree_1" class="dir"></li>
-                      </ul>
-                    </div>
-                  </div>
-                  <div class="col-15"> <button class='browse-btn' type='button'
-                      onclick="openDir('drawer1')">browse</button>
-                  </div>
-
-                </div>
-                <div>
-                  <div class="col-25"><label for="ref_filename">reference file name</label></div>
-                  <div class="col-60">
-                    <input id='ref_path' name='ref_path' type="text" disabled="true">
-                    <div id="drawer2" class="browse-dir scroll">
-                      <ul id="dir_tree" aria-labelledby="tree_label">
-                        <li id="modal_tree_2" class="dir"></li>
-                      </ul>
-                    </div>
-                  </div>
-                  <div class="col-15"><button class='browse-btn' type='button'
-                      onclick="openDir('drawer2')">browse</button>
-                  </div>
-                </div>
-                <div class="create-btn">
-                  <button id="create-button">Create</button>
-                </div>
-              </form>
-
-            </div>
-
-
-          </section>
-          <a class="closeBtn">×</a>
-        </section>
-        <section class="modal overlay">
-        </section>
-      </div>
-      {% if content == "" %}
-      <div class="box" id='export'>
-        <div class="center-col">
-          <img src="{{url_for('static', filename='6579900.jpg')}}" class="image" alt="" srcset="">
-          <a class="image-src" href="http://www.freepik.com">Designed by Freepik</a>
-        </div>
-      </div>
-
-      {% else %}
-      <div class="box" id='export'>
-        <div class="border-box">
-          <pre id="pre">
-            <code id="code"></code>
-          </pre>
-        </div>
-      </div>
-      {% endif %}
-
-    </div>
-
-
-  </div>
-
-</body>
+<script>hljs.highlightAll(); hljs.initLineNumbersOnLoad();</script>
+{% endblock %}
+{% block title %}{{ g.owner }}/{{ g.repo }}{% endblock %}
+{% block file_path %}
+<div class="full filepath-bar">
+    <span class="filename" id="filename"></span>
+</div>
+{% endblock %}
+{% block content %}
+<div class="border-box">
+    <pre id="pre">
+        <code id="code"></code>
+    </pre>
+</div>
+{% endblock %}
+{% block script %}
 <script>
-  let refData = null;
-  let treeData = null;
-  const owner = "{{ g.owner }}";
-  const repo = "{{ g.repo }}";
-  const ref = "{{ ref }}";
-  const content = "{{ content }}";
-  treeData = JSON.parse({{ tree| tojson }});
-  jsonData = JSON.parse({{ file_content| tojson }});
+    let refData = null;
+    let treeData = null;
+    const pathName = window.location.pathname;
+    const pathArray = pathName.split('/');
+    const owner = pathArray[1];
+    const repo = pathArray[2];
+    const ref = pathArray[3];
+    const content = pathArray.slice(4).join('/');
+    const openedFile = content;
 
-  if (content !== "") {
-    if (isCd(content)) {
-      const fileName = $('<div>', {
-        id: "filename",
-        class: "filename-bar"
-      });
-      fileName.text(jsonData['reference_file_path']);
-      $('#code').text(jsonData['reference_file_content']);
-      $('#pre').addClass('context-menu-one');
-      $('#pre').before(fileName);
-
-      refData = JSON.parse(jsonData['data']);
-
-    } else {
-      $('#code').text(jsonData['content']);
+    jsonData = JSON.parse({{ file_content| tojson }});
+    async function getFileContent() {
+        return await fetch(`/api/v1/repo/${owner}/${repo}/contents/${content}`)
+            .then(function (response) {
+                if (response.status !== 200) {
+                    console.log(`Looks like there was a problem. Status code: ${response.status}`);
+                    return;
+                }
+                console.log(response.json());
+                return response.json();
+            })
+            .catch(function (error) {
+                console.log("Fetch error: " + error);
+                return null;
+            });
     }
-  }
 
-
-  $('#tree').on('select_node.jstree', function (e, data) {
-    let node = data.node;
-    if (node.type === 'file') {
-      window.location.href = `/${owner}/${repo}/${ref}/${node['a_attr']['path']}`;
-    }
-  });
-
-  function isCd(filePath) {
-    return filePath.substr(filePath.lastIndexOf(".") + 1) === 'cd';
-  }
-
-  $(function () {
-    console.log(treeData);
-    const openedFile = "{{ content }}";
-    const jstreeSetting = {
-      plugins: ["wholerow"],
-      core: {
-        themes: {
-          responsive: false,
-        },
-      },
-      types: {
-        default: {
-          icon: "fa fa-folder",
-        },
-        file: {
-          icon: "fa fa-file",
-        },
-      },
-      plugins: ["types"],
-      core: {
-        data: treeData
-      }
-    };
-    $("#tree").jstree(jstreeSetting);
-    $("#modal_tree_1").jstree(jstreeSetting);
-    $("#modal_tree_2").jstree(jstreeSetting);
-
-    $('#modal_tree_1').on('changed.jstree', function (e, data) {
-      let selectedNode = data.instance.get_node(data.selected[0]);
-      if (selectedNode.original.type == "dir") {
-        $('#codee_path').val('');
-        $('#codee_path').val(selectedNode.id);
-      }
+    getFileContent().then(fileContent => {
+        $('#code').text(fileContent);
+    }).catch(error => {
+        console.error("Fetch error: " + error);
     });
-
-    $('#modal_tree_2').on('changed.jstree', function (e, data) {
-      let selectedNode = data.instance.get_node(data.selected[0]);
-      if (selectedNode.original.type == "file") {
-        $('#ref_path').val('');
-        $('#ref_path').val(selectedNode.id);
-      }
-    });
-
-    $('#tree').on('ready.jstree', function (e, data) {
-      const parents = $('#tree').jstree(true).get_node(openedFile).parents;
-      for (let i = parents.length - 2; i >= 0; i--) {
-        $("#tree").jstree('open_node', parents[i], 0);
-      }
-    });
-
-  });
-
-
+    $('#filename').text(content)
 
 </script>
-<script src="{{ url_for('static', filename = 'script/import/html-to-rtf-browser.min.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/drawtree.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/index.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/createcodee.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/component/menubar.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/getIndices.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/editcodee.js') }}"></script>
-
-</html>
+{% endblock %}
