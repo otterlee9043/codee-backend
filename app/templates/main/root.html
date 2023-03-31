@@ -16,7 +16,7 @@
     const owner = "{{ g.owner }}";
     const repo = "{{ g.repo }}";
     const ref = "{{ ref }}";
-    const openedFile = null;
+    const openFile = null;
     treeData = JSON.parse({{ tree| tojson }});
 </script>
 <script src="{{ url_for('static', filename = 'script/drawtree.js') }}"></script>

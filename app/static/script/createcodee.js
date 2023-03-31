@@ -1,3 +1,23 @@
+const settings = {
+  objModalPopupBtn: ".modalButton",
+  objModalCloseBtn: ".overlay, .closeBtn",
+  objModalDataAttr: "data-popup",
+};
+
+$(settings.objModalPopupBtn).bind("click", function () {
+  if ($(this).attr(settings.objModalDataAttr)) {
+    let strDataPopupName = $(this).attr(settings.objModalDataAttr);
+    $(".overlay, #" + strDataPopupName).fadeIn();
+  }
+});
+
+$(settings.objModalCloseBtn).bind("click", function () {
+  $("#codee_name").val("");
+  $("#codee_path").val("");
+  $("#ref_path").val("");
+  $(".modal").fadeOut();
+});
+
 function openDir(id) {
   document.getElementById(id).style.height = "250px";
 }

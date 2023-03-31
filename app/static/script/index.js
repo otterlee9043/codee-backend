@@ -1,26 +1,17 @@
-const settings = {
-  objModalPopupBtn: ".modalButton",
-  objModalCloseBtn: ".overlay, .closeBtn",
-  objModalDataAttr: "data-popup",
-};
-
-$(settings.objModalPopupBtn).bind("click", function () {
-  if ($(this).attr(settings.objModalDataAttr)) {
-    let strDataPopupName = $(this).attr(settings.objModalDataAttr);
-    $(".overlay, #" + strDataPopupName).fadeIn();
-  }
-});
-
-$(settings.objModalCloseBtn).bind("click", function () {
-  $("#codee_name").val("");
-  $("#codee_path").val("");
-  $("#ref_path").val("");
-  $(".modal").fadeOut();
-});
-
-// window.addEventListener("beforeunload", () => {
-//   updateCodee();
-// });
+async function getFileContent(owner, repo, content) {
+  return await fetch(`/api/v1/repo/${owner}/${repo}/contents/${content}`)
+    .then(function (response) {
+      if (response.status !== 200) {
+        console.log(`Looks like there was a problem. Status code: ${response.status}`);
+        return;
+      }
+      return response.text();
+    })
+    .catch(function (error) {
+      console.log("Fetch error: " + error);
+      return null;
+    });
+}
 
 const get = function (selector, scope) {
   scope = scope ? scope : document;
@@ -152,7 +143,7 @@ function addLinkTag(data) {
   registerCommentEvent(url, selected.parentElement, id, "link");
 }
 
-window.addEventListener("load", async function () {
+function renderCodee() {
   const pre = $("#pre")[0];
   if (pre.classList.contains("context-menu-one")) {
     hideLine();
@@ -215,7 +206,7 @@ window.addEventListener("load", async function () {
     }
     // });
   }
-});
+}
 
 const code = document.querySelector("code");
 let lineSelected = false;

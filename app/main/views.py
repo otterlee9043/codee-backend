@@ -2,9 +2,9 @@ from . import main
 from .. import db
 from ..models import User
 
-import json, os, difflib, re
+import json, os, difflib, re, time
 from collections import deque, defaultdict
-from flask import abort, render_template, redirect, url_for, g, request
+from flask import abort, render_template, redirect, url_for, make_response, g, request
 from flask_login import current_user, login_required
 from functools import wraps
 from os.path import exists
@@ -45,9 +45,7 @@ def init_diff_match_patch():
     return dmp
 
 
-def get_tree_of_repository(owner, repo, ref):
-    ref = "master"
-
+def get_tree_of_repository(owner, repo, ref="master"):
     tree_sha = None
     commit_resp = github.get(f'/repos/{owner}/{repo}/commits/{ref}')
     if commit_resp.ok:
@@ -84,8 +82,7 @@ def get_tree_of_repository(owner, repo, ref):
 
             items.append(file_info)
 
-        items = sorted(items, key=lambda x: (
-            x.get('type') != 'dir', x.get('text')))
+        items = sorted(items, key=lambda x: (x.get('type') != 'dir', x.get('text')))
 
         return json.dumps(items)
 
@@ -120,9 +117,22 @@ def set_repo_info(owner, repo):
     g.owner = owner
     g.repo = repo
 
+@main.route('/api/v1/repo/<owner>/<repo>/tree/<ref>', methods=['GET'])
+def get_tree(owner, repo, ref):
+    if not ref:
+        ref = "master"
+    response = make_response(get_tree_of_repository(owner, repo, ref))
+    response.headers['Cache-Control'] = 'max-age=60'
+    return response
 
 
-
+@main.route('/api/v1/repo/<owner>/<repo>/contents/<path:path>', methods=['GET'])
+def get_file_content(owner, repo, path):
+    print(path)
+    response = make_response(get_content_of_file(owner, repo, "master", path))
+    # response.headers['Cache-Control'] = 'max-age=60'
+    print(response.data)
+    return response
 
 
 
@@ -135,9 +145,16 @@ def index():
         repos_name = [repo['name'] for repo in repos_list]
     return render_template('main/repos.html', repos=repos_name)
 
+@main.route('/test', methods=['GET', 'POST'])
+def get_user_access_token():
+    return redirect(f"https://github.com/login/oauth/authorize?client_id={os.environ.get('GITHUB_APP_CLIENT_ID')}")
+
+
 
 @main.route('/<path:filepath>', methods=['GET'])
 def show_file(filepath):
+    print(">>>> show_file")
+    start = time.time()
     path_parts = filepath.split('/')
     set_repo_info(path_parts[0], path_parts[1])
     if len(path_parts) >= 4:
@@ -148,8 +165,9 @@ def show_file(filepath):
             file_content = {
                 'content': get_content_of_file(owner, repo, ref, content)
             }
-            return render_template('main/index.html', tree=get_tree_of_repository(owner, repo, ref),
-                           ref=ref, content=content, file_content=json.dumps(file_content))
+            end = time.time()
+            print(f"{end - start:.5f} sec")
+            return render_template('main/index.html', file_content=json.dumps(file_content))
     elif len(path_parts) == 3:
         owner, repo, ref = filepath.split("/", maxsplit=2)
         return render_template('main/root.html', tree=get_tree_of_repository(owner, repo, ref), ref=ref)
@@ -159,7 +177,6 @@ def show_file(filepath):
 def show_codee_file(ref, content):
     codee_content = get_content_of_file(g.owner, g.repo, ref, content)
     codee_content_json = json.loads(codee_content)
-    decoration = json.loads(codee_content_json['data'])
     ref_file_path = codee_content_json['referenced_file']
     ref_file_content = get_content_of_file(g.owner, g.repo, ref, ref_file_path)
 
@@ -167,14 +184,14 @@ def show_codee_file(ref, content):
     written_sha = codee_content_json['last_commit_sha']
 
     if actual_sha != written_sha:            
-        codee_content_json['last_commit_sha'] = actual_sha
-        print(f"actual_sha: {actual_sha}, written_sha: {written_sha}")
-        codee_content_json['data'] = json.dumps(
-            merge(written_sha, actual_sha, ref_file_path, decoration)
-        )
-        codee_content = json.dumps(codee_content_json)
-    return render_template('main/cd.html', tree=get_tree_of_repository(g.owner, g.repo, ref),
-                           ref=ref, content=content, ref_path=ref_file_path,
+        # codee_content_json['last_commit_sha'] = actual_sha
+        # print(f"actual_sha: {actual_sha}, written_sha: {written_sha}")
+        # codee_content_json['data'] = json.dumps(
+        #     merge(written_sha, actual_sha, ref_file_path, decoration)
+        # )
+        # codee_content = json.dumps(codee_content_json)
+        pass
+    return render_template('main/cd.html', ref=ref, content=content, ref_path=ref_file_path,
                            ref_content=ref_file_content, codee_content=codee_content)
 
 

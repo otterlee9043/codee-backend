@@ -8,7 +8,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/go.min.js"></script>
 <script
     src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
-<script>hljs.highlightAll(); hljs.initLineNumbersOnLoad();</script>
 {% endblock %}
 {% block title %}{{ g.owner }}/{{ g.repo }}{% endblock %}
 {% block file_path %}
@@ -18,35 +17,14 @@
 {% endblock %}
 {% block content %}
 <div class="border-box">
-    <pre id="pre">
+    <div id="filename" class="filename-bar"></div>
+    <pre id="pre" class="context-menu-one">
         <code id="code"></code>
     </pre>
 </div>
 {% endblock %}
 {% block script %}
-<script>
-    let refData = null;
-    let treeData = null;
-    const owner = "{{ g.owner }}";
-    const repo = "{{ g.repo }}";
-    const ref = "{{ ref }}";
-    const content = "{{ content }}";
-    const openedFile = content;
-    treeData = JSON.parse({{ tree| tojson }});
-    jsonData = JSON.parse({{ codee_content| tojson }});
-    console.log(jsonData);
-    const fileName = $('<div>', {
-        id: "filename",
-        class: "filename-bar"
-    });
-
-    fileName.text({{ ref_path| tojson }});
-    $('#code').text({{ ref_content| tojson }});
-    $('#pre').addClass('context-menu-one');
-    $('#pre').before(fileName);
-
-    refData = JSON.parse(jsonData['data']);
-</script>
+<script src="{{ url_for('static', filename = 'script/loadcd.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/drawtree.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/index.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/createcodee.js') }}"></script>

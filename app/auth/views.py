@@ -8,7 +8,7 @@ from .forms import LoginForm, RegistrationForm
 from flask_dance.contrib.github import github
 from flask_login import logout_user
 
-import os, json
+import os, json, requests
 root = './app/static/files/'
 
 
@@ -38,6 +38,22 @@ def login():
         user = save_or_update(account_info)
         login_user(user)
     return redirect(url_for('main.index'))
+
+
+@auth.route('/user-access-token')
+def get_uset_access_token():
+    print(request)
+    code = request.args.get('code')
+    query = {
+        'client_id': os.environ.get('GITHUB_APP_CLIENT_ID'),
+        'client_secret': os.environ.get('GITHUB_APP_CLIENT_SECRET'),
+        'code': code
+    }
+    resp = requests.post("https://github.com/login/oauth/access_token", params=query)
+    print(resp.text)
+    print(resp.json())
+    # code 값을 받아서 POST 보내기
+    return "callback URL"
 
 
 @auth.route('/github/login')

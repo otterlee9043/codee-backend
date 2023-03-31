@@ -5,7 +5,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/go.min.js"></script>
 <script
     src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
-<script>hljs.highlightAll(); hljs.initLineNumbersOnLoad();</script>
 {% endblock %}
 {% block title %}{{ g.owner }}/{{ g.repo }}{% endblock %}
 {% block file_path %}
@@ -22,39 +21,22 @@
 {% endblock %}
 {% block script %}
 <script>
-    let refData = null;
-    let treeData = null;
     const pathName = window.location.pathname;
     const pathArray = pathName.split('/');
     const owner = pathArray[1];
     const repo = pathArray[2];
     const ref = pathArray[3];
     const content = pathArray.slice(4).join('/');
-    const openedFile = content;
+    const openFile = content;
 
-    jsonData = JSON.parse({{ file_content| tojson }});
-    async function getFileContent() {
-        return await fetch(`/api/v1/repo/${owner}/${repo}/contents/${content}`)
-            .then(function (response) {
-                if (response.status !== 200) {
-                    console.log(`Looks like there was a problem. Status code: ${response.status}`);
-                    return;
-                }
-                console.log(response.json());
-                return response.json();
-            })
-            .catch(function (error) {
-                console.log("Fetch error: " + error);
-                return null;
-            });
-    }
-
-    getFileContent().then(fileContent => {
+    getFileContent(owner, repo, content).then(fileContent => {
         $('#code').text(fileContent);
+        hljs.highlightAll();
+        hljs.initLineNumbersOnLoad();
     }).catch(error => {
         console.error("Fetch error: " + error);
     });
-    $('#filename').text(content)
+    $('#filename').text(content);
 
 </script>
 <script src="{{ url_for('static', filename = 'script/drawtree.js') }}"></script>

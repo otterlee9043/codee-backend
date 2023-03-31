@@ -1,10 +1,9 @@
 /* @import url('https://fonts.googleapis.com/css?family=Nanum+Gothic'); */
 * {
   box-sizing: border-box;
-  
 }
 
-a{
+a {
   text-decoration: none;
 }
 
@@ -12,29 +11,28 @@ a:hover {
   text-decoration: underline;
 }
 
-.logout{
-
+.logout {
   float: right;
   padding: 20px 20px 0px 0px;
 }
 
-.darkbg .logout2 a{
+.darkbg .logout2 a {
   color: white;
 }
 
-.logout2{
+.logout2 {
   padding: 10px;
   font-size: 12px;
   display: inline;
   color: rgb(110, 110, 110);
 }
 
-.logout2:hover{
-color: rgb(189, 189, 189);
+.logout2:hover {
+  color: rgb(189, 189, 189);
 }
 
-.topbar{
-   display: flex;
+.topbar {
+  display: flex;
   justify-content: space-between;
   align-items: flex-start;
 }
@@ -43,11 +41,11 @@ color: rgb(189, 189, 189);
   background-color: rgb(27, 27, 27);
 }
 
-.white{
+.white {
   color: rgb(189, 189, 189);
 }
 
-.black{
+.black {
   color: black;
 }
 ul {
@@ -60,10 +58,11 @@ div {
 body {
   /* margin: 20px 30px 20px 30px; */
   margin: 0;
-  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji";
 }
 pre {
-  margin-top: 0px;
+  margin: 0px;
 }
 
 div#export {
@@ -84,12 +83,12 @@ div.box {
   width: 80%;
 }
 
-.small-logo{
+.small-logo {
   width: 150px;
   margin: 20px;
 }
 
-.big-logo{
+.big-logo {
   width: 300px;
   margin-bottom: 50px;
 }
@@ -282,7 +281,7 @@ a:visited {
 }
 
 .selected {
-  background-color: #ACCEF7;
+  background-color: #accef7;
 }
 
 .border-box {
@@ -298,7 +297,7 @@ a:visited {
   padding: 5px 10px;
   background-color: #f6f8fa;
   font-size: 15px;
-  font-family: 'Readex Pro', sans-serif;
+  font-family: "Readex Pro", sans-serif;
 }
 
 .button:hover {
@@ -331,7 +330,7 @@ a:visited {
   border-color: #2e9637;
 }
 
-.clone-btn:hover{
+.clone-btn:hover {
   background-color: #3ec249;
 }
 .username-bar {
@@ -558,13 +557,12 @@ textarea {
   text-align: center;
 }
 
-.link{
+.link {
   /* text-decoration: solid underline rgb(255, 215, 82) 3px; */
   border-bottom: solid rgb(255, 162, 235) 3px;
-  
 }
 
-.link:hover{
+.link:hover {
   border-bottom: solid rgb(255, 162, 235) 3px;
   text-decoration: none;
 }
@@ -578,11 +576,11 @@ textarea {
   border-bottom: solid rgb(230, 194, 76) 3px;
 }
 
-.comment-embed{
+.comment-embed {
   border-bottom: solid rgb(0, 195, 255) 3px;
 }
 
-.comment-embedded{
+.comment-embedded {
   padding: 5px;
   margin-top: 5px;
   margin-left: 30px;
@@ -613,26 +611,29 @@ textarea {
   margin: auto;
 }
 
-.reponame-container{
+.reponame-container {
   padding: 20px;
   background-color: #faf9f6;
   border-bottom: solid 1px #ddd;
+  margin-bottom: 20px;
 }
 
 .reponame {
 }
 
-.link{
-
+.link {
 }
-.filename{
-  font-weight:bold;
+.filename {
+  font-weight: bold;
+}
+
+.filepath-bar {
+  margin-bottom: 20px;
 }
 
 .col {
   display: flex;
   flex-direction: column;
-
 }
 .center-row {
   display: flex;
@@ -649,60 +650,59 @@ textarea {
   width: 100%;
 }
 
-.form-width{
+.form-width {
   width: 300px;
 }
-.full{
+.full {
   width: 100%;
 }
 
-.logo-wrapper{
+.logo-wrapper {
   width: 67%;
 }
 
-.align-center{
+.align-center {
   align-items: center;
-
 }
 
-.width48{
+.width48 {
   width: 48%;
 }
 
-.margin10{
+.margin10 {
   margin-bottom: 10px;
 }
 
-.margin20{
+.margin20 {
   margin-top: 20px;
   margin-bottom: 20px;
 }
 
-.image{
-  width:500px;
+.image {
+  width: 500px;
 }
 
-.image-src{
+.image-src {
   font-size: 11px;
-  color:rgb(175, 175, 175);
+  color: rgb(175, 175, 175);
   text-decoration: none;
 }
 
-.image-src:hover{
+.image-src:hover {
   text-decoration: none;
 }
 
-.repo{
+.repo {
   /* font-family: 'Readex Pro', sans-serif; */
   margin-bottom: 10px;
 }
 
-ul.repos{
+ul.repos {
   padding-left: 30px;
   padding-right: 30px;
 }
 
-.text-center{
+.text-center {
   text-align: center;
 }
 
@@ -710,7 +710,7 @@ ul.repos{
   color: blue;
 } */
 
-.youtube{
+.youtube {
   width: 400px;
   height: 250px;
   border: none;
@@ -718,26 +718,25 @@ ul.repos{
 }
 
 td {
-  vertical-align : top;
+  vertical-align: top;
 }
 
-section{
-  background-color:#ACCEF7;
+section {
+  background-color: #accef7;
 }
 
-
-.button-wrapper{
+.button-wrapper {
   float: right;
 }
 
-.button-wrapper.context-menu-item:hover{
+.button-wrapper.context-menu-item:hover {
   background-color: transparent;
-} 
-
-.button-wrapper.context-menu-item.context-menu-hover{
-  color:black;
 }
 
-.save.button:hover{
+.button-wrapper.context-menu-item.context-menu-hover {
+  color: black;
+}
+
+.save.button:hover {
   text-decoration: none;
 }
