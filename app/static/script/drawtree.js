@@ -1,11 +1,5 @@
-function spreadTree() {
-  $("#tree").on("select_node.jstree", function (e, data) {
-    let node = data.node;
-    if (node.type === "file") {
-      window.location.href = `/${owner}/${repo}/${ref}/${node["a_attr"]["path"]}`;
-    }
-  });
-}
+
+
 async function drawTree() {
   const tree = await fetch(`/api/v1/repo/${owner}/${repo}/tree/${ref}`)
     .then(function (response) {
@@ -59,12 +53,20 @@ async function drawTree() {
       $("#ref_path").val(selectedNode.id);
     }
   });
+  
+  $("#tree").on("select_node.jstree", function (e, data) {
+    let node = data.node;
+    if (node.type === "file") {
+      window.location.href = `/${owner}/${repo}/${ref}/${node["a_attr"]["path"]}`;
+    }
+  });
+}
 
-  if (openFile)
-    $("#tree").on("ready.jstree", function (e, data) {
-      const parents = $("#tree").jstree(true).get_node(content).parents;
-      for (let i = parents.length - 2; i >= 0; i--) {
-        $("#tree").jstree("open_node", parents[i], 0);
-      }
-    });
+function spreadTree() {  
+  $("#tree").on("ready.jstree", function (e, data) {
+    const parents = $("#tree").jstree(true).get_node(content).parents;
+    for (let i = parents.length - 2; i >= 0; i--) {
+      $("#tree").jstree("open_node", parents[i], 0);
+    }
+  });
 }

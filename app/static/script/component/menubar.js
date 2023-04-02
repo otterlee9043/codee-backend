@@ -25,6 +25,7 @@ function findOffsetTag(node, offset) {
   let prevOffset;
   while (length < offset) {
     prevOffset = length;
+    if (i >= childs.length) break;
     prev = childs[i];
     if (childs[i].tagName == null) {
       length += childs[i].nodeValue.length;

@@ -28,15 +28,18 @@
     const ref = pathArray[3];
     const content = pathArray.slice(4).join('/');
     const openFile = content;
-
-    getFileContent(owner, repo, content).then(fileContent => {
-        $('#code').text(fileContent);
-        hljs.highlightAll();
-        hljs.initLineNumbersOnLoad();
-    }).catch(error => {
-        console.error("Fetch error: " + error);
+    $(async function () {
+        drawTree();
+        spreadTree();
+        getFileContent(owner, repo, content).then(fileContent => {
+            $('#code').text(fileContent);
+            hljs.highlightAll();
+            hljs.initLineNumbersOnLoad();
+        }).catch(error => {
+            console.error("Fetch error: " + error);
+        });
+        $('#filename').text(content);
     });
-    $('#filename').text(content);
 
 </script>
 <script src="{{ url_for('static', filename = 'script/drawtree.js') }}"></script>

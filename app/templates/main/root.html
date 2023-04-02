@@ -11,13 +11,16 @@
 {% endblock %}
 {% block script %}
 <script>
-    let refData = null;
-    let treeData = null;
-    const owner = "{{ g.owner }}";
-    const repo = "{{ g.repo }}";
-    const ref = "{{ ref }}";
-    const openFile = null;
-    treeData = JSON.parse({{ tree| tojson }});
+    const pathName = window.location.pathname;
+    const pathArray = pathName.split('/');
+    const owner = pathArray[1];
+    const repo = pathArray[2];
+    const ref = pathArray[3];
+
+    $(function () {
+        drawTree();
+    });
+    
 </script>
 <script src="{{ url_for('static', filename = 'script/drawtree.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/createcodee.js') }}"></script>

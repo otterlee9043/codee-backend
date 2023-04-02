@@ -16,24 +16,18 @@ $(async function () {
   const refFileContent = await getFileContent(owner, repo, jsonData["referenced_file"]);
   $("#filename").text(jsonData["referenced_file"]);
   $("#code").text(refFileContent);
-  //   hljs.addPlugin({
-  //     afterHighlight: renderCodee,
-  //   });
-  hljs.highlightAll();
-  hljs.initLineNumbersOnLoad();
 
-  document.onreadystatechange = function () {
-    if (document.readyState === "complete") {
-      renderCodee();
-      console.log("done");
-    }
-  };
+  hljs.highlightAll();
+  await new Promise((resolve, reject) => {
+    hljs.initLineNumbersOnLoad();
+    resolve();
+  });
+
+  setTimeout(() => {
+    renderCodee();
+  }, 0);
 });
 
-// document.addEventListener("DOMContentLoaded", function () {
-//   // All external library calls should have been completed by now
-//   renderCodee();
-// });
 
 async function getFileContent(owner, repo, content) {
   return await fetch(`/api/v1/repo/${owner}/${repo}/contents/${content}`)
