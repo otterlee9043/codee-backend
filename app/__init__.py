@@ -1,4 +1,4 @@
-from flask import Flask, session
+from flask import Flask
 from flask_mail import Mail
 from flask_bootstrap import Bootstrap
 from flask_moment import Moment
@@ -17,7 +17,7 @@ pagedown = PageDown()
 
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
-session = Session()
+sess = Session()
 
 def create_app(config_name):
     app = Flask(__name__)
@@ -31,14 +31,14 @@ def create_app(config_name):
     db.init_app(app)
     login_manager.init_app(app)
     pagedown.init_app(app)
-    session.init_app(app)
+    sess.init_app(app)
 
     with app.app_context():
         db.create_all()
         db.session.commit()
 
-    # from .api import api as api_blueprint
-    # app.register_blueprint(api_blueprint, url_prefix='/api')
+    from .api import api as api_blueprint
+    app.register_blueprint(api_blueprint, url_prefix='/api/v1')
 
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
