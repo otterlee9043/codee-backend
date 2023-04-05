@@ -16,8 +16,11 @@
     const owner = pathArray[1];
     const repo = pathArray[2];
     const ref = pathArray[3];
-
+    const tree = JSON.parse({{ tree| tojson }});
+    $("#owner").text(owner);
+    $("#repo").text(repo);
     $(function () {
+        console.log(tree);
         drawTree();
     });
     

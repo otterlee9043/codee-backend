@@ -5,16 +5,16 @@ const repo = pathArray[2];
 const ref = pathArray[3];
 const content = pathArray.slice(4).join("/");
 const openFile = content;
-let jsonData = null;
-let refData = null;
+let codee = null;
+let decoration = null;
 
 $(async function () {
   drawTree();
   spreadTree();
-  jsonData = JSON.parse(await getFileContent(owner, repo, content));
-  refData = JSON.parse(jsonData["data"]);
-  const refFileContent = await getFileContent(owner, repo, jsonData["referenced_file"]);
-  $("#filename").text(jsonData["referenced_file"]);
+  codee = JSON.parse(await getFileContent(owner, repo, content));
+  decoration = JSON.parse(codee["data"]);
+  const refFileContent = await getFileContent(owner, repo, codee["referenced_file"]);
+  $("#filename").text(codee["referenced_file"]);
   $("#code").text(refFileContent);
 
   hljs.highlightAll();

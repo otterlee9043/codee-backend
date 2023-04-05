@@ -77,8 +77,8 @@ async function createCodee(event) {
 }
 
 async function updateCodee() {
-  jsonData["data"] = JSON.stringify(refData);
-  const codee_content = JSON.stringify(jsonData);
+  codee["data"] = JSON.stringify(decoration);
+  const codee_content = JSON.stringify(codee);
 
   const opts = {
     method: "POST",

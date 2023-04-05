@@ -147,8 +147,8 @@ function renderCodee() {
   const pre = $("#pre")[0];
   if (pre.classList.contains("context-menu-one")) {
     hideLine();
-    for (let line in refData) {
-      const decoList = refData[line];
+    for (let line in decoration) {
+      const decoList = decoration[line];
       decoList.map((deco) => {
         const type = deco.type;
         try {

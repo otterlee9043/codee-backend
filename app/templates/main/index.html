@@ -1,25 +1,25 @@
-{% extends "main/base.html" %}
-{% block extra_head %}
-<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+{% extends "main/base.html" %} {% block extra_head %}
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css" />
 <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/go.min.js"></script>
 <script
     src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
-{% endblock %}
-{% block title %}{{ g.owner }}/{{ g.repo }}{% endblock %}
-{% block file_path %}
+<script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+</script>
+{% endblock %} {% block title %}{{ g.owner }}/{{ g.repo }}{% endblock %} {%
+block file_path %}
 <div class="full filepath-bar">
     <span class="filename" id="filename"></span>
 </div>
-{% endblock %}
-{% block content %}
+{% endblock %} {% block content %}
 <div class="border-box">
     <pre id="pre">
-        <code id="code"></code>
+        <code id="code">{{ file_content |escape }}</code>
     </pre>
 </div>
-{% endblock %}
-{% block script %}
+{% endblock %} {% block script %}
 <script>
     const pathName = window.location.pathname;
     const pathArray = pathName.split('/');
@@ -27,20 +27,16 @@
     const repo = pathArray[2];
     const ref = pathArray[3];
     const content = pathArray.slice(4).join('/');
-    const openFile = content;
+    const tree = JSON.parse({{ tree| tojson }});
+
+    $("#owner").text(owner);
+    $("#repo").text(repo);
+    $("#filename").text(content);
+
     $(async function () {
         drawTree();
         spreadTree();
-        getFileContent(owner, repo, content).then(fileContent => {
-            $('#code').text(fileContent);
-            hljs.highlightAll();
-            hljs.initLineNumbersOnLoad();
-        }).catch(error => {
-            console.error("Fetch error: " + error);
-        });
-        $('#filename').text(content);
     });
-
 </script>
 <script src="{{ url_for('static', filename = 'script/drawtree.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/index.js') }}"></script>

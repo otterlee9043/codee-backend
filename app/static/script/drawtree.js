@@ -1,19 +1,7 @@
 
 
 async function drawTree() {
-  const tree = await fetch(`/api/v1/repo/${owner}/${repo}/tree/${ref}`)
-    .then(function (response) {
-      if (response.status !== 200) {
-        console.log(`Looks like there was a problem. Status code: ${response.status}`);
-        return;
-      }
-      return response.json();
-    })
-    .catch(function (error) {
-      console.log("Fetch error: " + error);
-      return null;
-    });
-
+  console.log(tree);
   const jstreeSetting = {
     plugins: ["wholerow"],
     core: {

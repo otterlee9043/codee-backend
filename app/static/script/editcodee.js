@@ -23,10 +23,10 @@ function addWordHide(start, end, line, id) {
 }
 
 function addDeco(line, info) {
-  (refData[line] || (refData[line] = [])).push(info);
+  (decoration[line] || (decoration[line] = [])).push(info);
 }
 
 function deleteDeco(line, id) {
-  refData[line].filter((info) => info["id"] !== id);
-  if (refData[line].length === 0) delete refData[line];
+  decoration[line].filter((info) => info["id"] !== id);
+  if (decoration[line].length === 0) delete decoration[line];
 }

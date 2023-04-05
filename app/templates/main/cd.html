@@ -1,30 +1,57 @@
-{% extends "main/base.html" %}
-{% block extra_head %}
-<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+{% extends "main/base.html" %} {% block extra_head %}
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css" />
 <link rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.7.1/jquery.contextMenu.min.css">
+    href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.7.1/jquery.contextMenu.min.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.7.1/jquery.contextMenu.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/go.min.js"></script>
 <script
     src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
-{% endblock %}
-{% block title %}{{ g.owner }}/{{ g.repo }}{% endblock %}
-{% block file_path %}
+{% endblock %} {% block title %}{{ g.owner }}/{{ g.repo }}{% endblock %} {%
+block file_path %}
 <div class="full filepath-bar">
-    <span class="filename">{{ content }}</span>
+    <span class="filename"></span>
 </div>
-{% endblock %}
-{% block content %}
+{% endblock %} {% block content %}
 <div class="border-box">
     <div id="filename" class="filename-bar"></div>
     <pre id="pre" class="context-menu-one">
-        <code id="code"></code>
+        <code id="code">{{ ref_content |escape }}</code>
     </pre>
 </div>
-{% endblock %}
-{% block script %}
-<script src="{{ url_for('static', filename = 'script/loadcd.js') }}"></script>
+{% endblock %} {% block script %}
+<script>
+    const pathName = window.location.pathname;
+    const pathArray = pathName.split("/");
+    const owner = pathArray[1];
+    const repo = pathArray[2];
+    const ref = pathArray[3];
+    const content = pathArray.slice(4).join("/");
+    const tree = JSON.parse({{ tree| tojson }});
+
+    const codee = JSON.parse({{ codee_content| tojson }});
+    let decoration = null;
+
+    $("#owner").text(owner);
+    $("#repo").text(repo);
+    $("#filename").text(content);
+
+    $(async function () {
+        drawTree();
+        spreadTree();
+        decoration = JSON.parse(codee["data"]);
+        $("#filename").text(codee["referenced_file"]);
+        hljs.highlightAll();
+        await new Promise((resolve, reject) => {
+            hljs.initLineNumbersOnLoad();
+            resolve();
+        });
+
+        setTimeout(() => {
+            renderCodee();
+        }, 0);
+    });
+</script>
 <script src="{{ url_for('static', filename = 'script/drawtree.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/index.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/createcodee.js') }}"></script>
