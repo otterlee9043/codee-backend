@@ -1,35 +1,33 @@
 from . import main
-from .. import db
+from .. import db, session_model
 from ..models import User, Test
 
-import json
-import os
-import difflib
-import re
-import time
-import requests
+import json, os, difflib, re, time, requests, base64
 from collections import deque, defaultdict
-from flask import abort, render_template, redirect, url_for, make_response, g, request, session
+from flask import abort, render_template, redirect, url_for, make_response, g, request, session, current_app
 from flask_login import current_user, login_required
-from functools import wraps
-from os.path import exists
 from flask_dance.contrib.github import github
-import base64
 from datetime import datetime
 from diff_match_patch import diff_match_patch
 
 
-def request_header(token):
-    return {
+def request_header(token, additional_header = None):
+    header = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github+json"
     }
+    if additional_header:
+        header.update(additional_header)
+    return header
 
 
-# @main.before_request
+@main.before_request
+@login_required
 def check_access_token():
-    if 'access_token' not in session and request.endpoint not in ['login', 'logout']:
-        return redirect(url_for('login'))
+    print(f"session.sid: {session.sid}")
+    if not session and request.endpoint not in ['auth.login', 'auth.logout']:
+        return redirect(url_for('auth.login'))        
+
 
 
 @main.app_template_filter()
@@ -105,8 +103,11 @@ def init_diff_match_patch():
 def get_last_commit_sha(owner, repo, ref, filepath):
     last_commit_sha = None
 
-    commit_list_resp = github.get(
-        f'/repos/{owner}/{repo}/commits', json={'sha': ref, 'path': filepath})
+    commit_list_resp = requests.get(
+        f'https://api.github.com/repos/{owner}/{repo}/commits', 
+        params={'sha': ref, 'path': filepath},
+        headers=request_header(session['access_token'])
+    )
 
     if commit_list_resp.ok:
         commit_list_json = commit_list_resp.json()
@@ -357,30 +358,31 @@ def update_codee():
     print(">> codee_content")
     print(codee_content)
 
-    get_resp = github.get(f'/repos/{owner}/{repo}/contents/{codee_path}')
+    get_resp = requests.get(f'https://api.github.com/repos/{owner}/{repo}/contents/{codee_path}',
+                            headers=request_header(session['access_token']))
     get_resp_json = get_resp.json()
 
     if not get_resp.ok:
         return 'Failed to get previous file content', 500
 
     current_sha = get_resp_json['sha']
-    current_content = base64.b64decode(
-        get_resp_json['content']).decode('utf-8')
 
     blob_request_body = {
         'content': codee_content,  # JSON str
         'encoding': "utf-8"
     }
-    blob_resp = github.post(
-        f'/repos/{owner}/{repo}/git/blobs', json=blob_request_body)
+    blob_resp = requests.post(
+        f'https://api.github.com/repos/{owner}/{repo}/git/blobs', data=blob_request_body,
+        headers=request_header(session['access_token']))
     if blob_resp.ok:
         request_body = {
             'message': "Codee 파일 수정",
             'content': base64.b64encode(codee_content.encode('utf-8')).decode('utf-8'),
             'sha': current_sha
         }
-        resp = github.put(f'/repos/{owner}/{repo}/contents/{codee_path}',
-                          json=request_body)
+        resp = requests.put(f'https://api.github.com/repos/{owner}/{repo}/contents/{codee_path}',
+                          data=request_body, 
+                          headers=request_header(session['access_token']))
         if resp.ok:
             return 'Codee file updated successfully', 200
     print(resp)
@@ -399,8 +401,9 @@ def create_codee():
     owner = current_user.username
 
     last_commit_sha = None
-    commit_list_resp = github.get(
-        f'/repos/{owner}/{repo}/commits?path={ref_path}')
+    commit_list_resp = requests.get(
+        f'https://api.github.com/repos/{owner}/{repo}/commits?path={ref_path}',
+        headers=request_header(session['access_token']))
     if commit_list_resp.ok:
         commit_list_json = commit_list_resp.json()
         last_commit_sha = commit_list_json[0]['sha']
@@ -415,8 +418,9 @@ def create_codee():
             'message': "Codee 파일 생성",
             'content': base64.b64encode(codee_content.encode('utf-8')).decode('utf-8')
         }
-        resp = github.put(f'/repos/{owner}/{repo}/contents/{save_location}/{codee_name}.cd',
-                          json=request_body)
+        resp = requests.put(f'https://api.github.com/repos/{owner}/{repo}/contents/{save_location}/{codee_name}.cd',
+                          data=request_body,
+                          headers=request_header(session['access_token']))
         print(resp)
         print(resp.json())
         return "created codee file", 200
