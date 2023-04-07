@@ -1,12 +1,9 @@
 from . import main
-from .. import db, session_model
-from ..models import User, Test
 
-import json, os, difflib, re, time, requests, base64
-from collections import deque, defaultdict
+import json, os, re, time, requests, base64
+from collections import defaultdict
 from flask import abort, render_template, redirect, url_for, make_response, g, request, session, current_app
 from flask_login import current_user, login_required
-from flask_dance.contrib.github import github
 from datetime import datetime
 from diff_match_patch import diff_match_patch
 
@@ -24,7 +21,6 @@ def request_header(token, additional_header = None):
 @main.before_request
 @login_required
 def check_access_token():
-    print(f"session.sid: {session.sid}")
     if not session and request.endpoint not in ['auth.login', 'auth.logout']:
         return redirect(url_for('auth.login'))        
 
@@ -44,7 +40,10 @@ def get_content_of_file(owner, repo, ref, path):
         resp_json = resp.json()
         base64_content = resp_json['content']
         bytes_content = base64.b64decode(base64_content)
-        content = bytes_content.decode('utf-8')
+        try:
+            content = bytes_content.decode('utf-8')
+        except:
+            content = "non-decodeable content"
         return content
     return "error"
 
@@ -115,20 +114,7 @@ def get_last_commit_sha(owner, repo, ref, filepath):
     return last_commit_sha
 
 
-def escape(string):
-    escape_dict = {'{+': '\\{\\+', '+}': '\\+\\}',
-                   '[-': '\\[\\-', '-]': '\\-\\]'}
-    pattern = re.compile('|'.join(re.escape(key)
-                         for key in escape_dict.keys()))
-    return pattern.sub(lambda match: escape_dict[match.group(0)], string)
 
-
-def unescape(escaped_string):
-    escape_dict = {'\\{\\+': '{+', '\\+\\}': '+}',
-                   '\\[\\-': '[-', '\\-\\]': '-]'}
-    pattern = re.compile('|'.join(re.escape(key)
-                         for key in escape_dict.keys()))
-    return pattern.sub(lambda match: escape_dict[match.group(0)], escaped_string)
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -193,141 +179,10 @@ def show_codee_file(owner, repo, ref, content):
     return ref_file_path, ref_file_content, codee_content
 
 
-def wrap_word(change_type, line):
-    start = 1 if line.startswith("\n") else 0
-    end = len(line) - 1 if line.endswith("\n") else len(line)
-    inner = line[start:end].replace(
-        '\n', ('+}\n{+' if change_type == '+' else '-]\n[-'))
-    inner = '{+' + inner + '+}' if change_type == '+' else '[-' + inner + '-]'
-    return (("\n" if line.startswith("\n") else "") + inner + ("" if line.endswith("\n") else ""))
-
-
-def find_added_word(line):
-    matches = re.finditer(r'\{\+(.*?)\+\}', line)
-    return [(match.start(), match.group(1), '+') for match in matches]
-
-
-def find_deleted_word(line):
-    matches = re.finditer(r'\[\-(.*?)\-\]', line)
-    return [(match.start(), match.group(1), '-') for match in matches]
-
-
-def detect_changes(diff_string):
-    changes = {}
-    diff_lines = diff_string.split("\n")
-    type_key = {'+': 'add', '-': 'delete'}
-    for line_num, diff_line in enumerate(diff_lines):
-        detected_words = find_added_word(
-            diff_line) + find_deleted_word(diff_line)
-        if not detected_words:
-            continue
-        if len(detected_words) == 1 and len(detected_words[0][1]) == len(diff_line) - 4:
-            changes[line_num+1] = {
-                'line': True,
-                'type': type_key[detected_words[0][2]]
-            }
-        else:
-            detected_words.sort(key=lambda x: x[0])
-            words = [(word[0] - 4 * i, word[1], word[2])
-                     for i, word in enumerate(detected_words)]
-            word_changes = []
-            change = {'line': False}
-            for word in words:
-                word_changes.append({
-                    'type': type_key[word[2]],
-                    'col': word[0],
-                    'length': len(word[1])
-                })
-            change['info'] = word_changes
-            changes[line_num+1] = change
-    return changes
-
-
-def update_deco(changes, decorations):
-    new_deco = defaultdict(list)
-    for deco_line_num, deco_list in decorations.items():
-        print(f"deco_line_num: {deco_line_num}, deco_list: {deco_list}")
-        deco_line_num = int(deco_line_num)
-        for deco in deco_list:
-            for change_line_num, change in changes.items():
-                print(
-                    f"    change_line_num: {change_line_num}, change: {change}")
-                change_line_num = int(change_line_num)
-                if change_line_num < deco_line_num:
-                    print(1)
-                    if change["line"]:
-                        print(2)
-                        deco_line_num += 1 if change["type"] == "add" else -1
-                        print(f"deco_line_num: {deco_line_num}")
-                    continue
-                elif change_line_num > deco_line_num:
-                    print(3)
-                    break
-                # change_line_num == deco_line_num
-                if change["line"]:  # 줄 단위의 변경 사항
-                    if deco["type"] == "line_hide":
-                        print(4)
-                        # line_hide 하는 범위에 겹치는 변경사항이 있으면 데코 삭제
-                        pass
-                    else:
-                        print(5)
-                        if change["info"]["type"] == "add":
-                            print(6)
-                            new_deco[deco_line_num + 1].append(deco)
-                else:  # 단어 단위의 변경 사항
-                    print(7)
-                    deco = update_word_deco(deco, change["info"])
-            if deco:
-                new_deco[deco_line_num].append(deco)
-
-    return new_deco
-
-
-def update_word_deco(deco, word_changes):
-    start = deco["start"]
-    end = deco["end"]
-    for change in word_changes:
-        # line change 분류
-        change_end = change["col"] + change["length"] - 1
-        if change["type"] == "add":
-            if change["col"] < start:
-                print("(1)")
-                start += change["length"]
-                end += change["length"]
-            elif change["col"] >= start and change["col"] <= end:
-                print("(2)")
-                end += change["length"]
-        else:
-            if change["col"] < start:
-                if change_end < start:
-                    print("(3)")
-                    start -= change["length"]
-                    end -= change["length"]
-                elif change_end >= start and change_end < end:
-                    print("(4)")
-                    start = change["col"]
-                    end -= change["length"]
-                else:  # change_end >= end
-                    print(5)
-                    return None
-            elif change["col"] >= start and change["col"] <= end:
-                if change_end >= start and change_end < end:
-                    print("(6)")
-                    end -= change["length"]
-                elif change_end >= end:
-                    print("(7)")
-                    end = start + 1
-    deco["start"] = start
-    deco["end"] = end
-    return deco
-
-
 def merge(old_sha, new_sha, ref_file, deco):
     dmp = init_diff_match_patch()
-    print("=========deco")
     print(deco)
     print(f"old_sha: {old_sha}, new_sha: {new_sha}")
-    # deco = sorted(deco, key=lambda x: x['line'])
     old_code = escape(get_content_of_file(g.owner, g.repo, old_sha, ref_file))
     new_code = escape(get_content_of_file(g.owner, g.repo, new_sha, ref_file))
     diffs = dmp.diff_main(old_code, new_code)
@@ -426,3 +281,31 @@ def create_codee():
         return "created codee file", 200
 
     return "Failed to create codee file", 500
+
+
+@main.route('/delete_codee', methods=['POST'])
+def delete_codee():
+    json_data = request.get_json()
+    repo = json_data['repo']
+    codee_path = json_data['codee_path']
+    owner = current_user.username
+
+    blob_resp = requests.get(f'https://api.github.com/repos/{owner}/{repo}/contents/{codee_path}',
+                headers=request_header(session['access_token']))
+    if blob_resp.ok:
+        blob_resp_json = blob_resp.json()
+        blob_sha = blob_resp_json['sha']
+
+        request_body = {
+            'message': "Codee 파일 삭제",
+            'sha': blob_sha
+        }
+        resp = requests.delete(f'https://api.github.com/repos/{owner}/{repo}/contents/{codee_path}',
+                            data=json.dumps(request_body),
+                            headers=request_header(session['access_token']))
+        if resp.ok:
+            return "deleted codee file", 200
+        else:
+            return "fail to delete", 500
+    else:
+        return "wrong codee path", 500
