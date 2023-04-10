@@ -6,8 +6,9 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_pagedown import PageDown
 from config import config
-from flask_session import Session
+from flask_session import Session, SqlAlchemySessionInterface
 import mysql.connector
+
 
 mail = Mail()
 bootstrap = Bootstrap()
@@ -18,6 +19,8 @@ pagedown = PageDown()
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 sess = Session()
+session_interface = None
+session_model = None
 
 def create_app(config_name):
     app = Flask(__name__)
@@ -29,13 +32,17 @@ def create_app(config_name):
     bootstrap.init_app(app)
     moment.init_app(app)
     db.init_app(app)
+    
     login_manager.init_app(app)
     pagedown.init_app(app)
     sess.init_app(app)
 
+    app.config['SESSION_SQLALCHEMY'] = db
+
     with app.app_context():
         db.create_all()
         db.session.commit()
+        db.Model.metadata.reflect(bind=db.engine,schema='codee')
 
     from .api import api as api_blueprint
     app.register_blueprint(api_blueprint, url_prefix='/api/v1')
@@ -46,6 +53,4 @@ def create_app(config_name):
     from .auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint, url_prefix='/auth')
 
-    from .auth.oauth import github_blueprint
-    app.register_blueprint(github_blueprint, url_prefix='/github_login')
     return app
