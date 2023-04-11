@@ -3,18 +3,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import URLSafeTimedSerializer as Serializer
 from flask_login import UserMixin
 from app.exceptions import ValidationError
-from sqlalchemy import event, Table, MetaData
 from . import db, login_manager
 
-
-class MySession(db.Model):
-    __table__ = db.Model.metadata.tables['codee.sessions']
-
-@db.event.listens_for(MySession, 'before_insert')
-def validate_record_before_insert(mapper, connection, target):
-    print(">>>>>> EVENT HANDLER WORKING!")
-    if 'certain_string' in target.column_name:
-        return
 
 class User(UserMixin, db.Model):
     __tablename__ = 'user'

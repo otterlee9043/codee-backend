@@ -1,4 +1,6 @@
 from . import main
+from .. import db 
+from sqlalchemy import event
 
 import json, os, re, time, requests, base64
 from collections import defaultdict
@@ -20,11 +22,10 @@ def request_header(token, additional_header = None):
 
 @main.before_request
 @login_required
-def check_access_token():
+def check_access_token():    
     if not session and request.endpoint not in ['auth.login', 'auth.logout']:
-        return redirect(url_for('auth.login'))        
-
-
+        return redirect(url_for('auth.login')) 
+    
 
 @main.app_template_filter()
 def is_cd(file_path):
