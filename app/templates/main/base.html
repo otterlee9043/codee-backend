@@ -25,7 +25,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{url_for('static', filename='favicon/favicon-32x32.png')}}">
     <link rel="icon" type="image/png" sizes="96x96" href="{{url_for('static', filename='favicon/favicon-96x96.png')}}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{url_for('static', filename='favicon/favicon-16x16.png')}}">
-    <link rel="manifest" href="{{url_for('static', filename='favicon/manifest.json')}}">
+    <link rel="manifest" href="{{url_for('static', filename='favicon/manifest.json')}}" crossorigin="use-credentials">
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="msapplication-TileImage" content="{{url_for('static', filename='favicon/ms-icon-144x144.png')}}">
     <meta name="theme-color" content="#ffffff">
@@ -40,13 +40,13 @@
     <script src="http://code.jquery.com/jquery-latest.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
-    <title>{% block title %}{% endblock %} - codee</title>
     {% block extra_head %}{% endblock %}
 </head>
 <header>
     <div class="topbar darkbg">
-        <div class="logo-wrapper"><img src="{{url_for('static', filename='logo_white.svg')}}" class="small-logo" alt=""
-                srcset=""></div>
+        <a class="logo-wrapper" href="/">
+            <img src="{{url_for('static', filename='logo_white.svg')}}" class="small-logo" alt="" srcset="">
+        </a>
 
         <div class="logout2 white">
             <span>{{ current_user.username }} 님,</span>

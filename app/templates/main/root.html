@@ -1,5 +1,4 @@
 {% extends "main/base.html" %}
-{% block title %}Index{% endblock %}
 {% block username %}{{ current_user.username }}{% endblock %}
 {% block owner %}{{ g.owner }}{% endblock %}
 {% block repo %}{{ g.repo }}{% endblock %}
@@ -19,6 +18,9 @@
     const tree = JSON.parse({{ tree| tojson }});
     $("#owner").text(owner);
     $("#repo").text(repo);
+
+    document.title = `${owner}/${repo} - codee`;
+
     $(function () {
         console.log(tree);
         drawTree();
@@ -26,5 +28,5 @@
     
 </script>
 <script src="{{ url_for('static', filename = 'script/drawtree.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/createcodee.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/codee.js') }}"></script>
 {% endblock %}

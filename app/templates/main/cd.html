@@ -7,14 +7,18 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/go.min.js"></script>
 <script
     src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
-{% endblock %} {% block title %}{{ g.owner }}/{{ g.repo }}{% endblock %} {%
-block file_path %}
-<div class="full filepath-bar">
-    <span class="filename"></span>
+{% endblock %}
+{% block file_path %}
+<div class="full filepath-bar topbar">
+    <span id="filename" class="filename"></span>
+    <div>
+        <button class="button" type="button" onclick="updateCodee()">save</button>
+        <button class="button" type="button" onclick="deleteCodee()">delete</button>
+    </div>
 </div>
 {% endblock %} {% block content %}
 <div class="border-box">
-    <div id="filename" class="filename-bar"></div>
+    <div id="ref-filename" class="filename-bar"></div>
     <pre id="pre" class="context-menu-one">
         <code id="code">{{ ref_content |escape }}</code>
     </pre>
@@ -32,15 +36,17 @@ block file_path %}
     const codee = JSON.parse({{ codee_content| tojson }});
     let decoration = null;
 
+    document.title = `${repo}/${content} - codee`;
+
     $("#owner").text(owner);
     $("#repo").text(repo);
     $("#filename").text(content);
+    $("#ref-filename").text(codee['referenced_file']);
 
     $(async function () {
         drawTree();
         spreadTree();
         decoration = JSON.parse(codee["data"]);
-        $("#filename").text(codee["referenced_file"]);
         hljs.highlightAll();
         await new Promise((resolve, reject) => {
             hljs.initLineNumbersOnLoad();
@@ -54,8 +60,8 @@ block file_path %}
 </script>
 <script src="{{ url_for('static', filename = 'script/drawtree.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/index.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/createcodee.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/codee.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/component/menubar.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/getIndices.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/editcodee.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/editdeco.js') }}"></script>
 {% endblock %}

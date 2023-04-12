@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=deivce-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://kit.fontawesome.com/16fd5c8b77.js" crossorigin="anonymous"></script>
+    <title>Codee</title>
+</head>
+
+<body>
+    <div class="container center-col">
+        <div class="wrapper">
+            <img src="{{url_for('static', filename='logo.svg')}}" class="big-logo-only" alt="" srcset="">
+            <br>
+            <a href="https://github.com/login/oauth/authorize?scope=repo&client_id=11cc85bbf44189ab0d8a">
+                <button class="button clone-btn login-btn full">Login</button>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

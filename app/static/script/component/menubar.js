@@ -395,9 +395,10 @@ function embedComment(comment, span, id) {
   const closeBtn = document.createElement("span");
   closeBtn.innerText = "X";
   closeBtn.classList.add("right");
+  closeBtn.classList.add("deco-close");
 
   commentSpan.appendChild(closeBtn);
-  const line = parseInt(getTD(selected).getAttribute("data-line-number"));
+  const line = parseInt(getTD(span).getAttribute("data-line-number"));
   closeBtn.addEventListener("click", () => {
     deleteDeco(line, commentSpan.id);
     mergeNode(span, commentSpan);

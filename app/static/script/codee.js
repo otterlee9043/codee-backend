@@ -23,12 +23,10 @@ function openDir(id) {
 }
 
 function isValidFilename(filename) {
-  // Check for invalid characters
   if (/[\\/:\*\?"<>\|]/.test(filename)) {
     return false;
   }
 
-  // Check for empty filename
   if (filename.length === 0) {
     return false;
   }
@@ -84,7 +82,7 @@ async function updateCodee() {
     method: "POST",
     body: JSON.stringify({
       repo: repo,
-      codee_path: content, // 현재 위치
+      codee_path: content, 
       codee_content: codee_content,
     }),
     headers: new Headers({
@@ -95,10 +93,37 @@ async function updateCodee() {
   await fetch(`/update_codee`, opts)
     .then((resp) => {
       if (resp.status !== 200) {
-        console.log(`Looks like there was a problem. Status code: ${resp.status}`);
+        console.log(`Looks like there was a problem. Status code: ${resp.status}, ${resp.text}`);
       }
     })
     .catch((error) => {
       console.log("Fetch error: " + error);
     });
+}
+
+async function deleteCodee() {
+  const result = confirm("정말 삭제하시겠습니까?");
+  if (result) {
+    const opts = {
+      method: "POST",
+      body: JSON.stringify({
+        repo: repo,
+        codee_path: content
+      }),
+      headers: new Headers({
+        "content-type": "application/json",
+      }),
+    };
+  
+    await fetch(`/delete_codee`, opts)
+      .then((resp) => {
+        if (resp.status !== 200) {
+          console.log(`Looks like there was a problem. Status code: ${resp.status}, ${resp.text}`);
+        }
+        window.location.href = `/${owner}/${repo}/${ref}`;
+      })
+      .catch((error) => {
+        console.log("Fetch error: " + error);
+      });
+  }
 }

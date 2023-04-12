@@ -717,6 +717,8 @@ function registerCommentEvent(comment, node, id, type) {
   const closeBtn = document.createElement("span");
   closeBtn.innerText = "X";
   closeBtn.classList.add("right");
+  closeBtn.classList.add("deco-close");
+  
 
   commentSpan.appendChild(closeBtn);
   const line = parseInt(getTD(node).getAttribute("data-line-number"));

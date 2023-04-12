@@ -8,8 +8,8 @@
     hljs.highlightAll();
     hljs.initLineNumbersOnLoad();
 </script>
-{% endblock %} {% block title %}{{ g.owner }}/{{ g.repo }}{% endblock %} {%
-block file_path %}
+{% endblock %} 
+{% block file_path %}
 <div class="full filepath-bar">
     <span class="filename" id="filename"></span>
 </div>
@@ -29,6 +29,8 @@ block file_path %}
     const content = pathArray.slice(4).join('/');
     const tree = JSON.parse({{ tree| tojson }});
 
+    document.title = `${repo}/${content} - codee`;
+
     $("#owner").text(owner);
     $("#repo").text(repo);
     $("#filename").text(content);
@@ -40,5 +42,5 @@ block file_path %}
 </script>
 <script src="{{ url_for('static', filename = 'script/drawtree.js') }}"></script>
 <script src="{{ url_for('static', filename = 'script/index.js') }}"></script>
-<script src="{{ url_for('static', filename = 'script/createcodee.js') }}"></script>
+<script src="{{ url_for('static', filename = 'script/codee.js') }}"></script>
 {% endblock %}
