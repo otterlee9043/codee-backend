@@ -1,11 +1,11 @@
-from flask import render_template, redirect, request, url_for, flash, session, current_app
+from flask import redirect, request, url_for, flash, session
 from flask_login import login_user, logout_user, login_required, \
     current_user
 from . import auth
 from .. import db
 from ..models import User
 from flask_login import logout_user
-import os, requests
+import os, requests, json
 
 
 
@@ -28,13 +28,15 @@ def get_access_token():
         "https://github.com/login/oauth/access_token", params=query, headers=headers)
     if resp.ok:
         resp_data = resp.json()
+        print(f"resp_data: {resp_data}")
         session['access_token'] = resp_data['access_token']
+        print(session)
         headers['Authorization'] = f"Bearer {session['access_token']}"
         user_resp = requests.get("https://api.github.com/user", headers=headers)
         if user_resp.ok:
-            account_info= user_resp.json()
+            account_info = user_resp.json()
             user = save_or_update(account_info)
-            login_user(user)
+            login_user(user, remember=False)
     return redirect(url_for("main.index"))
 
 
@@ -54,5 +56,21 @@ def save_or_update(user_info):
 @login_required
 def logout():
     logout_user()
+    revoke_access_token()
     flash('You have been logged out.')
     return redirect(url_for('main.index'))
+
+def revoke_access_token():
+    client_id = os.environ.get('GITHUB_OAUTH_CLIENT_ID')
+    access_token = session['access_token']
+    session.pop('access_token', None)
+    headers = {"Authorization": f"Bearer {access_token}",
+    "Accept": "application/vnd.github+json"}
+
+    response = requests.delete(f"https://api.github.com/applications/{client_id}/token", 
+                        headers=headers,
+                        data=json.dumps({"access_token": access_token}))
+    if response.ok:
+        print("Access token revoked successfully.")
+    else:
+        print(f"Failed to revoke access token: {response.status_code} - {response.json()['message']}")

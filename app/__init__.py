@@ -19,8 +19,6 @@ pagedown = PageDown()
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 sess = Session()
-session_interface = None
-session_model = None
 
 def create_app(config_name):
     app = Flask(__name__)
@@ -33,17 +31,18 @@ def create_app(config_name):
     moment.init_app(app)
     db.init_app(app)
     
+    login_manager.session_protection = None
     login_manager.init_app(app)
     pagedown.init_app(app)
     sess.init_app(app)
 
     app.config['SESSION_SQLALCHEMY'] = db
-
+    
     with app.app_context():
+        print("db.create_all()")
         db.create_all()
         db.session.commit()
-        db.Model.metadata.reflect(bind=db.engine,schema='codee')
-
+    
     from .api import api as api_blueprint
     app.register_blueprint(api_blueprint, url_prefix='/api/v1')
 
